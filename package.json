@@ -1,0 +1,34 @@
+{
+  "engines": {
+    "node": ">=18.15.0 <18.18.0"
+  },
+  "name": "json-odrl-manager",
+  "version": "1.0.0",
+  "description": "Partial implementation for ODRL policies in JSON format for Node.js.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "gen-docs": "typedoc --out docs",
+    "test": "mocha --require ts-node/register --exit ./src/tests/**/*.test.ts"
+  },
+  "keywords": ["ODRL", "JSON-LD", "Policy"],
+  "author": "Visions",
+  "license": "",
+  "devDependencies": {
+    "@types/chai": "^4.3.9",
+    "@types/mocha": "^10.0.3",
+    "@types/node": "^20.8.9",
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0",
+    "prettier": "^3.0.3",
+    "supertest": "^6.3.3",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.2.2"
+  }
+}

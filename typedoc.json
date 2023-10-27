@@ -1,0 +1,18 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "src/**/*.ts"
+  ],
+  "exclude": ["./node_modules"],
+  "excludePrivate": false,
+  "includeVersion": true,
+  "out": "docs",
+  "readme": "README.md",
+  "name": "odrl-manager",
+  "tsconfig": "./tsconfig.json",
+  "entryPointStrategy": "Expand",
+  "markedOptions": {
+    "breaks": true,
+    "gfm": true
+  }
+}
