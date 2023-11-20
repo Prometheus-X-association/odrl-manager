@@ -6,8 +6,8 @@ import { Party } from 'models/Party';
 import { Relation } from 'models/Relation';
 
 export class Rule {
-  action: Action;
-  target: Asset;
+  action?: Action;
+  target?: Asset;
   assigner?: Party;
   assignee?: Party;
   asset?: Asset;
@@ -17,30 +17,27 @@ export class Rule {
   uid?: string;
   relation?: Relation;
 
-  constructor(
-    action: Action,
-    target: Asset,
-    constraints?: Constraint[],
-    uid?: string,
-    relation?: Relation,
-  ) {
-    this.action = action;
-    this.target = target;
+  constructor(constraints?: Constraint[], uid?: string, relation?: Relation) {
     this.constraints = constraints || [];
     this.uid = uid;
     this.relation = relation;
   }
 
-  public getTarget(): Asset {
+  public setTarget(asset: Asset): void {
+    this.target = asset;
+  }
+  public setAction(action: Action): void {
+    this.action = action;
+  }
+  public getTarget(): Asset | undefined {
     return this.target;
+  }
+  public getAction(): Action | undefined {
+    return this.action;
   }
   public getConstraints(): Constraint[] {
     return this.constraints;
   }
-  public getAction(): Action {
-    return this.action;
-  }
-
   async evaluate(): Promise<boolean> {
     try {
       if (this.constraints) {

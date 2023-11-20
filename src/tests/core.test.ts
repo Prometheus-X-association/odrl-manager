@@ -1,4 +1,4 @@
-import { parseODRL } from 'PolicyInstanciator';
+import { PolicyInstanciator } from 'PolicyInstanciator';
 import { expect } from 'chai';
 import { _logObject } from './utils';
 import { PolicyOffer } from 'models/PolicyOffer';
@@ -75,10 +75,11 @@ describe('Testing Core units', () => {
     };
     */
 
-    const policy: PolicyOffer = parseODRL(contract) as PolicyOffer;
-    _logObject(policy);
+    const instanciator: PolicyInstanciator = new PolicyInstanciator();
+    instanciator.traverse(contract);
+    _logObject(instanciator.policy);
 
     // todo
-    evaluator.visitPolicy(policy);
+    // evaluator.visitPolicy(policy);
   });
 });
