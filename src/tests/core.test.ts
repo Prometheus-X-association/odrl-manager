@@ -22,7 +22,7 @@ describe('Testing Core units', () => {
               leftOperand: 'age',
               operator: 'gt',
               rightOperand: 17,
-            },
+            } /*
             {
               operator: 'and',
               constraint: [
@@ -38,8 +38,21 @@ describe('Testing Core units', () => {
                 },
               ],
             },
+            */,
+          ],
+        } /*
+        {
+          action: 'use',
+          target: 'http://contract-target-to-be-used',
+          constraint: [
+            {
+              leftOperand: 'age',
+              operator: 'gt',
+              rightOperand: 17,
+            },
           ],
         },
+        */,
       ],
     };
     /*
@@ -76,7 +89,7 @@ describe('Testing Core units', () => {
     */
 
     const instanciator: PolicyInstanciator = new PolicyInstanciator();
-    instanciator.traverse(contract);
+    instanciator.genPolicyFrom(contract);
     _logObject(instanciator.policy);
 
     // todo

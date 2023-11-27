@@ -7,6 +7,8 @@ import { PolicySet } from 'models/PolicySet';
 import { Rule } from 'models/Rule';
 import { RulePermission } from 'models/RulePermission';
 
+type InstanciatorFunction = (node: any, parent: any) => any;
+
 export class PolicyInstanciator {
   public policy: Policy | null;
   public static instance: PolicyInstanciator;
@@ -15,24 +17,25 @@ export class PolicyInstanciator {
     this.policy = null;
   }
   //
-  private static instanciators: any = {
-    permission: (node: any, parent: Policy): RulePermission => {
-      const rule = new RulePermission();
-      parent.addPermission(rule);
-      return rule;
-    },
-    prohibition: (node: any) => {},
-    obligation: (node: any) => {},
-    action: (node: any, parent: Rule): Action => {
-      const action = new Action(node.action, null);
-      parent.setAction(action);
-      return action;
-    },
-    target: (node: any, parent: Rule) => {
-      const asset = new Asset(node.target);
-      parent.setTarget(asset);
-    },
-  };
+  private static readonly instanciators: Record<string, InstanciatorFunction> =
+    {
+      permission: (element: any, parent: Policy): RulePermission => {
+        const rule = new RulePermission();
+        parent.addPermission(rule);
+        return rule;
+      },
+      prohibition: (element: any, parent: Policy) => {},
+      obligation: (element: any, parent: Policy) => {},
+      action: (element: any, parent: Rule): Action => {
+        const action = new Action(element, null);
+        parent.setAction(action);
+        return action;
+      },
+      target: (element: any, parent: Rule) => {
+        const asset = new Asset(element);
+        parent.setTarget(asset);
+      },
+    };
   private selectPolicyType(json: any): void {
     const context = json['@context'];
     switch (json['@type']) {
@@ -56,24 +59,38 @@ export class PolicyInstanciator {
   }
   //
   public traverse(node: any, parent: any): void {
+    const instanciate = (property: string, value: any): any => {
+      if (PolicyInstanciator.instanciators[property]) {
+        return PolicyInstanciator.instanciators[property](value, parent);
+      } else {
+        console.warn(`No function associated with property "${property}"`);
+        return null;
+      }
+    };
+
     for (const property in node) {
-      if (node.hasOwnProperty(property)) {
-        const value = node[property];
-        if (typeof value === 'object' && value !== null) {
-          if (PolicyInstanciator.instanciators[property]) {
-            const child: any = PolicyInstanciator.instanciators[property](
-              value,
-              parent,
-            );
-            this.traverse(value, child);
-          } else {
-            console.warn(
-              `Warning: No function associated with property "${property}"`,
-            );
+      const value = node[property];
+      if (Array.isArray(value)) {
+        for (let i = 0; i < value.length; i++) {
+          const element = value[i];
+          if (element) {
+            const child: any = instanciate(property, element);
+            if (child !== null && typeof element === 'object') {
+              this.traverse(element, child);
+            } else {
+              console.warn(`Traversal stopped for property "${property}"`);
+            }
           }
-        } else {
-          console.log(`Log: The current value is "${value}"`);
         }
+      } else if (value) {
+        const child: any = instanciate(property, value);
+        if (child !== null && typeof value === 'object') {
+          this.traverse(value, child);
+        } else {
+          console.warn(`Traversal stopped for property "${property}"`);
+        }
+      } else {
+        console.warn(`The current value is "${value}"`);
       }
     }
   }
