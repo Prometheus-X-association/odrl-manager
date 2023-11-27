@@ -22,7 +22,7 @@ describe('Testing Core units', () => {
               leftOperand: 'age',
               operator: 'gt',
               rightOperand: 17,
-            } /*
+            },
             {
               operator: 'and',
               constraint: [
@@ -38,7 +38,6 @@ describe('Testing Core units', () => {
                 },
               ],
             },
-            */,
           ],
         } /*
         {

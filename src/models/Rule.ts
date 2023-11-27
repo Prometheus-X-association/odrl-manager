@@ -17,8 +17,8 @@ export class Rule {
   uid?: string;
   relation?: Relation;
 
-  constructor(constraints?: Constraint[], uid?: string, relation?: Relation) {
-    this.constraints = constraints || [];
+  constructor(uid?: string, relation?: Relation) {
+    this.constraints = [];
     this.uid = uid;
     this.relation = relation;
   }
@@ -28,6 +28,9 @@ export class Rule {
   }
   public setAction(action: Action): void {
     this.action = action;
+  }
+  public addConstraint(constraint: Constraint) {
+    this.constraints.push(constraint);
   }
   public getTarget(): Asset | undefined {
     return this.target;
