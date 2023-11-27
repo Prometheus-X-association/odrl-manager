@@ -39,23 +39,32 @@ export class PolicyInstanciator {
         parent.setTarget(asset);
       },
       constraint: (element: any, parent: Rule) => {
-        const {
-          leftOperand,
-          operator,
-          rightOperand,
-          constraint: constraints,
-        } = element;
-        const constraint: Constraint =
-          (leftOperand &&
-            operator &&
-            rightOperand &&
-            new AtomicConstraint(leftOperand, operator, rightOperand)) ||
-          (operator &&
-            Array.isArray(constraints) &&
-            constraints.length > 0 &&
-            new LogicalConstraint(operator, constraints));
-        parent.addConstraint(constraint);
-        return constraint;
+        try {
+          const {
+            leftOperand,
+            operator,
+            rightOperand,
+            constraint: constraints,
+          } = element;
+          const constraint: Constraint =
+            (leftOperand &&
+              operator &&
+              rightOperand !== undefined &&
+              new AtomicConstraint(leftOperand, operator, rightOperand)) ||
+            (operator &&
+              Array.isArray(constraints) &&
+              constraints.length > 0 &&
+              new LogicalConstraint(operator));
+          if (constraint === undefined) {
+            throw new Error(
+              `Invalid constraint: ${JSON.stringify(element, null, 2)}`,
+            );
+          }
+          parent.addConstraint(constraint);
+          return constraint;
+        } catch (error: any) {
+          throw error;
+        }
       },
     };
   private selectPolicyType(json: any): void {
@@ -82,17 +91,21 @@ export class PolicyInstanciator {
   //
   public traverse(node: any, parent: any): void {
     const instanciate = (property: string, element: any) => {
-      if (element) {
-        const child: any =
-          PolicyInstanciator.instanciators[property] &&
-          PolicyInstanciator.instanciators[property](element, parent);
-        if (typeof element === 'object') {
-          if (child) {
-            this.traverse(element, child);
-          } else {
-            console.warn(`Traversal stopped for "${property}".`);
+      try {
+        if (element) {
+          const child: any =
+            PolicyInstanciator.instanciators[property] &&
+            PolicyInstanciator.instanciators[property](element, parent);
+          if (typeof element === 'object') {
+            if (child) {
+              this.traverse(element, child);
+            } else {
+              console.warn(`Traversal stopped for "${property}".`);
+            }
           }
         }
+      } catch (error: any) {
+        console.error(error.message);
       }
     };
     for (const property in node) {

@@ -32,6 +32,11 @@ describe('Testing Core units', () => {
                   rightOperand: 0,
                 },
                 {
+                  aleftOperand: 'a',
+                  aoperator: 'eq',
+                  arightOperand: 0,
+                },
+                {
                   leftOperand: 'b',
                   operator: 'eq',
                   rightOperand: 1,
@@ -39,7 +44,7 @@ describe('Testing Core units', () => {
               ],
             },
           ],
-        } /*
+        },
         {
           action: 'use',
           target: 'http://contract-target-to-be-used',
@@ -51,26 +56,7 @@ describe('Testing Core units', () => {
             },
           ],
         },
-        */,
-      ],
-    };
-    /*
-    const contract = {
-      '@context': 'http://www.w3.org/ns/odrl/2/',
-      '@type': 'Offer',
-      permission: [
-        {
-          action: 'read',
-          target: 'http://contract-target',
-          constraint: [
-            {
-              leftOperand: 'age',
-              operator: 'gt',
-              rightOperand: 17,
-            },
-          ],
-        },
-      ],
+      ] /*,
       prohibition: [
         {
           action: 'read',
@@ -84,8 +70,8 @@ describe('Testing Core units', () => {
           ],
         },
       ],
+      */,
     };
-    */
 
     const instanciator: PolicyInstanciator = new PolicyInstanciator();
     instanciator.genPolicyFrom(contract);
