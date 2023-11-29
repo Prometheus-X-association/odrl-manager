@@ -1,4 +1,6 @@
-export class Operator {
+import { DebugMonitor } from 'DebugMonitor';
+
+export class Operator extends DebugMonitor {
   public static readonly EQ: string = 'eq';
   public static readonly NEQ: string = 'neq';
   public static readonly GT: string = 'gt';
@@ -14,6 +16,7 @@ export class Operator {
 
   public value: string;
   constructor(value: string) {
+    super();
     this.value = value;
   }
 }

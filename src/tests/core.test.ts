@@ -56,7 +56,7 @@ describe('Testing Core units', () => {
             },
           ],
         },
-      ] /*,
+      ],
       prohibition: [
         {
           action: 'read',
@@ -70,12 +70,30 @@ describe('Testing Core units', () => {
           ],
         },
       ],
-      */,
+      obligation: [
+        {
+          assigner: 'assigner',
+          assignee: 'assignee',
+          action: [
+            {
+              value: 'compensate',
+              refinement: [
+                {
+                  leftOperand: 'payAmount',
+                  operator: 'eq',
+                  rightOperand: 500,
+                  unit: 'http://dbpedia.org/resource/Euro',
+                },
+              ],
+            },
+          ],
+        },
+      ],
     };
 
     const instanciator: PolicyInstanciator = new PolicyInstanciator();
     instanciator.genPolicyFrom(contract);
-    _logObject(instanciator.policy);
+    instanciator.policy?.debug();
 
     // todo
     // evaluator.visitPolicy(policy);

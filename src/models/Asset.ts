@@ -1,6 +1,7 @@
+import { DebugMonitor } from 'DebugMonitor';
 import { AssetCollection } from 'models/AssetCollection';
 
-export class Asset {
+export class Asset extends DebugMonitor {
   uid?: string;
   partOf?: AssetCollection[];
   hasPolicy?: string;
@@ -10,6 +11,7 @@ export class Asset {
       | string
       | { uid?: string; partOf?: AssetCollection[]; hasPolicy?: string },
   ) {
+    super();
     if (typeof target === 'string') {
       this.uid = target;
     } else {

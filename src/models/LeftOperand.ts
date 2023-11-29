@@ -1,7 +1,10 @@
-export class LeftOperand {
+import { DebugMonitor } from 'DebugMonitor';
+
+export class LeftOperand extends DebugMonitor {
   private value: string;
 
   constructor(value: string) {
+    super();
     this.value = value;
   }
 

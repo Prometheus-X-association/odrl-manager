@@ -1,22 +1,25 @@
+import { DebugMonitor } from 'DebugMonitor';
 import { LeftOperand } from './LeftOperand';
+import { LogicalConstraint } from './LogicalConstraint';
 import { Operator } from './Operator';
 import { RightOperand } from './RightOperand';
 
-export abstract class Constraint {
-  uid?: string;
-  dataType?: string;
-  unit?: string;
-  status?: number;
-  operator: Operator;
-  leftOperand: LeftOperand | null;
-  rightOperand: RightOperand | null;
-  rightOperandReference: null | string | string[] = [];
-
+export abstract class Constraint extends DebugMonitor {
+  public uid?: string;
+  public dataType?: string;
+  public unit?: string;
+  public status?: number;
+  public operator: Operator;
+  public leftOperand: LeftOperand | null;
+  public rightOperand: RightOperand | null;
+  private rightOperandReference?: null | string | string[];
+  private logicalConstraints?: null | LogicalConstraint[];
   constructor(
     leftOperand: LeftOperand | null,
     operator: Operator,
     rightOperand: RightOperand | null,
   ) {
+    super();
     this.leftOperand = leftOperand;
     this.operator = operator;
     this.rightOperand = rightOperand;

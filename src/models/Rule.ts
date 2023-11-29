@@ -1,3 +1,4 @@
+import { DebugMonitor } from 'DebugMonitor';
 import { Action } from 'models/Action';
 import { Asset } from 'models/Asset';
 import { Constraint } from 'models/Constraint';
@@ -5,24 +6,28 @@ import { LogicalConstraint } from 'models/LogicalConstraint';
 import { Party } from 'models/Party';
 import { Relation } from 'models/Relation';
 
-export class Rule {
-  action?: Action;
+export abstract class Rule extends DebugMonitor {
+  action?: Action | Action[];
   target?: Asset;
   assigner?: Party;
   assignee?: Party;
   asset?: Asset;
   parties?: Party[];
   failures?: Rule[];
-  constraints: Constraint[];
+  protected constraint: Constraint[];
   uid?: string;
   relation?: Relation;
 
   constructor(uid?: string, relation?: Relation) {
-    this.constraints = [];
+    super();
+    this.constraint = [];
     this.uid = uid;
     this.relation = relation;
   }
 
+  public get constraints(): Constraint[] {
+    return this.constraint;
+  }
   public setTarget(asset: Asset): void {
     this.target = asset;
   }
@@ -35,7 +40,7 @@ export class Rule {
   public getTarget(): Asset | undefined {
     return this.target;
   }
-  public getAction(): Action | undefined {
+  public getAction(): Action | undefined | Action[] {
     return this.action;
   }
   public getConstraints(): Constraint[] {

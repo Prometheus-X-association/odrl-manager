@@ -8,7 +8,9 @@ import { PolicyAgreement } from 'models/PolicyAgreement';
 import { PolicyOffer } from 'models/PolicyOffer';
 import { PolicySet } from 'models/PolicySet';
 import { Rule } from 'models/Rule';
+import { RuleDuty } from 'models/RuleDuty';
 import { RulePermission } from 'models/RulePermission';
+import { RuleProhibition } from 'models/RuleProhibition';
 
 type InstanciatorFunction = (node: any, parent: any) => any;
 
@@ -27,8 +29,17 @@ export class PolicyInstanciator {
         parent.addPermission(rule);
         return rule;
       },
-      prohibition: (element: any, parent: Policy) => {},
-      obligation: (element: any, parent: Policy) => {},
+      prohibition: (element: any, parent: Policy) => {
+        const rule = new RuleProhibition();
+        parent.addProhibition(rule);
+        return rule;
+      },
+      obligation: (element: any, parent: Policy) => {
+        const rule = new RuleDuty();
+        parent.addDuty(rule);
+        return rule;
+      },
+      duty: (element: any, parent: Policy) => {},
       action: (element: any, parent: Rule): Action => {
         const action = new Action(element, null);
         parent.setAction(action);

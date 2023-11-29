@@ -6,15 +6,8 @@ import { Rule } from 'models/Rule';
 
 export class RuleDuty extends Rule {
   consequence?: RuleDuty[];
-
-  constructor(
-    action: Action,
-    target: Asset,
-    constraints?: Constraint[],
-    assigner?: Party,
-    assignee?: Party,
-  ) {
-    super(action, target, constraints);
+  constructor(assigner?: Party, assignee?: Party) {
+    super();
     this.assigner = assigner;
     this.assignee = assignee;
   }
