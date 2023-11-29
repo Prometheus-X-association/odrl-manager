@@ -11,4 +11,6 @@ export class PolicyAgreement extends Policy {
   constructor(uid: string, context: string) {
     super(uid, context, 'Agreement');
   }
+
+  public localValidation(): void {}
 }

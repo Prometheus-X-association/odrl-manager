@@ -1,10 +1,10 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 import { ConflictTerm } from 'models/ConflictTerm';
 import { RuleDuty } from 'models/RuleDuty';
 import { RulePermission } from 'models/RulePermission';
 import { RuleProhibition } from 'models/RuleProhibition';
 
-export abstract class Policy extends DebugMonitor {
+export abstract class Policy extends PolicyValidator {
   protected '@context': string = '';
   protected '@type': string;
   protected uid: string;

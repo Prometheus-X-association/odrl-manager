@@ -1,7 +1,7 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 import { AssetCollection } from 'models/AssetCollection';
 
-export class Asset extends DebugMonitor {
+export class Asset extends PolicyValidator {
   uid?: string;
   partOf?: AssetCollection[];
   hasPolicy?: string;
@@ -20,4 +20,6 @@ export class Asset extends DebugMonitor {
       this.hasPolicy = target.hasPolicy;
     }
   }
+
+  public localValidation(): void {}
 }

@@ -8,4 +8,6 @@ export class PolicySet extends Policy {
   constructor(uid: string, context: string) {
     super(uid, context, 'Set');
   }
+
+  public localValidation(): void {}
 }

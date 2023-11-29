@@ -6,4 +6,6 @@ export class RulePermission extends Rule {
   constructor() {
     super();
   }
+
+  public localValidation(): void {}
 }

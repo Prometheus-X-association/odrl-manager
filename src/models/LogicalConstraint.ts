@@ -29,4 +29,5 @@ export class LogicalConstraint extends Constraint {
         return false;
     }
   }
+  public localValidation(): void {}
 }

@@ -1,6 +1,6 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 
-export class LeftOperand extends DebugMonitor {
+export class LeftOperand extends PolicyValidator {
   private value: string;
 
   constructor(value: string) {
@@ -19,4 +19,5 @@ export class LeftOperand extends DebugMonitor {
     }
     return null;
   }
+  public localValidation(): void {}
 }

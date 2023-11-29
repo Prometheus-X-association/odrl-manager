@@ -1,6 +1,6 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 
-export class Operator extends DebugMonitor {
+export class Operator extends PolicyValidator {
   public static readonly EQ: string = 'eq';
   public static readonly NEQ: string = 'neq';
   public static readonly GT: string = 'gt';
@@ -19,4 +19,5 @@ export class Operator extends DebugMonitor {
     super();
     this.value = value;
   }
+  public localValidation(): void {}
 }

@@ -1,7 +1,7 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 import { Constraint } from 'models/Constraint';
 
-export class Action extends DebugMonitor {
+export class Action extends PolicyValidator {
   value: string;
   refinement?: Constraint[];
   includedIn: Action | null;
@@ -12,4 +12,6 @@ export class Action extends DebugMonitor {
     this.value = value;
     this.includedIn = includedIn;
   }
+
+  public localValidation(): void {}
 }

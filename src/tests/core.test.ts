@@ -93,8 +93,10 @@ describe('Testing Core units', () => {
 
     const instanciator: PolicyInstanciator = new PolicyInstanciator();
     instanciator.genPolicyFrom(contract);
+    console.log('\nDebug monitoring:');
     instanciator.policy?.debug();
-
+    console.log('\nValidation monitoring:');
+    instanciator.policy?.validate();
     // todo
     // evaluator.visitPolicy(policy);
   });

@@ -1,3 +1,5 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 
-export class Party extends DebugMonitor {}
+export class Party extends PolicyValidator {
+  public localValidation(): void {}
+}

@@ -11,4 +11,6 @@ export class RuleDuty extends Rule {
     this.assigner = assigner;
     this.assignee = assignee;
   }
+
+  public localValidation(): void {}
 }

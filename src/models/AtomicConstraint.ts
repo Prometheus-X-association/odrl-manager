@@ -26,4 +26,6 @@ export class AtomicConstraint extends Constraint {
     }
     return false;
   }
+
+  public localValidation(): void {}
 }

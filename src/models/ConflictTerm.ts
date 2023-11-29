@@ -1,3 +1,5 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 
-export class ConflictTerm extends DebugMonitor {}
+export class ConflictTerm extends PolicyValidator {
+  public localValidation(): void {}
+}

@@ -1,4 +1,4 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 import { Action } from 'models/Action';
 import { Asset } from 'models/Asset';
 import { Constraint } from 'models/Constraint';
@@ -6,7 +6,7 @@ import { LogicalConstraint } from 'models/LogicalConstraint';
 import { Party } from 'models/Party';
 import { Relation } from 'models/Relation';
 
-export abstract class Rule extends DebugMonitor {
+export abstract class Rule extends PolicyValidator {
   action?: Action | Action[];
   target?: Asset;
   assigner?: Party;

@@ -1,10 +1,10 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 import { LeftOperand } from './LeftOperand';
 import { LogicalConstraint } from './LogicalConstraint';
 import { Operator } from './Operator';
 import { RightOperand } from './RightOperand';
 
-export abstract class Constraint extends DebugMonitor {
+export abstract class Constraint extends PolicyValidator {
   public uid?: string;
   public dataType?: string;
   public unit?: string;

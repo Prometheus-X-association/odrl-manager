@@ -1,11 +1,11 @@
-import { DebugMonitor } from 'DebugMonitor';
+import { PolicyValidator } from 'PolicyValidator';
 import { Asset } from 'models/Asset';
 
 export enum RelationType {
   TARGET = 'target',
 }
 
-export class Relation extends DebugMonitor {
+export class Relation extends PolicyValidator {
   type: RelationType;
   asset: Asset;
 
@@ -14,4 +14,6 @@ export class Relation extends DebugMonitor {
     this.type = type;
     this.asset = asset;
   }
+
+  public localValidation(): void {}
 }
