@@ -28,4 +28,13 @@ export abstract class Constraint extends PolicyValidator {
   async evaluate(): Promise<boolean> {
     return false;
   }
+
+  protected async verify(): Promise<boolean> {
+    return (
+      (this.uid === undefined || typeof this.uid === 'string') &&
+      (this.dataType === undefined || typeof this.dataType === 'string') &&
+      (this.unit === undefined || typeof this.unit === 'string') &&
+      (this.status === undefined || typeof this.status === 'number')
+    );
+  }
 }

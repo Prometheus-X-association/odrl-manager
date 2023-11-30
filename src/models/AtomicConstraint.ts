@@ -28,6 +28,7 @@ export class AtomicConstraint extends Constraint {
   }
 
   public async verify(): Promise<boolean> {
+    super.verify();
     return true;
   }
 }

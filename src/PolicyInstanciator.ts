@@ -11,6 +11,7 @@ import { Rule } from 'models/Rule';
 import { RuleDuty } from 'models/RuleDuty';
 import { RulePermission } from 'models/RulePermission';
 import { RuleProhibition } from 'models/RuleProhibition';
+import { copyWithExclusion } from 'utils';
 
 type InstanciatorFunction = (node: any, parent: any) => any;
 
@@ -90,6 +91,12 @@ export class PolicyInstanciator {
         Array.isArray(constraints) &&
         constraints.length > 0 &&
         new LogicalConstraint(operator));
+    copyWithExclusion(constraint, element, [
+      'constraint',
+      'leftOperand',
+      'operator',
+      'rightOperand',
+    ]);
     parent.addConstraint(constraint || element);
     return constraint;
   }

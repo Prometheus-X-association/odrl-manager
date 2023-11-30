@@ -16,30 +16,30 @@ describe('Testing Core units', async () => {
       permission: [
         {
           action: 'read',
-          target: 'http://contract-target',
+          target: 'http://target-a',
           constraint: [
             {
-              leftOperand: 'age',
-              operator: 'gt',
-              rightOperand: 17,
+              leftOperand: 'media',
+              operator: 'eq',
+              rightOperand: 'print',
             },
             {
               operator: 'and',
               constraint: [
                 {
-                  leftOperand: 'a',
-                  operator: 'eq',
-                  rightOperand: 0,
+                  leftOperand: 'dateTime',
+                  operator: 'gt',
+                  rightOperand: '2018-01-01',
                 },
                 {
-                  aleftOperand: 'a',
-                  aoperator: 'eq',
-                  arightOperand: 0,
+                  leftOperand: 'dateTime',
+                  operator: 'lt',
+                  rightOperand: '2019-01-01',
                 },
                 {
-                  leftOperand: 'b',
-                  operator: 'eq',
-                  rightOperand: 1,
+                  leftOperand: 'dateTime',
+                  operator: 'neq',
+                  rightOperand: '2018-01-02',
                 },
               ],
             },
@@ -47,25 +47,18 @@ describe('Testing Core units', async () => {
         },
         {
           action: 'use',
-          target: 'http://contract-target-to-be-used',
-          constraint: [
-            {
-              leftOperand: 'age',
-              operator: 'gt',
-              rightOperand: 17,
-            },
-          ],
+          target: 'http://target-b',
         },
       ],
       prohibition: [
         {
-          action: 'read',
-          target: 'http://contract-target',
+          action: 'play',
+          target: 'http://target-c',
           constraint: [
             {
-              leftOperand: 'age',
-              operator: 'gt',
-              rightOperand: 23,
+              leftOperand: 'dateTime',
+              operator: 'gteq',
+              rightOperand: '2017-12-31',
             },
           ],
         },
