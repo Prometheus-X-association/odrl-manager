@@ -4,7 +4,7 @@ import { _logObject } from './utils';
 import { PolicyOffer } from 'models/PolicyOffer';
 import { PolicyEvaluator } from 'PolicyEvaluator';
 
-describe('Testing Core units', () => {
+describe('Testing Core units', async () => {
   let evaluator: PolicyEvaluator;
   before(() => {
     evaluator = new PolicyEvaluator();
@@ -96,10 +96,7 @@ describe('Testing Core units', () => {
     console.log('\nDebug monitoring:');
     instanciator.policy?.debug();
     console.log('\nValidation monitoring:');
-    instanciator.policy?.launchValidation().then((value) => {
-      console.log(value);
-    });
-    // todo
-    // evaluator.visitPolicy(policy);
+    const valid = await instanciator.policy?.launchValidation();
+    expect(valid).to.equal(true);
   });
 });

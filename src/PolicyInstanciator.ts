@@ -21,63 +21,79 @@ export class PolicyInstanciator {
   constructor() {
     this.policy = null;
   }
-  //
+
   private static readonly instanciators: Record<string, InstanciatorFunction> =
     {
-      permission: (element: any, parent: Policy): RulePermission => {
-        const rule = new RulePermission();
-        parent.addPermission(rule);
-        return rule;
-      },
-      prohibition: (element: any, parent: Policy) => {
-        const rule = new RuleProhibition();
-        parent.addProhibition(rule);
-        return rule;
-      },
-      obligation: (element: any, parent: Policy) => {
-        const rule = new RuleDuty();
-        parent.addDuty(rule);
-        return rule;
-      },
-      duty: (element: any, parent: Policy) => {},
-      action: (element: any, parent: Rule): Action => {
-        const action = new Action(element, null);
-        parent.setAction(action);
-        return action;
-      },
-      target: (element: any, parent: Rule) => {
-        const asset = new Asset(element);
-        parent.setTarget(asset);
-      },
-      constraint: (element: any, parent: Rule) => {
-        try {
-          const {
-            leftOperand,
-            operator,
-            rightOperand,
-            constraint: constraints,
-          } = element;
-          const constraint: Constraint =
-            (leftOperand &&
-              operator &&
-              rightOperand !== undefined &&
-              new AtomicConstraint(leftOperand, operator, rightOperand)) ||
-            (operator &&
-              Array.isArray(constraints) &&
-              constraints.length > 0 &&
-              new LogicalConstraint(operator));
-          if (constraint === undefined) {
-            throw new Error(
-              `Invalid constraint: ${JSON.stringify(element, null, 2)}`,
-            );
-          }
-          parent.addConstraint(constraint);
-          return constraint;
-        } catch (error: any) {
-          throw error;
-        }
-      },
+      permission: PolicyInstanciator.permission,
+      prohibition: PolicyInstanciator.prohibition,
+      obligation: PolicyInstanciator.obligation,
+      duty: PolicyInstanciator.duty,
+      action: PolicyInstanciator.action,
+      target: PolicyInstanciator.target,
+      constraint: PolicyInstanciator.constraint,
+      refinement: PolicyInstanciator.refinement,
     };
+
+  private static permission(element: any, parent: Policy): RulePermission {
+    const rule = new RulePermission();
+    parent.addPermission(rule);
+    return rule;
+  }
+
+  private static prohibition(element: any, parent: Policy): RuleProhibition {
+    const rule = new RuleProhibition();
+    parent.addProhibition(rule);
+    return rule;
+  }
+
+  private static obligation(element: any, parent: Policy): RuleDuty {
+    const rule = new RuleDuty();
+    parent.addDuty(rule);
+    return rule;
+  }
+
+  private static duty(element: any, parent: Policy) {}
+
+  private static action(element: string | any, parent: Rule): Action {
+    if (typeof element === 'object') {
+      const action = new Action(element.value, null);
+      parent.addAction(action);
+      return action;
+    }
+    const action = new Action(element, null);
+    parent.setAction(action);
+    return action;
+  }
+
+  private static refinement(element: any, parent: Rule): Constraint {
+    return PolicyInstanciator.constraint(element, parent);
+  }
+
+  private static target(element: any, parent: Rule): void {
+    const asset = new Asset(element);
+    parent.setTarget(asset);
+  }
+
+  private static constraint(element: any, parent: Rule): Constraint {
+    const {
+      leftOperand,
+      operator,
+      rightOperand,
+      constraint: constraints,
+    } = element;
+    const constraint: Constraint =
+      (leftOperand &&
+        operator &&
+        rightOperand !== undefined &&
+        new AtomicConstraint(leftOperand, operator, rightOperand)) ||
+      (operator &&
+        Array.isArray(constraints) &&
+        constraints.length > 0 &&
+        new LogicalConstraint(operator));
+    parent.addConstraint(constraint || element);
+    return constraint;
+  }
+
   private selectPolicyType(json: any): void {
     const context = json['@context'];
     switch (json['@type']) {
@@ -94,12 +110,13 @@ export class PolicyInstanciator {
         throw new Error(`Unknown policy type: ${json['@type']}`);
     }
   }
+
   public genPolicyFrom(json: any): Policy | null {
     this.selectPolicyType(json);
     this.traverse(json, this.policy);
     return this.policy;
   }
-  //
+
   public traverse(node: any, parent: any): void {
     const instanciate = (property: string, element: any) => {
       try {

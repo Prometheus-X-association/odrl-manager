@@ -64,7 +64,9 @@ export abstract class PolicyValidator {
             ) {
               item.debug(depth + 2);
             } else {
-              console.log(`\x1b[31m${indentation}    ${item}\x1b[37m`);
+              console.log(
+                `\x1b[31m${indentation}    ${JSON.stringify(item)}\x1b[37m`,
+              );
             }
           }
           console.log(`${indentation}  \x1b[36m]\x1b[37m`);
@@ -78,8 +80,6 @@ export abstract class PolicyValidator {
             console.log(
               `\x1b[31m${indentation}  -${prop}: ${JSON.stringify(
                 value,
-                null,
-                2,
               )}\x1b[37m`,
             );
           } else {

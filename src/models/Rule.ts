@@ -34,6 +34,12 @@ export abstract class Rule extends PolicyValidator {
   public setAction(action: Action): void {
     this.action = action;
   }
+  public addAction(action: Action): void {
+    if (this.action === undefined) {
+      this.action = [];
+    }
+    (this.action as Array<Action>).push(action);
+  }
   public addConstraint(constraint: Constraint) {
     this.constraints.push(constraint);
   }
