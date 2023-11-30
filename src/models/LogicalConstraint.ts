@@ -29,5 +29,8 @@ export class LogicalConstraint extends Constraint {
         return false;
     }
   }
-  public localValidation(): void {}
+
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

@@ -12,5 +12,7 @@ export class RuleDuty extends Rule {
     this.assignee = assignee;
   }
 
-  public localValidation(): void {}
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

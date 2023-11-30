@@ -13,5 +13,7 @@ export class Action extends PolicyValidator {
     this.includedIn = includedIn;
   }
 
-  public localValidation(): void {}
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

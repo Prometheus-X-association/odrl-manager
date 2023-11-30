@@ -96,7 +96,9 @@ describe('Testing Core units', () => {
     console.log('\nDebug monitoring:');
     instanciator.policy?.debug();
     console.log('\nValidation monitoring:');
-    instanciator.policy?.validate();
+    instanciator.policy?.launchValidation().then((value) => {
+      console.log(value);
+    });
     // todo
     // evaluator.visitPolicy(policy);
   });

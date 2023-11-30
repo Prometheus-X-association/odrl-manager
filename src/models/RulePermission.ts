@@ -7,5 +7,7 @@ export class RulePermission extends Rule {
     super();
   }
 
-  public localValidation(): void {}
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

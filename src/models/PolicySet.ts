@@ -9,5 +9,7 @@ export class PolicySet extends Policy {
     super(uid, context, 'Set');
   }
 
-  public localValidation(): void {}
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

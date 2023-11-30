@@ -21,5 +21,7 @@ export class Asset extends PolicyValidator {
     }
   }
 
-  public localValidation(): void {}
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

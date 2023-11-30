@@ -15,5 +15,7 @@ export class Relation extends PolicyValidator {
     this.asset = asset;
   }
 
-  public localValidation(): void {}
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }
