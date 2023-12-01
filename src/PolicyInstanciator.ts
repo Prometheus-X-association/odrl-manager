@@ -33,6 +33,7 @@ export class PolicyInstanciator {
       target: PolicyInstanciator.target,
       constraint: PolicyInstanciator.constraint,
       refinement: PolicyInstanciator.refinement,
+      consequence: PolicyInstanciator.consequence,
     };
 
   private static permission(element: any, parent: Policy): RulePermission {
@@ -66,16 +67,15 @@ export class PolicyInstanciator {
     return action;
   }
 
-  private static refinement(element: any, parent: Rule): Constraint {
-    return PolicyInstanciator.constraint(element, parent);
-  }
-
   private static target(element: any, parent: Rule): void {
     const asset = new Asset(element);
     parent.setTarget(asset);
   }
 
-  private static constraint(element: any, parent: Rule): Constraint {
+  private static constraint(
+    element: any,
+    parent: LogicalConstraint | Rule | Action,
+  ): Constraint {
     const {
       leftOperand,
       operator,
@@ -99,6 +99,16 @@ export class PolicyInstanciator {
     ]);
     parent.addConstraint(constraint || element);
     return constraint;
+  }
+
+  private static refinement(element: any, parent: Action): Constraint {
+    return PolicyInstanciator.constraint(element, parent);
+  }
+
+  private static consequence(element: any, parent: RuleDuty): RuleDuty {
+    const rule = new RuleDuty();
+    parent.addConsequence(rule);
+    return rule;
   }
 
   private selectPolicyType(json: any): void {

@@ -81,6 +81,28 @@ describe('Testing Core units', async () => {
             },
           ],
         },
+        {
+          action: 'delete',
+          target: 'http://target-d',
+          consequence: [
+            {
+              action: [
+                {
+                  value: 'compensate',
+                  refinement: [
+                    {
+                      leftOperand: 'payAmount',
+                      operator: 'eq',
+                      rightOperand: 10,
+                      unit: 'http://dbpedia.org/resource/Euro',
+                    },
+                  ],
+                },
+              ],
+              compensatedParty: 'http://wwf.org',
+            },
+          ],
+        },
       ],
     };
 

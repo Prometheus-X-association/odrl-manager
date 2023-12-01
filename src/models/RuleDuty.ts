@@ -15,4 +15,11 @@ export class RuleDuty extends Rule {
   public async verify(): Promise<boolean> {
     return true;
   }
+
+  public addConsequence(consequence: RuleDuty) {
+    if (this.consequence === undefined) {
+      this.consequence = [];
+    }
+    this.consequence.push(consequence);
+  }
 }
