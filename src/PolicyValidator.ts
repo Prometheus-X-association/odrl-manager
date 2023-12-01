@@ -38,7 +38,7 @@ export abstract class PolicyValidator {
           }
           resolve(true);
         } catch (error: any) {
-          console.error(`\x1b[31m${error.message}\x1b[37m`);
+          console.error(`[PolicyValidator] - \x1b[31m${error.message}\x1b[37m`);
           resolve(false);
         }
       }),

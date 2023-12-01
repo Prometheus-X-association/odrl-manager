@@ -30,11 +30,18 @@ export abstract class Constraint extends PolicyValidator {
   }
 
   protected async verify(): Promise<boolean> {
-    return (
-      (this.uid === undefined || typeof this.uid === 'string') &&
-      (this.dataType === undefined || typeof this.dataType === 'string') &&
-      (this.unit === undefined || typeof this.unit === 'string') &&
-      (this.status === undefined || typeof this.status === 'number')
-    );
+    try {
+      const isValid =
+        (this.uid === undefined || typeof this.uid === 'string') &&
+        (this.dataType === undefined || typeof this.dataType === 'string') &&
+        (this.unit === undefined || typeof this.unit === 'string') &&
+        (this.status === undefined || typeof this.status === 'number');
+      if (!isValid) {
+        throw new Error('Some of your constraint properties are invalid');
+      }
+      return isValid;
+    } catch (error: any) {
+      throw error.message;
+    }
   }
 }

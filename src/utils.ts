@@ -1,12 +1,26 @@
-export const copyWithExclusion = (
+export enum CopyMode {
+  all = 0,
+  exclude = 1,
+  include = 2,
+}
+export const copy = (
   instance: Record<string, any> | null | undefined,
   element: Record<string, any>,
-  excluded: string[] = [],
+  attributes: string[] = [],
+  mode: CopyMode = 0,
 ): void => {
   if (instance) {
-    const keys = Object.keys(element).filter((key) => !excluded.includes(key));
+    let keys = Object.keys(element);
+    if (mode !== CopyMode.all) {
+      keys = keys.filter((key) => {
+        const included = attributes.includes(key);
+        return mode === CopyMode.exclude ? !included : included;
+      });
+    }
     keys.forEach((key: string) => {
-      instance[key] = element[key];
+      if (typeof instance[key] !== 'function') {
+        instance[key] = element[key];
+      }
     });
   }
 };

@@ -5,7 +5,9 @@ import { Party } from 'models/Party';
 import { Rule } from 'models/Rule';
 
 export class RuleDuty extends Rule {
-  consequence?: RuleDuty[];
+  private consequence?: RuleDuty[];
+  public compensatedParty?: string;
+  public compensatingParty?: string;
   constructor(assigner?: Party, assignee?: Party) {
     super();
     this.assigner = assigner;
@@ -13,6 +15,10 @@ export class RuleDuty extends Rule {
   }
 
   public async verify(): Promise<boolean> {
+    if (typeof this.assigner !== 'string') {
+      console.warn('Warning: [RuleDuty] - Assigner is not defined');
+      console.warn(`\tTarget: ${this.target?.uid}`);
+    }
     return true;
   }
 

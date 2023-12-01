@@ -11,7 +11,7 @@ import { Rule } from 'models/Rule';
 import { RuleDuty } from 'models/RuleDuty';
 import { RulePermission } from 'models/RulePermission';
 import { RuleProhibition } from 'models/RuleProhibition';
-import { copyWithExclusion } from 'utils';
+import { CopyMode, copy } from 'utils';
 
 type InstanciatorFunction = (node: any, parent: any) => any;
 
@@ -49,12 +49,18 @@ export class PolicyInstanciator {
   }
 
   private static obligation(element: any, parent: Policy): RuleDuty {
-    const rule = new RuleDuty();
+    const { assigner, assignee } = element;
+    const rule = new RuleDuty(assigner, assignee);
     parent.addDuty(rule);
     return rule;
   }
 
-  private static duty(element: any, parent: Policy) {}
+  private static duty(element: any, parent: RulePermission) {
+    const { assigner, assignee } = element;
+    const rule = new RuleDuty(assigner, assignee);
+    parent.addDuty(rule);
+    return rule;
+  }
 
   private static action(element: string | any, parent: Rule): Action {
     if (typeof element === 'object') {
@@ -91,12 +97,12 @@ export class PolicyInstanciator {
         Array.isArray(constraints) &&
         constraints.length > 0 &&
         new LogicalConstraint(operator));
-    copyWithExclusion(constraint, element, [
-      'constraint',
-      'leftOperand',
-      'operator',
-      'rightOperand',
-    ]);
+    copy(
+      constraint,
+      element,
+      ['constraint', 'leftOperand', 'operator', 'rightOperand'],
+      CopyMode.exclude,
+    );
     parent.addConstraint(constraint || element);
     return constraint;
   }
@@ -106,7 +112,14 @@ export class PolicyInstanciator {
   }
 
   private static consequence(element: any, parent: RuleDuty): RuleDuty {
-    const rule = new RuleDuty();
+    const { assigner, assignee } = element;
+    const rule = new RuleDuty(assigner, assignee);
+    copy(
+      rule,
+      element,
+      ['compensatedParty', 'compensatingParty'],
+      CopyMode.include,
+    );
     parent.addConsequence(rule);
     return rule;
   }

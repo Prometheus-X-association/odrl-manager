@@ -2,14 +2,11 @@ import { PolicyInstanciator } from 'PolicyInstanciator';
 import { expect } from 'chai';
 import { _logObject } from './utils';
 import { PolicyOffer } from 'models/PolicyOffer';
-import { PolicyEvaluator } from 'PolicyEvaluator';
 
 describe('Testing Core units', async () => {
-  let evaluator: PolicyEvaluator;
+  let instanciator: PolicyInstanciator;
+
   before(() => {
-    evaluator = new PolicyEvaluator();
-  });
-  it('should...', async () => {
     const contract = {
       '@context': 'http://www.w3.org/ns/odrl/2/',
       '@type': 'Offer',
@@ -49,6 +46,35 @@ describe('Testing Core units', async () => {
           action: 'use',
           target: 'http://target-b',
         },
+        {
+          assigner: 'assigner-a',
+          target: 'http://target-e',
+          action: 'play',
+          duty: [
+            {
+              action: [
+                {
+                  value: 'compensate',
+                  refinement: [
+                    {
+                      leftOperand: 'payAmount',
+                      operator: 'eq',
+                      rightOperand: '5.00',
+                      unit: 'http://dbpedia.org/resource/Euro',
+                    },
+                  ],
+                },
+              ],
+              constraint: [
+                {
+                  leftOperand: 'event',
+                  operator: 'lt',
+                  rightOperand: 'policyUsage',
+                },
+              ],
+            },
+          ],
+        },
       ],
       prohibition: [
         {
@@ -65,8 +91,8 @@ describe('Testing Core units', async () => {
       ],
       obligation: [
         {
-          assigner: 'assigner',
-          assignee: 'assignee',
+          assigner: 'assigner-b',
+          assignee: 'assignee-b',
           action: [
             {
               value: 'compensate',
@@ -105,12 +131,12 @@ describe('Testing Core units', async () => {
         },
       ],
     };
-
-    const instanciator: PolicyInstanciator = new PolicyInstanciator();
+    instanciator = new PolicyInstanciator();
     instanciator.genPolicyFrom(contract);
-    console.log('\nDebug monitoring:');
     instanciator.policy?.debug();
-    console.log('\nValidation monitoring:');
+  });
+
+  it('should validate a policy after parsing it.', async () => {
     const valid = await instanciator.policy?.launchValidation();
     expect(valid).to.equal(true);
   });
