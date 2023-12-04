@@ -1,12 +1,11 @@
-import { PolicyValidator } from 'PolicyValidator';
+import { PolicyExplorer } from 'PolicyExplorer';
 import { Action } from 'models/Action';
 import { Asset } from 'models/Asset';
 import { Constraint } from 'models/Constraint';
-import { LogicalConstraint } from 'models/LogicalConstraint';
 import { Party } from 'models/Party';
 import { Relation } from 'models/Relation';
 
-export abstract class Rule extends PolicyValidator {
+export abstract class Rule extends PolicyExplorer {
   action?: Action | Action[];
   target?: Asset;
   assigner?: Party;
@@ -14,18 +13,21 @@ export abstract class Rule extends PolicyValidator {
   asset?: Asset;
   parties?: Party[];
   failures?: Rule[];
-  protected constraint: Constraint[];
+  protected constraint?: Constraint[];
   uid?: string;
   relation?: Relation;
 
-  constructor(uid?: string, relation?: Relation) {
+  constructor(uid?: string) {
     super();
-    this.constraint = [];
-    this.uid = uid;
-    this.relation = relation;
+    if (uid) {
+      this.uid = uid;
+    }
   }
 
   public get constraints(): Constraint[] {
+    if (this.constraint === undefined) {
+      this.constraint = [];
+    }
     return this.constraint;
   }
   public setTarget(asset: Asset): void {
@@ -52,11 +54,12 @@ export abstract class Rule extends PolicyValidator {
   public getConstraints(): Constraint[] {
     return this.constraints;
   }
-  async evaluate(): Promise<boolean> {
+
+  protected async visit(): Promise<boolean> {
     try {
       if (this.constraints) {
         await Promise.all(
-          this.constraints.map((constraint) => constraint.evaluate()),
+          this.constraints.map((constraint) => constraint.visit()),
         );
       }
       return true;

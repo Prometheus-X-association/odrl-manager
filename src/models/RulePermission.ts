@@ -14,6 +14,10 @@ export class RulePermission extends Rule {
     this.duty.push(duty);
   }
 
+  public async visit(): Promise<boolean> {
+    return false;
+  }
+
   public async verify(): Promise<boolean> {
     return true;
   }

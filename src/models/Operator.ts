@@ -21,6 +21,10 @@ export class Operator extends PolicyValidator {
   }
 
   public async verify(): Promise<boolean> {
-    return true;
+    const isValid = Object.values(Operator).includes(this.value);
+    if (!isValid) {
+      throw new Error(`Operator not valid: '${this.value}'`);
+    }
+    return isValid;
   }
 }

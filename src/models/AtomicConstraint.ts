@@ -12,10 +12,10 @@ export class AtomicConstraint extends Constraint {
     super(leftOperand, operator, rightOperand);
   }
 
-  async evaluate(): Promise<boolean> {
+  async visit(): Promise<boolean> {
     if (this.leftOperand && this.rightOperand) {
-      const leftValue: unknown = await this.leftOperand.evaluate();
-      switch (this.operator.value) {
+      const leftValue: unknown = await this.leftOperand.visit();
+      switch (this.operator?.value) {
         case Operator.EQ:
           return leftValue === this.rightOperand;
         case Operator.GT:
@@ -28,7 +28,14 @@ export class AtomicConstraint extends Constraint {
   }
 
   public async verify(): Promise<boolean> {
-    super.verify();
-    return true;
+    const isValid =
+      (await super.verify()) &&
+      this.leftOperand instanceof LeftOperand &&
+      this.operator instanceof Operator &&
+      this.rightOperand instanceof RightOperand;
+    if (!isValid) {
+      throw new Error('AtomicConstraint propertie invalid');
+    }
+    return isValid;
   }
 }

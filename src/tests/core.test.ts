@@ -1,13 +1,11 @@
-import { PolicyInstanciator } from 'PolicyInstanciator';
+import instanciator from 'PolicyInstanciator';
+import evaluator from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logObject } from './utils';
-import { PolicyOffer } from 'models/PolicyOffer';
 
 describe('Testing Core units', async () => {
-  let instanciator: PolicyInstanciator;
-
   before(() => {
-    const contract = {
+    const json = {
       '@context': 'http://www.w3.org/ns/odrl/2/',
       '@type': 'Offer',
       permission: [
@@ -131,13 +129,41 @@ describe('Testing Core units', async () => {
         },
       ],
     };
-    instanciator = new PolicyInstanciator();
-    instanciator.genPolicyFrom(contract);
+    instanciator.genPolicyFrom(json);
     instanciator.policy?.debug();
   });
 
   it('should validate a policy after parsing it.', async () => {
     const valid = await instanciator.policy?.launchValidation();
     expect(valid).to.equal(true);
+  });
+
+  it('should evaluate a simple permission with a custom left operand.', async () => {
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Offer',
+      permission: [
+        {
+          action: 'read',
+          target: 'http://contract-target',
+          constraint: [
+            {
+              leftOperand: 'age',
+              operator: 'gt',
+              rightOperand: 17,
+            },
+          ],
+        },
+      ],
+    };
+    instanciator.genPolicyFrom(json);
+    const { policy } = instanciator;
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    if (policy) {
+      evaluator.setPolicy(policy);
+      evaluator.setDataContext({ age: 18 });
+      await evaluator.visitTarget('http://contract-target');
+    }
   });
 });

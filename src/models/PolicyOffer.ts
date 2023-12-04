@@ -12,6 +12,10 @@ export class PolicyOffer extends Policy {
     super(uid, context, 'Offer');
   }
 
+  public async visit(): Promise<boolean> {
+    return false;
+  }
+
   public async verify(): Promise<boolean> {
     return true;
   }

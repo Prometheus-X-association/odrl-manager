@@ -2,11 +2,14 @@ import { Action } from 'models/Action';
 import { Asset } from 'models/Asset';
 import { AtomicConstraint } from 'models/AtomicConstraint';
 import { Constraint } from 'models/Constraint';
+import { LeftOperand } from 'models/LeftOperand';
 import { LogicalConstraint } from 'models/LogicalConstraint';
+import { Operator } from 'models/Operator';
 import { Policy } from 'models/Policy';
 import { PolicyAgreement } from 'models/PolicyAgreement';
 import { PolicyOffer } from 'models/PolicyOffer';
 import { PolicySet } from 'models/PolicySet';
+import { RightOperand } from 'models/RightOperand';
 import { Rule } from 'models/Rule';
 import { RuleDuty } from 'models/RuleDuty';
 import { RulePermission } from 'models/RulePermission';
@@ -15,12 +18,19 @@ import { CopyMode, copy } from 'utils';
 
 type InstanciatorFunction = (node: any, parent: any) => any;
 
-export class PolicyInstanciator {
+class PolicyInstanciator {
   public policy: Policy | null;
   public static instance: PolicyInstanciator;
 
   constructor() {
     this.policy = null;
+  }
+
+  public static getInstance(): PolicyInstanciator {
+    if (!PolicyInstanciator.instance) {
+      PolicyInstanciator.instance = new PolicyInstanciator();
+    }
+    return PolicyInstanciator.instance;
   }
 
   private static readonly instanciators: Record<string, InstanciatorFunction> =
@@ -92,7 +102,11 @@ export class PolicyInstanciator {
       (leftOperand &&
         operator &&
         rightOperand !== undefined &&
-        new AtomicConstraint(leftOperand, operator, rightOperand)) ||
+        new AtomicConstraint(
+          new LeftOperand(leftOperand),
+          new Operator(operator),
+          new RightOperand(rightOperand),
+        )) ||
       (operator &&
         Array.isArray(constraints) &&
         constraints.length > 0 &&
@@ -178,3 +192,5 @@ export class PolicyInstanciator {
     }
   }
 }
+
+export default PolicyInstanciator.getInstance();
