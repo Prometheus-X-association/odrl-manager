@@ -19,5 +19,8 @@ export class Operator extends PolicyValidator {
     super();
     this.value = value;
   }
-  public localValidation(): void {}
+
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

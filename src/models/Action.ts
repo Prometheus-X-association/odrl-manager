@@ -13,5 +13,13 @@ export class Action extends PolicyValidator {
     this.includedIn = includedIn;
   }
 
-  public localValidation(): void {}
+  public addConstraint(constraint: Constraint) {
+    if (this.refinement === undefined) {
+      this.refinement = [];
+    }
+    this.refinement.push(constraint);
+  }
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

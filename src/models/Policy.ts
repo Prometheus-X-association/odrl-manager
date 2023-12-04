@@ -43,4 +43,11 @@ export abstract class Policy extends PolicyValidator {
   public addDuty(prohibition: RuleDuty): void {
     this.obligation.push(prohibition);
   }
+  public async launchValidation(): Promise<boolean> {
+    const validations: Promise<boolean>[] = [];
+    this.validate(0, validations);
+    return Promise.all(validations).then((results) =>
+      results.every((result) => result),
+    );
+  }
 }

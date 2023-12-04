@@ -19,5 +19,8 @@ export class LeftOperand extends PolicyValidator {
     }
     return null;
   }
-  public localValidation(): void {}
+
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

@@ -12,5 +12,7 @@ export class PolicyAgreement extends Policy {
     super(uid, context, 'Agreement');
   }
 
-  public localValidation(): void {}
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }

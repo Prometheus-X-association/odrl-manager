@@ -7,5 +7,14 @@ export class RulePermission extends Rule {
     super();
   }
 
-  public localValidation(): void {}
+  public addDuty(duty: RuleDuty) {
+    if (this.duty === undefined) {
+      this.duty = [];
+    }
+    this.duty.push(duty);
+  }
+
+  public async verify(): Promise<boolean> {
+    return true;
+  }
 }
