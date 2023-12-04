@@ -3,7 +3,7 @@ export abstract class PolicyValidator {
   //
   protected validate(depth: number = 0, validations: Promise<boolean>[]): void {
     validations.push(
-      new Promise((resolve) => {
+      (async (): Promise<boolean> => {
         try {
           validations.push(this.verify());
           for (const prop in this) {
@@ -36,12 +36,12 @@ export abstract class PolicyValidator {
               }
             }
           }
-          resolve(true);
+          return true;
         } catch (error: any) {
           console.error(`[PolicyValidator] - \x1b[31m${error.message}\x1b[37m`);
-          resolve(false);
+          return false;
         }
-      }),
+      })(),
     );
   }
   //

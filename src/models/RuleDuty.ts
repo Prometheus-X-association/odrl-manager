@@ -15,6 +15,10 @@ export class RuleDuty extends Rule {
     }
   }
 
+  public async visit(): Promise<boolean> {
+    return false;
+  }
+
   public async verify(): Promise<boolean> {
     return true;
   }

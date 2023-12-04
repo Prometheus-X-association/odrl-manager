@@ -7,6 +7,10 @@ export class RuleProhibition extends Rule {
     super();
   }
 
+  public async visit(): Promise<boolean> {
+    return false;
+  }
+
   public async verify(): Promise<boolean> {
     return true;
   }

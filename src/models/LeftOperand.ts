@@ -12,7 +12,7 @@ export class LeftOperand extends PolicyValidator {
     return this.value;
   }
 
-  public async evaluate(): Promise<string | number | null> {
+  public async visit(): Promise<string | number | null> {
     // tmp testing purpose
     if (this.value === 'age') {
       return 21;

@@ -25,7 +25,7 @@ export abstract class Constraint extends PolicyValidator {
     this.rightOperand = rightOperand;
   }
 
-  async evaluate(): Promise<boolean> {
+  async visit(): Promise<boolean> {
     return false;
   }
 
