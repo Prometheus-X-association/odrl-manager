@@ -9,14 +9,14 @@ export abstract class Constraint extends PolicyValidator {
   public dataType?: string;
   public unit?: string;
   public status?: number;
-  public operator: Operator;
+  public operator: Operator | null;
   public leftOperand: LeftOperand | null;
   public rightOperand: RightOperand | null;
   private rightOperandReference?: null | string | string[];
   private logicalConstraints?: null | LogicalConstraint[];
   constructor(
     leftOperand: LeftOperand | null,
-    operator: Operator,
+    operator: Operator | null,
     rightOperand: RightOperand | null,
   ) {
     super();

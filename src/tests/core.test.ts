@@ -1,7 +1,6 @@
 import { PolicyInstanciator } from 'PolicyInstanciator';
 import { expect } from 'chai';
 import { _logObject } from './utils';
-import { PolicyOffer } from 'models/PolicyOffer';
 
 describe('Testing Core units', async () => {
   let instanciator: PolicyInstanciator;

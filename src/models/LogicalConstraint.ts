@@ -2,9 +2,11 @@ import { Constraint } from 'models/Constraint';
 import { Operator } from './Operator';
 
 export class LogicalConstraint extends Constraint {
+  static readonly operands = ['and', 'andSequence', 'or', 'xone'];
   private constraint: Constraint[];
-  constructor(operator: Operator) {
-    super(null, operator, null);
+  private operand?: string;
+  constructor(operand: String) {
+    super(null, null, null);
     this.constraint = [];
   }
   public addConstraint(constraint: Constraint) {
@@ -12,7 +14,7 @@ export class LogicalConstraint extends Constraint {
   }
   // Todo
   async evaluate(): Promise<boolean> {
-    switch (this.operator.value) {
+    switch (this.operand) {
       case 'and':
         return (
           await Promise.all(
@@ -31,7 +33,14 @@ export class LogicalConstraint extends Constraint {
   }
 
   public async verify(): Promise<boolean> {
-    super.verify();
-    return true;
+    const isValid =
+      (await super.verify()) &&
+      this.operand &&
+      Object.values(LogicalConstraint.operands).includes(this.operand);
+
+    if (!isValid) {
+      throw new Error('LogicalConstraint propertie invalid');
+    }
+    return isValid;
   }
 }

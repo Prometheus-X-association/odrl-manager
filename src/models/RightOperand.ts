@@ -9,6 +9,7 @@ export class RightOperand extends PolicyValidator {
   }
 
   public async verify(): Promise<boolean> {
+    //
     return true;
   }
 }

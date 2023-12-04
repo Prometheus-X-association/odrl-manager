@@ -14,18 +14,21 @@ export abstract class Rule extends PolicyValidator {
   asset?: Asset;
   parties?: Party[];
   failures?: Rule[];
-  protected constraint: Constraint[];
+  protected constraint?: Constraint[];
   uid?: string;
   relation?: Relation;
 
-  constructor(uid?: string, relation?: Relation) {
+  constructor(uid?: string) {
     super();
-    this.constraint = [];
-    this.uid = uid;
-    this.relation = relation;
+    if (uid) {
+      this.uid = uid;
+    }
   }
 
   public get constraints(): Constraint[] {
+    if (this.constraint === undefined) {
+      this.constraint = [];
+    }
     return this.constraint;
   }
   public setTarget(asset: Asset): void {
