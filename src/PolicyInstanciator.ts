@@ -18,12 +18,19 @@ import { CopyMode, copy } from 'utils';
 
 type InstanciatorFunction = (node: any, parent: any) => any;
 
-export class PolicyInstanciator {
+class PolicyInstanciator {
   public policy: Policy | null;
   public static instance: PolicyInstanciator;
 
   constructor() {
     this.policy = null;
+  }
+
+  public static getInstance(): PolicyInstanciator {
+    if (!PolicyInstanciator.instance) {
+      PolicyInstanciator.instance = new PolicyInstanciator();
+    }
+    return PolicyInstanciator.instance;
   }
 
   private static readonly instanciators: Record<string, InstanciatorFunction> =
@@ -185,3 +192,5 @@ export class PolicyInstanciator {
     }
   }
 }
+
+export default PolicyInstanciator.getInstance();

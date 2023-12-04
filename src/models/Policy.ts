@@ -1,10 +1,10 @@
-import { PolicyEvaluator } from 'PolicyEvaluator';
+import { PolicyExplorer } from 'PolicyExplorer';
 import { ConflictTerm } from 'models/ConflictTerm';
 import { RuleDuty } from 'models/RuleDuty';
 import { RulePermission } from 'models/RulePermission';
 import { RuleProhibition } from 'models/RuleProhibition';
 
-export abstract class Policy extends PolicyEvaluator {
+export abstract class Policy extends PolicyExplorer {
   protected '@context': string = '';
   protected '@type': string;
   protected uid: string;

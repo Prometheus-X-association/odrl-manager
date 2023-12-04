@@ -1,11 +1,11 @@
-import { PolicyEvaluator } from 'PolicyEvaluator';
+import { PolicyExplorer } from 'PolicyExplorer';
 import { Action } from 'models/Action';
 import { Asset } from 'models/Asset';
 import { Constraint } from 'models/Constraint';
 import { Party } from 'models/Party';
 import { Relation } from 'models/Relation';
 
-export abstract class Rule extends PolicyEvaluator {
+export abstract class Rule extends PolicyExplorer {
   action?: Action | Action[];
   target?: Asset;
   assigner?: Party;
