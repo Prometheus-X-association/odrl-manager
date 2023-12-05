@@ -12,7 +12,7 @@
     "dist"
   ],
   "scripts": {
-    "postinstall": "tsup",
+    "postinstall": "pnpm add -D tsup && tsup",
     "build": "tsup",
     "gen-docs": "typedoc --out docs",
     "test": "mocha --require ts-node/register --exit ./src/tests/**/*.test.ts"
