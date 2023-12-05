@@ -1,5 +1,5 @@
-import { Party } from 'models/Party';
-import { Rule } from 'models/Rule';
+import { Party } from './Party';
+import { Rule } from './Rule';
 
 export class RuleDuty extends Rule {
   private consequence?: RuleDuty[];

@@ -1,4 +1,4 @@
-import { PolicyValidator } from 'PolicyValidator';
+import { PolicyValidator } from '../PolicyValidator';
 import { LeftOperand } from './LeftOperand';
 import { LogicalConstraint } from './LogicalConstraint';
 import { Operator } from './Operator';

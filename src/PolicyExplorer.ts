@@ -1,4 +1,4 @@
-import { PolicyValidator } from 'PolicyValidator';
+import { PolicyValidator } from './PolicyValidator';
 
 export abstract class PolicyExplorer extends PolicyValidator {
   protected abstract visit(): Promise<boolean>;

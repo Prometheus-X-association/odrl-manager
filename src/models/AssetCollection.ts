@@ -1,5 +1,5 @@
-import { Asset } from 'models/Asset';
-import { Constraint } from 'models/Constraint';
+import { Asset } from './Asset';
+import { Constraint } from './Constraint';
 
 export class AssetCollection extends Asset {
   source?: string;

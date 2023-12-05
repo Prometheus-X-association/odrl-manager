@@ -1,4 +1,4 @@
-import { Constraint } from 'models/Constraint';
+import { Constraint } from './Constraint';
 import { Operator } from './Operator';
 
 export class LogicalConstraint extends Constraint {

@@ -1,4 +1,4 @@
-import { PolicyValidator } from 'PolicyValidator';
+import { PolicyValidator } from '../PolicyValidator';
 
 export class LeftOperand extends PolicyValidator {
   private value: string;

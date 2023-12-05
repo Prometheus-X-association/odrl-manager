@@ -1,4 +1,4 @@
-import { PolicyValidator } from 'PolicyValidator';
+import { PolicyValidator } from '../PolicyValidator';
 
 export class Operator extends PolicyValidator {
   public static readonly EQ: string = 'eq';

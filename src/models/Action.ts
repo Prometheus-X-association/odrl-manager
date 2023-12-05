@@ -1,5 +1,5 @@
-import { PolicyValidator } from 'PolicyValidator';
-import { Constraint } from 'models/Constraint';
+import { PolicyValidator } from '../PolicyValidator';
+import { Constraint } from './Constraint';
 
 export class Action extends PolicyValidator {
   value: string;

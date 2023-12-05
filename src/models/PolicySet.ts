@@ -1,4 +1,4 @@
-import { RulePermission } from 'models/RulePermission';
+import { RulePermission } from './RulePermission';
 import { Policy } from './Policy';
 
 export class PolicySet extends Policy {

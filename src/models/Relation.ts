@@ -1,5 +1,5 @@
-import { PolicyValidator } from 'PolicyValidator';
-import { Asset } from 'models/Asset';
+import { PolicyValidator } from '../PolicyValidator';
+import { Asset } from './Asset';
 
 export enum RelationType {
   TARGET = 'target',

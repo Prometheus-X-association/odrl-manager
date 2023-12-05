@@ -1,9 +1,9 @@
-import { PolicyExplorer } from 'PolicyExplorer';
-import { Action } from 'models/Action';
-import { Asset } from 'models/Asset';
-import { Constraint } from 'models/Constraint';
-import { Party } from 'models/Party';
-import { Relation } from 'models/Relation';
+import { PolicyExplorer } from '../PolicyExplorer';
+import { Action } from './Action';
+import { Asset } from './Asset';
+import { Constraint } from './Constraint';
+import { Party } from './Party';
+import { Relation } from './Relation';
 
 export abstract class Rule extends PolicyExplorer {
   action?: Action | Action[];
