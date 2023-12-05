@@ -1,8 +1,8 @@
-import { PolicyExplorer } from 'PolicyExplorer';
-import { ConflictTerm } from 'models/ConflictTerm';
-import { RuleDuty } from 'models/RuleDuty';
-import { RulePermission } from 'models/RulePermission';
-import { RuleProhibition } from 'models/RuleProhibition';
+import { PolicyExplorer } from '../PolicyExplorer';
+import { ConflictTerm } from './ConflictTerm';
+import { RuleDuty } from './RuleDuty';
+import { RulePermission } from './RulePermission';
+import { RuleProhibition } from './RuleProhibition';
 
 export abstract class Policy extends PolicyExplorer {
   protected '@context': string = '';

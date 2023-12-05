@@ -1,4 +1,4 @@
-import { Policy } from 'models/Policy';
+import { Policy } from './models/Policy';
 
 class PolicyEvaluator {
   public static instance: PolicyEvaluator;

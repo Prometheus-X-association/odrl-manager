@@ -1,5 +1,5 @@
-import { PolicyValidator } from 'PolicyValidator';
-import { AssetCollection } from 'models/AssetCollection';
+import { PolicyValidator } from '../PolicyValidator';
+import { AssetCollection } from './AssetCollection';
 
 export class Asset extends PolicyValidator {
   uid?: string;

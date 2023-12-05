@@ -1,5 +1,5 @@
-import { Party } from 'models/Party';
-import { RulePermission } from 'models/RulePermission';
+import { Party } from './Party';
+import { RulePermission } from './RulePermission';
 import { Policy } from './Policy';
 
 export class PolicyOffer extends Policy {

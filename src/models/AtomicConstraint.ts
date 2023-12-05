@@ -1,6 +1,6 @@
-import { Operator } from 'models/Operator';
-import { RightOperand } from 'models/RightOperand';
-import { LeftOperand } from 'models/LeftOperand';
+import { Operator } from './Operator';
+import { RightOperand } from './RightOperand';
+import { LeftOperand } from './LeftOperand';
 import { Constraint } from './Constraint';
 
 export class AtomicConstraint extends Constraint {

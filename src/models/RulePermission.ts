@@ -1,4 +1,4 @@
-import { Rule } from 'models/Rule';
+import { Rule } from './Rule';
 import { RuleDuty } from './RuleDuty';
 
 export class RulePermission extends Rule {
