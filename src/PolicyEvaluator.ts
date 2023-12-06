@@ -1,9 +1,14 @@
+import { ContextFetcher } from 'ContextFetcher';
 import { Policy } from './models/Policy';
 
 export class PolicyEvaluator {
   public static instance: PolicyEvaluator;
-
-  constructor() {}
+  private policy: Policy | null;
+  private fetcher: ContextFetcher | null;
+  constructor() {
+    this.policy = null;
+    this.fetcher = null;
+  }
 
   public static getInstance(): PolicyEvaluator {
     if (!PolicyEvaluator.instance) {
@@ -12,8 +17,13 @@ export class PolicyEvaluator {
     return PolicyEvaluator.instance;
   }
 
-  public setPolicy(policy: Policy): void {}
-  public setDataContext(data: any): void {}
+  public setPolicy(policy: Policy): void {
+    this.policy = policy;
+  }
+
+  public setContextFetcher(fetcher: ContextFetcher): void {
+    this.fetcher = fetcher;
+  }
   public async visitTarget(target: string): Promise<void> {}
 }
 

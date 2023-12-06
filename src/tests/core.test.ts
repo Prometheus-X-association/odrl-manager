@@ -2,6 +2,7 @@ import instanciator from 'PolicyInstanciator';
 import evaluator from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logObject } from './utils';
+import { ContextFetcher } from 'ContextFetcher';
 
 describe('Testing Core units', async () => {
   before(() => {
@@ -161,8 +162,27 @@ describe('Testing Core units', async () => {
     expect(policy).to.not.be.null;
     expect(policy).to.not.be.undefined;
     if (policy) {
+      class Fetcher extends ContextFetcher {
+        private absolutePosition: number = 0;
+        constructor() {
+          super();
+          this.leftOperands.age = this.getAge.bind(this);
+          this.absolutePosition = 9;
+        }
+        // Overriding
+        public async getAbsolutePosition(): Promise<number> {
+          return this.absolutePosition;
+        }
+        // Custom fetching
+        private async getAge(): Promise<number> {
+          return 18;
+        }
+      }
       evaluator.setPolicy(policy);
-      evaluator.setDataContext({ age: 18 });
+      const fetcher = new Fetcher();
+      const value = await fetcher.getAbsolutePosition();
+      console.log(value);
+      evaluator.setContextFetcher(new Fetcher());
       await evaluator.visitTarget('http://contract-target');
     }
   });
