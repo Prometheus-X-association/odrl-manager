@@ -18,7 +18,7 @@ import { CopyMode, copy } from './utils';
 
 type InstanciatorFunction = (node: any, parent: any) => any;
 
-class PolicyInstanciator {
+export class PolicyInstanciator {
   public policy: Policy | null;
   public static instance: PolicyInstanciator;
 
