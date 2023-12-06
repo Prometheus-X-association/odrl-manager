@@ -1,5 +1,56 @@
+export const Custom = (): MethodDecorator => {
+  return (
+    target: any,
+    key: string | symbol,
+    descriptor: PropertyDescriptor,
+  ) => {
+    if (descriptor && typeof descriptor.value === 'function') {
+      target.customMethods = target.customMethods || [];
+      target.customMethods.push(key);
+    }
+  };
+};
+
+interface LeftOperandFunctions {
+  absolutePosition: () => Promise<number>;
+  absoluteSize: () => Promise<number>;
+  absoluteSpatialPosition: () => Promise<[number, number]>;
+  absoluteTemporalPosition: () => Promise<Date>;
+  count: () => Promise<number>;
+  dateTime: () => Promise<Date>;
+  delayPeriod: () => Promise<number>;
+  deliveryChannel: () => Promise<string>;
+  device: () => Promise<string>;
+  elapsedTime: () => Promise<number>;
+  event: () => Promise<string>;
+  fileFormat: () => Promise<string>;
+  industry: () => Promise<string>;
+  language: () => Promise<string>;
+  media: () => Promise<string>;
+  meteredTime: () => Promise<number>;
+  payAmount: () => Promise<number>;
+  percentage: () => Promise<number>;
+  product: () => Promise<string>;
+  purpose: () => Promise<string>;
+  recipient: () => Promise<string>;
+  relativePosition: () => Promise<number>;
+  relativeSize: () => Promise<number>;
+  relativeSpatialPosition: () => Promise<[number, number]>;
+  relativeTemporalPosition: () => Promise<Date>;
+  resolution: () => Promise<number>;
+  spatial: () => Promise<string>;
+  spatialCoordinates: () => Promise<[number, number]>;
+  system: () => Promise<string>;
+  systemDevice: () => Promise<string>;
+  timeInterval: () => Promise<[Date, Date]>;
+  unitOfCount: () => Promise<string>;
+  version: () => Promise<string>;
+  virtualLocation: () => Promise<string>;
+  [key: string]: Function;
+}
+
 export abstract class ContextFetcher {
-  public leftOperands: Record<string, Function> = {
+  public context: LeftOperandFunctions = {
     absolutePosition: this.getAbsolutePosition.bind(this),
     absoluteSize: this.getAbsoluteSize.bind(this),
     absoluteSpatialPosition: this.getAbsoluteSpatialPosition.bind(this),
@@ -35,6 +86,19 @@ export abstract class ContextFetcher {
     version: this.getVersion.bind(this),
     virtualLocation: this.getVirtualLocation.bind(this),
   };
+
+  constructor() {
+    const prototype = Object.getPrototypeOf(this);
+    const customs = prototype.customMethods || [];
+    //
+    customs.forEach((method: any) => {
+      const propertyName = method.replace(/^get/, '');
+      const lowercasePropertyName =
+        propertyName.charAt(0).toLowerCase() + propertyName.slice(1);
+      this.context[lowercasePropertyName as keyof ContextFetcher] =
+        this[method as keyof ContextFetcher].bind(this);
+    });
+  }
 
   protected async getAbsolutePosition(): Promise<number> {
     return 0;
@@ -89,7 +153,7 @@ export abstract class ContextFetcher {
   }
 
   protected async getLanguage(): Promise<string> {
-    return '';
+    return 'en';
   }
 
   protected async getMedia(): Promise<string> {
