@@ -1,6 +1,6 @@
 import { Policy } from './models/Policy';
 
-class PolicyEvaluator {
+export class PolicyEvaluator {
   public static instance: PolicyEvaluator;
 
   constructor() {}
