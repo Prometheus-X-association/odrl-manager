@@ -1,11 +1,11 @@
-import { PolicyExplorer } from '../PolicyExplorer';
+import { Explorable } from '../Explorable';
 import { Action } from './Action';
 import { Asset } from './Asset';
 import { Constraint } from './Constraint';
 import { Party } from './Party';
 import { Relation } from './Relation';
 
-export abstract class Rule extends PolicyExplorer {
+export abstract class Rule extends Explorable {
   action?: Action | Action[];
   target?: Asset;
   assigner?: Party;

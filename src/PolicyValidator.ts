@@ -1,11 +1,11 @@
 export abstract class PolicyValidator {
   protected abstract verify(): Promise<boolean>;
   //
-  protected validate(depth: number = 0, validations: Promise<boolean>[]): void {
-    validations.push(
+  protected validate(depth: number = 0, promises: Promise<boolean>[]): void {
+    promises.push(
       (async (): Promise<boolean> => {
         try {
-          validations.push(this.verify());
+          promises.push(this.verify());
           for (const prop in this) {
             if (this.hasOwnProperty(prop)) {
               const value = (this as any)[prop];
@@ -15,7 +15,7 @@ export abstract class PolicyValidator {
                     item instanceof PolicyValidator &&
                     typeof item.validate === 'function'
                   ) {
-                    item.validate(depth + 2, validations);
+                    item.validate(depth + 2, promises);
                   } else {
                     throw new Error(
                       `Invalid entry: ${JSON.stringify(item, null, 2)}`,
@@ -26,7 +26,7 @@ export abstract class PolicyValidator {
                 value instanceof PolicyValidator &&
                 typeof value.validate === 'function'
               ) {
-                value.validate(depth + 1, validations);
+                value.validate(depth + 1, promises);
               } else {
                 if (typeof value === 'object' && value !== null) {
                   throw new Error(

@@ -1,27 +1,33 @@
 import { PolicyValidator } from './PolicyValidator';
 
-export abstract class PolicyExplorer extends PolicyValidator {
+export abstract class Explorable extends PolicyValidator {
   protected abstract visit(): Promise<boolean>;
 
-  protected explore(depth: number = 0, evaluators: Promise<boolean>[]): void {
-    evaluators.push(this.visit());
+  protected explore(
+    pick: Function,
+    depth: number = 0,
+    entities: Explorable[],
+  ): void {
+    if (pick(this)) {
+      entities.push(this);
+    }
     for (const prop in this) {
       if (this.hasOwnProperty(prop)) {
         const value = (this as any)[prop];
         if (Array.isArray(value)) {
           for (const item of value) {
             if (
-              item instanceof PolicyExplorer &&
+              item instanceof Explorable &&
               typeof item.explore === 'function'
             ) {
-              item.explore(depth + 2, evaluators);
+              item.explore(pick, depth + 2, entities);
             }
           }
         } else if (
-          value instanceof PolicyExplorer &&
+          value instanceof Explorable &&
           typeof value.explore === 'function'
         ) {
-          value.explore(depth + 1, evaluators);
+          value.explore(pick, depth + 1, entities);
         }
       }
     }

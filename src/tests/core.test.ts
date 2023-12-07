@@ -135,7 +135,7 @@ describe('Testing Core units', async () => {
   });
 
   it('should validate a policy after parsing it.', async () => {
-    const valid = await instanciator.policy?.launchValidation();
+    const valid = await instanciator.policy?.validate();
     expect(valid).to.equal(true);
   });
 
@@ -159,6 +159,7 @@ describe('Testing Core units', async () => {
     };
     instanciator.genPolicyFrom(json);
     const { policy } = instanciator;
+    console.log(JSON.stringify(policy, null, 2));
     expect(policy).to.not.be.null;
     expect(policy).to.not.be.undefined;
     if (policy) {
@@ -187,8 +188,8 @@ describe('Testing Core units', async () => {
       const language = await fetcher.context.language();
       expect(language).to.equal('en');
 
-      evaluator.setContextFetcher(fetcher);
-      await evaluator.visitTarget('http://contract-target');
+      evaluator.setFetcher(fetcher);
+      await evaluator.getAllowedActionsOn('http://contract-target');
     }
   });
 });
