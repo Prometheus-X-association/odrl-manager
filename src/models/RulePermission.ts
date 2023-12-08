@@ -15,7 +15,7 @@ export class RulePermission extends Rule {
   }
 
   public async visit(): Promise<boolean> {
-    return false;
+    return super.visit();
   }
 
   public async verify(): Promise<boolean> {

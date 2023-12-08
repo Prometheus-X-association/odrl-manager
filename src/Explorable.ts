@@ -1,6 +1,6 @@
-import { PolicyValidator } from './PolicyValidator';
+import { ModelEssential } from './ModelEssential';
 
-export abstract class Explorable extends PolicyValidator {
+export abstract class Explorable extends ModelEssential {
   protected abstract visit(): Promise<boolean>;
 
   protected explore(

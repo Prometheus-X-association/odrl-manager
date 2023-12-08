@@ -15,13 +15,20 @@ export class AtomicConstraint extends Constraint {
   async visit(): Promise<boolean> {
     if (this.leftOperand && this.rightOperand) {
       const leftValue: unknown = await this.leftOperand.visit();
+      console.log(this.operator?.value, leftValue, 'value <<<<<<<<<');
       switch (this.operator?.value) {
         case Operator.EQ:
           return leftValue === this.rightOperand;
+        case Operator.NEQ:
+          return leftValue !== this.rightOperand;
         case Operator.GT:
           return (leftValue as number) > (this.rightOperand.value as number);
+        case Operator.GEQ:
+          return (leftValue as number) >= (this.rightOperand.value as number);
         case Operator.LT:
           return (leftValue as number) < (this.rightOperand.value as number);
+        case Operator.LEQ:
+          return (leftValue as number) <= (this.rightOperand.value as number);
       }
     }
     return false;

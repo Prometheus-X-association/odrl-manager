@@ -48,12 +48,14 @@ export class PolicyInstanciator {
 
   private static setPermission(element: any, parent: Policy): RulePermission {
     const rule = new RulePermission();
+    rule.setParent(parent);
     parent.addPermission(rule);
     return rule;
   }
 
   private static setProhibition(element: any, parent: Policy): RuleProhibition {
     const rule = new RuleProhibition();
+    rule.setParent(parent);
     parent.addProhibition(rule);
     return rule;
   }
@@ -61,6 +63,7 @@ export class PolicyInstanciator {
   private static setObligation(element: any, parent: Policy): RuleDuty {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
+    rule.setParent(parent);
     parent.addDuty(rule);
     return rule;
   }
@@ -68,6 +71,7 @@ export class PolicyInstanciator {
   private static setDuty(element: any, parent: RulePermission) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
+    rule.setParent(parent);
     parent.addDuty(rule);
     return rule;
   }
@@ -75,16 +79,19 @@ export class PolicyInstanciator {
   private static setAction(element: string | any, parent: Rule): Action {
     if (typeof element === 'object') {
       const action = new Action(element.value, null);
+      action.setParent(parent);
       parent.addAction(action);
       return action;
     }
     const action = new Action(element, null);
+    action.setParent(parent);
     parent.setAction(action);
     return action;
   }
 
   private static setTarget(element: any, parent: Rule): void {
     const asset = new Asset(element);
+    asset.setParent(parent);
     parent.setTarget(asset);
   }
 
@@ -117,6 +124,9 @@ export class PolicyInstanciator {
       ['constraint', 'leftOperand', 'operator', 'rightOperand'],
       CopyMode.exclude,
     );
+    if (constraint) {
+      constraint.setParent(parent);
+    }
     parent.addConstraint(constraint || element);
     return constraint;
   }
@@ -134,6 +144,7 @@ export class PolicyInstanciator {
       ['compensatedParty', 'compensatingParty'],
       CopyMode.include,
     );
+    rule.setParent(parent);
     parent.addConsequence(rule);
     return rule;
   }

@@ -1,7 +1,7 @@
-import { PolicyValidator } from '../PolicyValidator';
+import { ModelEssential } from '../ModelEssential';
 import { Constraint } from './Constraint';
 
-export class Action extends PolicyValidator {
+export class Action extends ModelEssential {
   value: string;
   refinement?: Constraint[];
   includedIn: Action | null;

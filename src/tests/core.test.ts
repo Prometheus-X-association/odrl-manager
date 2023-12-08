@@ -150,8 +150,21 @@ describe('Testing Core units', async () => {
           constraint: [
             {
               leftOperand: 'age',
+              operator: 'gteq',
+              rightOperand: 18,
+            },
+          ],
+        },
+      ],
+      prohibition: [
+        {
+          action: 'read',
+          target: 'http://contract-target',
+          constraint: [
+            {
+              leftOperand: 'age',
               operator: 'gt',
-              rightOperand: 17,
+              rightOperand: 21,
             },
           ],
         },
@@ -162,6 +175,8 @@ describe('Testing Core units', async () => {
     console.log(JSON.stringify(policy, null, 2));
     expect(policy).to.not.be.null;
     expect(policy).to.not.be.undefined;
+    const valid = await instanciator.policy?.validate();
+    expect(valid).to.equal(true);
     if (policy) {
       class Fetcher extends ContextFetcher {
         private absolutePosition: number = 0;

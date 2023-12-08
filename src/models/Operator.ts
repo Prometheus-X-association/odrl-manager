@@ -1,6 +1,6 @@
-import { PolicyValidator } from '../PolicyValidator';
+import { ModelEssential } from '../ModelEssential';
 
-export class Operator extends PolicyValidator {
+export class Operator extends ModelEssential {
   public static readonly EQ: string = 'eq';
   public static readonly NEQ: string = 'neq';
   public static readonly GT: string = 'gt';

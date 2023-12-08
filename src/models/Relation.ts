@@ -1,11 +1,11 @@
-import { PolicyValidator } from '../PolicyValidator';
+import { ModelEssential } from '../ModelEssential';
 import { Asset } from './Asset';
 
 export enum RelationType {
   TARGET = 'target',
 }
 
-export class Relation extends PolicyValidator {
+export class Relation extends ModelEssential {
   type: RelationType;
   asset: Asset;
 

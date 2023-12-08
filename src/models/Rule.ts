@@ -24,33 +24,40 @@ export abstract class Rule extends Explorable {
     }
   }
 
-  public get constraints(): Constraint[] {
+  private get constraints(): Constraint[] {
     if (this.constraint === undefined) {
       this.constraint = [];
     }
     return this.constraint;
   }
+
   public setTarget(asset: Asset): void {
     this.target = asset;
   }
+
   public setAction(action: Action): void {
     this.action = action;
   }
+
   public addAction(action: Action): void {
     if (this.action === undefined) {
       this.action = [];
     }
     (this.action as Array<Action>).push(action);
   }
+
   public addConstraint(constraint: Constraint) {
     this.constraints.push(constraint);
   }
+
   public getTarget(): Asset | undefined {
     return this.target;
   }
+
   public getAction(): Action | undefined | Action[] {
     return this.action;
   }
+
   public getConstraints(): Constraint[] {
     return this.constraints;
   }
@@ -58,14 +65,14 @@ export abstract class Rule extends Explorable {
   protected async visit(): Promise<boolean> {
     try {
       if (this.constraints) {
-        await Promise.all(
+        const all = await Promise.all(
           this.constraints.map((constraint) => constraint.visit()),
         );
+        return all.every(Boolean);
       }
-      return true;
     } catch (error) {
       console.error('Error while evaluating rule:', error);
-      return false;
     }
+    return false;
   }
 }

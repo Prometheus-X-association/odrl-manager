@@ -4,6 +4,8 @@ import { Explorable } from 'Explorable';
 import { Asset } from 'models/Asset';
 import { RulePermission } from 'models/RulePermission';
 import { RuleProhibition } from 'models/RuleProhibition';
+import { Rule } from 'models/Rule';
+import { ModelEssential } from 'ModelEssential';
 
 interface Picker {
   pick: (explorable: Explorable) => boolean;
@@ -16,7 +18,6 @@ type Pickers = {
 export class PolicyEvaluator {
   public static instance: PolicyEvaluator;
   private policy: Policy | null;
-  private fetcher: ContextFetcher | null;
   private options: any | null;
 
   private readonly pickers: Pickers = {
@@ -36,7 +37,6 @@ export class PolicyEvaluator {
 
   constructor() {
     this.policy = null;
-    this.fetcher = null;
   }
 
   public static getInstance(): PolicyEvaluator {
@@ -66,7 +66,7 @@ export class PolicyEvaluator {
   }
 
   public setFetcher(fetcher: ContextFetcher): void {
-    this.fetcher = fetcher;
+    ModelEssential.setFetcher(fetcher);
   }
 
   private pick = (explorable: Explorable): boolean => {
@@ -99,14 +99,16 @@ export class PolicyEvaluator {
   }
 
   public async getAllowedActionsOn(target: string): Promise<Explorable[]> {
+    type ParentRule = RulePermission | RuleProhibition;
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
-    targets.forEach((target: Asset) => {
-      console.log(target.uid);
-      // Todo visit using fetcher
-      // fetcher
-      // target.visit
+
+    // WIP
+    targets.forEach(async (target: Asset) => {
+      const parent: ParentRule = target.getParent() as ParentRule;
+      console.log(JSON.stringify(target.getParent(), null, 2));
+      console.log(await parent.visit(), '<<visit');
     });
     return [];
   }
