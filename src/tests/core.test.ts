@@ -1,11 +1,14 @@
 import instanciator from 'PolicyInstanciator';
 import evaluator from 'PolicyEvaluator';
 import { expect } from 'chai';
-import { _logObject } from './utils';
+import { _logCyan, _logGreen, _logObject } from './utils';
 import { ContextFetcher } from 'ContextFetcher';
 import { Custom } from 'ContextFetcher';
 describe('Testing Core units', async () => {
-  before(() => {
+  before(() => {});
+
+  it(`should validate a policy after parsing it.`, async function () {
+    _logCyan('\n> ' + this.test?.title);
     const json = {
       '@context': 'http://www.w3.org/ns/odrl/2/',
       '@type': 'Offer',
@@ -132,14 +135,13 @@ describe('Testing Core units', async () => {
     };
     instanciator.genPolicyFrom(json);
     instanciator.policy?.debug();
-  });
-
-  it('should validate a policy after parsing it.', async () => {
     const valid = await instanciator.policy?.validate();
     expect(valid).to.equal(true);
   });
 
-  it('should evaluate a simple permission with a custom left operand.', async () => {
+  it(`Should validate policy constraints and confirm performability
+    of "read" action on the specified target with customized data fetcher`, async function () {
+    _logCyan('\n> ' + this.test?.title);
     const json = {
       '@context': 'http://www.w3.org/ns/odrl/2/',
       '@type': 'Offer',
@@ -172,10 +174,10 @@ describe('Testing Core units', async () => {
     };
     instanciator.genPolicyFrom(json);
     const { policy } = instanciator;
-    console.log(JSON.stringify(policy, null, 2));
     expect(policy).to.not.be.null;
     expect(policy).to.not.be.undefined;
-    const valid = await instanciator.policy?.validate();
+    policy?.debug();
+    const valid = await policy?.validate();
     expect(valid).to.equal(true);
     if (policy) {
       class Fetcher extends ContextFetcher {
@@ -202,9 +204,13 @@ describe('Testing Core units', async () => {
       expect(absolutePosition).to.equal(9);
       const language = await fetcher.context.language();
       expect(language).to.equal('en');
-
       evaluator.setFetcher(fetcher);
-      await evaluator.getAllowedActionsOn('http://contract-target');
+      const isPerformable = await evaluator.isActionPerformable(
+        'read',
+        'http://contract-target',
+      );
+      expect(isPerformable).to.equal(true);
     }
   });
+  //      // await evaluator.getAllowedActionsOn('http://contract-target');
 });

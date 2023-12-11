@@ -24,7 +24,7 @@ export abstract class Rule extends Explorable {
     }
   }
 
-  private get constraints(): Constraint[] {
+  protected get constraints(): Constraint[] {
     if (this.constraint === undefined) {
       this.constraint = [];
     }
@@ -60,19 +60,5 @@ export abstract class Rule extends Explorable {
 
   public getConstraints(): Constraint[] {
     return this.constraints;
-  }
-
-  protected async visit(): Promise<boolean> {
-    try {
-      if (this.constraints) {
-        const all = await Promise.all(
-          this.constraints.map((constraint) => constraint.visit()),
-        );
-        return all.every(Boolean);
-      }
-    } catch (error) {
-      console.error('Error while evaluating rule:', error);
-    }
-    return false;
   }
 }

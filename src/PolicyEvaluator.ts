@@ -6,6 +6,8 @@ import { RulePermission } from 'models/RulePermission';
 import { RuleProhibition } from 'models/RuleProhibition';
 import { Rule } from 'models/Rule';
 import { ModelEssential } from 'ModelEssential';
+import { Action, ActionType } from 'models/Action';
+import { RuleDuty } from 'models/RuleDuty';
 
 interface Picker {
   pick: (explorable: Explorable) => boolean;
@@ -99,7 +101,7 @@ export class PolicyEvaluator {
   }
 
   public async getAllowedActionsOn(target: string): Promise<Explorable[]> {
-    type ParentRule = RulePermission | RuleProhibition;
+    type ParentRule = RulePermission | RuleProhibition | RuleDuty;
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
@@ -113,7 +115,27 @@ export class PolicyEvaluator {
     return [];
   }
 
-  // public async visitTarget(target: string): Promise<void> {}
+  public async isActionPerformable(
+    actionType: ActionType,
+    target: string,
+  ): Promise<boolean> {
+    type ParentRule = RulePermission | RuleProhibition | RuleDuty;
+    const targets: Asset[] = (await this.explore({
+      target,
+    })) as Asset[];
+    const results = await targets.reduce(
+      async (promise: Promise<boolean[]>, target: Asset) => {
+        const acc = await promise;
+        const parent: ParentRule = target.getParent() as ParentRule;
+        const action: Action = parent.action as Action;
+        return actionType === action?.value
+          ? [...acc, await parent.visit()]
+          : acc;
+      },
+      Promise.resolve([]),
+    );
+    return results.every((result) => result);
+  }
 }
 
 export default PolicyEvaluator.getInstance();

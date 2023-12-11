@@ -15,7 +15,17 @@ export class RulePermission extends Rule {
   }
 
   public async visit(): Promise<boolean> {
-    return super.visit();
+    try {
+      if (this.constraints) {
+        const all = await Promise.all(
+          this.constraints.map((constraint) => constraint.visit()),
+        );
+        return all.every(Boolean);
+      }
+    } catch (error) {
+      console.error('Error while evaluating rule:', error);
+    }
+    return false;
   }
 
   public async verify(): Promise<boolean> {
