@@ -212,5 +212,48 @@ describe('Testing Core units', async () => {
       expect(isPerformable).to.equal(true);
     }
   });
-  //      // await evaluator.getAllowedActionsOn('http://contract-target');
+
+  it(`Should retrieve performable actions on a specific target`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Offer',
+      permission: [
+        {
+          action: 'read',
+          target: 'http://contract-target',
+        },
+        {
+          action: 'write',
+          target: 'http://contract-target',
+        },
+      ],
+      prohibition: [
+        /*
+        {
+          action: 'write',
+          target: 'http://contract-target',
+        },
+        {
+          action: 'read',
+          target: 'http://contract-target',
+        },
+        */
+      ],
+    };
+    instanciator.genPolicyFrom(json);
+    const { policy } = instanciator;
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    const valid = await policy?.validate();
+    expect(valid).to.equal(true);
+    if (policy) {
+      evaluator.setPolicy(policy);
+      const actions = await evaluator.getPerformableActions(
+        'http://contract-target',
+      );
+      console.log(actions);
+    }
+  });
 });

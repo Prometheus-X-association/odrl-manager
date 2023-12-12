@@ -13,7 +13,10 @@ export class RuleProhibition extends Rule {
         const all = await Promise.all(
           this.constraints.map((constraint) => constraint.visit()),
         );
-        return all.every((value) => value === false);
+        if (all.length) {
+          return all.every((value) => value === false);
+        }
+        return false;
       }
     } catch (error) {
       console.error('Error while evaluating rule:', error);

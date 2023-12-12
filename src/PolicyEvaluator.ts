@@ -100,21 +100,42 @@ export class PolicyEvaluator {
     return [];
   }
 
-  public async getAllowedActionsOn(target: string): Promise<Explorable[]> {
+  /**
+   * Retrieves a list of performable actions on the specified target.
+   * @param target - A string representing the target
+   * @returns A promise resolved with an array of performables actions.
+   */
+  public async getPerformableActions(target: string): Promise<string[]> {
     type ParentRule = RulePermission | RuleProhibition | RuleDuty;
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
-
-    // WIP
-    targets.forEach(async (target: Asset) => {
+    const actionPromises: Record<string, Promise<boolean>[]> = {};
+    targets.forEach((target: Asset) => {
       const parent: ParentRule = target.getParent() as ParentRule;
-      console.log(JSON.stringify(target.getParent(), null, 2));
-      console.log(await parent.visit(), '<<visit');
+      const action: Action = parent.action as Action;
+      if (!actionPromises[action.value]) {
+        actionPromises[action.value] = [];
+      }
+      actionPromises[action.value].push(parent.visit());
     });
-    return [];
+    const actions: string[] = [];
+    for (const [action, promises] of Object.entries(actionPromises)) {
+      const results = await Promise.all(promises);
+      const isPerformable = results.every((result) => result);
+      if (isPerformable) {
+        actions.push(action);
+      }
+    }
+    return actions;
   }
 
+  /**
+   * Verify if a specific action can be performed on a given target.
+   * @param actionType - A string representing the action.
+   * @param target - A string representing the target.
+   * @returns A promise resolved with a boolean indicating if the action is performable.
+   */
   public async isActionPerformable(
     actionType: ActionType,
     target: string,
