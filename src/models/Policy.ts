@@ -50,10 +50,10 @@ export abstract class Policy extends Explorable {
       results.every((result) => result),
     );
   }
-  // Todo
-  public async explore(picker: Function): Promise<Explorable[]> {
+
+  public async explore(picker: Function, options?: any): Promise<Explorable[]> {
     const explorables: Explorable[] = [];
-    super.explore(picker, 0, explorables);
+    super.explore(picker, 0, explorables, options);
     return explorables;
   }
 }

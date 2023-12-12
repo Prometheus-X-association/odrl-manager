@@ -1,7 +1,7 @@
 import instanciator from 'PolicyInstanciator';
 import evaluator from 'PolicyEvaluator';
 import { expect } from 'chai';
-import { _logCyan, _logGreen, _logObject } from './utils';
+import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
 import { ContextFetcher } from 'ContextFetcher';
 import { Custom } from 'ContextFetcher';
 describe('Testing Core units', async () => {
@@ -144,7 +144,7 @@ describe('Testing Core units', async () => {
     _logCyan('\n> ' + this.test?.title);
     const json = {
       '@context': 'http://www.w3.org/ns/odrl/2/',
-      '@type': 'Offer',
+      '@type': 'Set',
       permission: [
         {
           action: 'read',
@@ -217,8 +217,12 @@ describe('Testing Core units', async () => {
     _logCyan('\n> ' + this.test?.title);
     const json = {
       '@context': 'http://www.w3.org/ns/odrl/2/',
-      '@type': 'Offer',
+      '@type': 'Set',
       permission: [
+        {
+          action: 'use',
+          target: 'http://offering-target',
+        },
         {
           action: 'read',
           target: 'http://contract-target',
@@ -229,16 +233,10 @@ describe('Testing Core units', async () => {
         },
       ],
       prohibition: [
-        /*
-        {
-          action: 'write',
-          target: 'http://contract-target',
-        },
         {
           action: 'read',
           target: 'http://contract-target',
         },
-        */
       ],
     };
     instanciator.genPolicyFrom(json);
@@ -253,7 +251,68 @@ describe('Testing Core units', async () => {
       const actions = await evaluator.getPerformableActions(
         'http://contract-target',
       );
-      console.log(actions);
+      _logYellow('\nPerformable actions:');
+      _logObject(actions);
+      expect(actions).to.deep.equal(['write']);
+    }
+  });
+
+  it(`Should confirm the exploitability of resources listed in a policy set.`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'use',
+          target: 'http://contract-target',
+        },
+        {
+          action: 'read',
+          target: 'http://contract-target/video',
+        },
+        {
+          action: 'write',
+          target: 'http://contract-target/cloud',
+        },
+      ],
+      prohibition: [
+        {
+          action: 'use',
+          target: 'http://contract-target',
+        },
+      ],
+    };
+    instanciator.genPolicyFrom(json);
+    const { policy } = instanciator;
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    const valid = await policy?.validate();
+    expect(valid).to.equal(true);
+    if (policy) {
+      evaluator.setPolicy(policy);
+      const resourcesPolicy = {
+        '@context': 'http://www.w3.org/ns/odrl/2/',
+        '@type': 'Set',
+        permission: [
+          {
+            action: 'use',
+            target: 'http://contract-target',
+          },
+          {
+            action: 'read',
+            target: 'http://contract-target/video',
+          },
+          {
+            action: 'write',
+            target: 'http://contract-target/cloud',
+          },
+        ],
+      };
+      const isAccessible =
+        await evaluator.evalResourcePerformabilities(resourcesPolicy);
+      expect(isAccessible).to.equal(false);
     }
   });
 });

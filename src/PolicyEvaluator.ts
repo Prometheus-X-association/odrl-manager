@@ -4,23 +4,22 @@ import { Explorable } from 'Explorable';
 import { Asset } from 'models/Asset';
 import { RulePermission } from 'models/RulePermission';
 import { RuleProhibition } from 'models/RuleProhibition';
-import { Rule } from 'models/Rule';
 import { ModelEssential } from 'ModelEssential';
 import { Action, ActionType } from 'models/Action';
 import { RuleDuty } from 'models/RuleDuty';
+import { PolicyInstanciator } from 'PolicyInstanciator';
 
 interface Picker {
-  pick: (explorable: Explorable) => boolean;
+  pick: (explorable: Explorable, options?: any) => boolean;
   type: Function;
 }
 type Pickers = {
   [key: string]: Picker;
 };
-
+type ParentRule = RulePermission | RuleProhibition | RuleDuty;
 export class PolicyEvaluator {
   public static instance: PolicyEvaluator;
   private policy: Policy | null;
-  private options: any | null;
 
   private readonly pickers: Pickers = {
     target: {
@@ -48,17 +47,24 @@ export class PolicyEvaluator {
     return PolicyEvaluator.instance;
   }
 
-  private pickTarget(explorable: Explorable): boolean {
-    console.log('pickTarget');
-    return true;
+  private pickTarget(explorable: Explorable, options?: any): boolean {
+    if (explorable instanceof Asset) {
+      const uid = (explorable as Asset).uid;
+      const target = options?.target;
+      if (typeof target === 'object') {
+        return target.all || uid === target.uid;
+      }
+      return uid === target;
+    }
+    return false;
   }
 
-  private pickPermission(explorable: Explorable): boolean {
+  private pickPermission(explorable: Explorable, options?: any): boolean {
     console.log('pickPermission');
     return true;
   }
 
-  private pickProhibition(explorable: Explorable): boolean {
+  private pickProhibition(explorable: Explorable, options?: any): boolean {
     console.log('pickProhibition');
     return true;
   }
@@ -71,15 +77,15 @@ export class PolicyEvaluator {
     ModelEssential.setFetcher(fetcher);
   }
 
-  private pick = (explorable: Explorable): boolean => {
-    for (const key in this.options) {
-      if (this.options.hasOwnProperty(key)) {
+  private pick = (explorable: Explorable, options?: any): boolean => {
+    for (const key in options) {
+      if (options.hasOwnProperty(key)) {
         const picker: Picker = this.pickers[key];
         if (
           typeof picker.pick === 'function' &&
           explorable instanceof picker.type
         ) {
-          const pickable = picker.pick(explorable);
+          const pickable = picker.pick(explorable, options);
           if (pickable) {
             return true;
           }
@@ -91,9 +97,9 @@ export class PolicyEvaluator {
 
   private async explore(options: any): Promise<Explorable[]> {
     if (this.policy) {
-      this.options = options;
       const explorables: Explorable[] = await this.policy.explore(
         this.pick.bind(this),
+        options,
       );
       return explorables;
     }
@@ -106,7 +112,6 @@ export class PolicyEvaluator {
    * @returns A promise resolved with an array of performables actions.
    */
   public async getPerformableActions(target: string): Promise<string[]> {
-    type ParentRule = RulePermission | RuleProhibition | RuleDuty;
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
@@ -134,13 +139,12 @@ export class PolicyEvaluator {
    * Verify if a specific action can be performed on a given target.
    * @param actionType - A string representing the action.
    * @param target - A string representing the target.
-   * @returns A promise resolved with a boolean indicating if the action is performable.
+   * @returns Resolves with a boolean indicating action performability.
    */
   public async isActionPerformable(
     actionType: ActionType,
     target: string,
   ): Promise<boolean> {
-    type ParentRule = RulePermission | RuleProhibition | RuleDuty;
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
@@ -155,6 +159,34 @@ export class PolicyEvaluator {
       },
       Promise.resolve([]),
     );
+    return results.every((result) => result);
+  }
+
+  /**
+   * Evaluates the exploitability of listed resources within a set of policies.
+   * @param json - JSON representation of policies to be evaluated.
+   * @returns A Promise resolving to a boolean indicating if the resources are exploitable.
+   */
+  public async evalResourcePerformabilities(json: any): Promise<boolean> {
+    const instanciator = new PolicyInstanciator();
+    instanciator.genPolicyFrom(json);
+    const evaluator = new PolicyEvaluator();
+    if (instanciator.policy) {
+      evaluator.setPolicy(instanciator.policy);
+    }
+    const targets: Asset[] = (await evaluator.explore({
+      target: { uid: '', all: true },
+    })) as Asset[];
+    const actionPromises: Promise<boolean>[] = targets.map(
+      async (target: Asset) => {
+        const parent: ParentRule = target.getParent() as ParentRule;
+        const actionType = (parent.action as Action).value as ActionType;
+        return target.uid
+          ? this.isActionPerformable(actionType, target.uid)
+          : false;
+      },
+    );
+    const results = await Promise.all(actionPromises);
     return results.every((result) => result);
   }
 }

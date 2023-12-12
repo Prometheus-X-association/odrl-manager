@@ -7,8 +7,9 @@ export abstract class Explorable extends ModelEssential {
     pick: Function,
     depth: number = 0,
     entities: Explorable[],
+    options?: any,
   ): void {
-    if (pick(this)) {
+    if (pick(this, options)) {
       entities.push(this);
     }
     for (const prop in this) {
@@ -20,14 +21,14 @@ export abstract class Explorable extends ModelEssential {
               item instanceof Explorable &&
               typeof item.explore === 'function'
             ) {
-              item.explore(pick, depth + 2, entities);
+              item.explore(pick, depth + 2, entities, options);
             }
           }
         } else if (
           value instanceof Explorable &&
           typeof value.explore === 'function'
         ) {
-          value.explore(pick, depth + 1, entities);
+          value.explore(pick, depth + 1, entities, options);
         }
       }
     }
