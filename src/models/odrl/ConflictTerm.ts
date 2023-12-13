@@ -1,4 +1,4 @@
-import { ModelEssential } from '../ModelEssential';
+import { ModelEssential } from '../../ModelEssential';
 
 export class ConflictTerm extends ModelEssential {
   public async verify(): Promise<boolean> {

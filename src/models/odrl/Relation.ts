@@ -1,4 +1,4 @@
-import { ModelEssential } from '../ModelEssential';
+import { ModelEssential } from '../../ModelEssential';
 import { Asset } from './Asset';
 
 export enum RelationType {

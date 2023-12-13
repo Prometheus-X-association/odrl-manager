@@ -1,4 +1,4 @@
-import { ModelEssential } from '../ModelEssential';
+import { ModelEssential } from '../../ModelEssential';
 
 export class Operator extends ModelEssential {
   public static readonly EQ: string = 'eq';

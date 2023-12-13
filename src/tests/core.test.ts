@@ -133,8 +133,7 @@ describe('Testing Core units', async () => {
         },
       ],
     };
-    instanciator.genPolicyFrom(json);
-    instanciator.policy?.debug();
+    instanciator.genPolicyFrom(json)?.debug();
     const valid = await instanciator.policy?.validate();
     expect(valid).to.equal(true);
   });
@@ -172,8 +171,7 @@ describe('Testing Core units', async () => {
         },
       ],
     };
-    instanciator.genPolicyFrom(json);
-    const { policy } = instanciator;
+    const policy = instanciator.genPolicyFrom(json);
     expect(policy).to.not.be.null;
     expect(policy).to.not.be.undefined;
     policy?.debug();
@@ -239,8 +237,7 @@ describe('Testing Core units', async () => {
         },
       ],
     };
-    instanciator.genPolicyFrom(json);
-    const { policy } = instanciator;
+    const policy = instanciator.genPolicyFrom(json);
     expect(policy).to.not.be.null;
     expect(policy).to.not.be.undefined;
     policy?.debug();
@@ -283,8 +280,7 @@ describe('Testing Core units', async () => {
         },
       ],
     };
-    instanciator.genPolicyFrom(json);
-    const { policy } = instanciator;
+    const policy = instanciator.genPolicyFrom(json);
     expect(policy).to.not.be.null;
     expect(policy).to.not.be.undefined;
     policy?.debug();
@@ -313,6 +309,57 @@ describe('Testing Core units', async () => {
       const isAccessible =
         await evaluator.evalResourcePerformabilities(resourcesPolicy);
       expect(isAccessible).to.equal(false);
+    }
+  });
+
+  it(`Should evaluate complementary policies.`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const permission = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'use',
+          target: 'http://contract-target',
+        },
+        {
+          action: 'read',
+          target: 'http://contract-target/note',
+        },
+      ],
+    };
+    const prohibition = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      prohibition: [
+        {
+          action: 'use',
+          target: 'http://contract-target',
+        },
+      ],
+    };
+    const permissionPolicy = instanciator.genPolicyFrom(permission);
+    const prohibitionPolicy = instanciator.genPolicyFrom(prohibition);
+    expect(permissionPolicy).to.exist;
+    expect(prohibitionPolicy).to.exist;
+    if (permissionPolicy && prohibitionPolicy) {
+      permissionPolicy.debug();
+      prohibitionPolicy.debug();
+      evaluator.cleanPolicies();
+      evaluator.addPolicy(permissionPolicy);
+      evaluator.addPolicy(prohibitionPolicy);
+      let actions = await evaluator.getPerformableActions(
+        'http://contract-target',
+      );
+      _logYellow('\nPerformable actions for "http://contract-target":');
+      _logObject(actions);
+      expect(actions).to.deep.equal([]);
+      actions = await evaluator.getPerformableActions(
+        'http://contract-target/note',
+      );
+      _logYellow('\nPerformable actions for "http://contract-target/note":');
+      _logObject(actions);
+      expect(actions).to.deep.equal(['read']);
     }
   });
 });

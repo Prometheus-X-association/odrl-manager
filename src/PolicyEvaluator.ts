@@ -1,12 +1,12 @@
 import { ContextFetcher } from 'ContextFetcher';
-import { Policy } from './models/Policy';
+import { Policy } from './models/odrl/Policy';
 import { Explorable } from 'Explorable';
-import { Asset } from 'models/Asset';
-import { RulePermission } from 'models/RulePermission';
-import { RuleProhibition } from 'models/RuleProhibition';
+import { Asset } from 'models/odrl/Asset';
+import { RulePermission } from 'models/odrl/RulePermission';
+import { RuleProhibition } from 'models/odrl/RuleProhibition';
 import { ModelEssential } from 'ModelEssential';
-import { Action, ActionType } from 'models/Action';
-import { RuleDuty } from 'models/RuleDuty';
+import { Action, ActionType } from 'models/odrl/Action';
+import { RuleDuty } from 'models/odrl/RuleDuty';
 import { PolicyInstanciator } from 'PolicyInstanciator';
 
 interface Picker {
@@ -19,7 +19,7 @@ type Pickers = {
 type ParentRule = RulePermission | RuleProhibition | RuleDuty;
 export class PolicyEvaluator {
   public static instance: PolicyEvaluator;
-  private policy: Policy | null;
+  private policies: Policy[] | null;
 
   private readonly pickers: Pickers = {
     target: {
@@ -37,7 +37,7 @@ export class PolicyEvaluator {
   };
 
   constructor() {
-    this.policy = null;
+    this.policies = null;
   }
 
   public static getInstance(): PolicyEvaluator {
@@ -69,8 +69,26 @@ export class PolicyEvaluator {
     return true;
   }
 
+  /*
   public setPolicy(policy: Policy): void {
     this.policy = policy;
+  }
+  */
+
+  public cleanPolicies(): void {
+    this.policies = [];
+  }
+
+  public addPolicy(policy: Policy): void {
+    if (this.policies === null) {
+      this.policies = [];
+    }
+    this.policies.push(policy);
+  }
+
+  public setPolicy(policy: Policy): void {
+    this.cleanPolicies();
+    this.addPolicy(policy);
   }
 
   public setFetcher(fetcher: ContextFetcher): void {
@@ -96,11 +114,15 @@ export class PolicyEvaluator {
   };
 
   private async explore(options: any): Promise<Explorable[]> {
-    if (this.policy) {
-      const explorables: Explorable[] = await this.policy.explore(
-        this.pick.bind(this),
-        options,
-      );
+    if (this.policies && this.policies.length) {
+      const explorables: Explorable[] = (
+        await Promise.all(
+          this.policies.map(
+            async (policy: Policy) =>
+              await policy.explore(this.pick.bind(this), options),
+          ),
+        )
+      ).flat();
       return explorables;
     }
     return [];
@@ -165,7 +187,7 @@ export class PolicyEvaluator {
   /**
    * Evaluates the exploitability of listed resources within a set of policies.
    * @param json - JSON representation of policies to be evaluated.
-   * @returns A Promise resolving to a boolean indicating if the resources are exploitable.
+   * @returns Resolves with a boolean indicating if the resources are exploitable.
    */
   public async evalResourcePerformabilities(json: any): Promise<boolean> {
     const instanciator = new PolicyInstanciator();
