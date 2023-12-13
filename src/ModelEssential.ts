@@ -1,21 +1,45 @@
-export abstract class PolicyValidator {
+import { ContextFetcher } from 'ContextFetcher';
+import { randomUUID } from 'node:crypto';
+interface ParentRelations {
+  [key: string]: ModelEssential;
+}
+export abstract class ModelEssential {
+  private static parentRelations: ParentRelations = {};
+  protected static fetcher: ContextFetcher;
+  public _objectUID: string;
+  constructor() {
+    this._objectUID = randomUUID();
+  }
+
+  public static setFetcher(fetcher: ContextFetcher): void {
+    ModelEssential.fetcher = fetcher;
+  }
+
+  public setParent(parent: ModelEssential): void {
+    ModelEssential.parentRelations[this._objectUID] = parent;
+  }
+
+  public getParent(): ModelEssential {
+    return ModelEssential.parentRelations[this._objectUID];
+  }
+
   protected abstract verify(): Promise<boolean>;
   //
-  protected validate(depth: number = 0, validations: Promise<boolean>[]): void {
-    validations.push(
+  protected validate(depth: number = 0, promises: Promise<boolean>[]): void {
+    promises.push(
       (async (): Promise<boolean> => {
         try {
-          validations.push(this.verify());
+          promises.push(this.verify());
           for (const prop in this) {
             if (this.hasOwnProperty(prop)) {
               const value = (this as any)[prop];
               if (Array.isArray(value)) {
                 for (const item of value) {
                   if (
-                    item instanceof PolicyValidator &&
+                    item instanceof ModelEssential &&
                     typeof item.validate === 'function'
                   ) {
-                    item.validate(depth + 2, validations);
+                    item.validate(depth + 2, promises);
                   } else {
                     throw new Error(
                       `Invalid entry: ${JSON.stringify(item, null, 2)}`,
@@ -23,10 +47,10 @@ export abstract class PolicyValidator {
                   }
                 }
               } else if (
-                value instanceof PolicyValidator &&
+                value instanceof ModelEssential &&
                 typeof value.validate === 'function'
               ) {
-                value.validate(depth + 1, validations);
+                value.validate(depth + 1, promises);
               } else {
                 if (typeof value === 'object' && value !== null) {
                   throw new Error(
@@ -59,7 +83,7 @@ export abstract class PolicyValidator {
           console.log(`${indentation}  ${prop}: \x1b[36m[\x1b[37m`);
           for (const item of value) {
             if (
-              item instanceof PolicyValidator &&
+              item instanceof ModelEssential &&
               typeof item.debug === 'function'
             ) {
               item.debug(depth + 2);
@@ -71,7 +95,7 @@ export abstract class PolicyValidator {
           }
           console.log(`${indentation}  \x1b[36m]\x1b[37m`);
         } else if (
-          value instanceof PolicyValidator &&
+          value instanceof ModelEssential &&
           typeof value.debug === 'function'
         ) {
           value.debug(depth + 1);
@@ -83,9 +107,11 @@ export abstract class PolicyValidator {
               )}\x1b[37m`,
             );
           } else {
-            console.log(
-              `${indentation}  \x1b[32m-\x1b[37m${prop}: \x1b[90m${value}\x1b[37m`,
-            );
+            if (prop !== '_objectUID') {
+              console.log(
+                `${indentation}  \x1b[32m-\x1b[37m${prop}: \x1b[90m${value}\x1b[37m`,
+              );
+            }
           }
         }
       }

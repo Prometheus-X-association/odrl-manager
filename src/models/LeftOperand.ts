@@ -1,6 +1,6 @@
-import { PolicyValidator } from '../PolicyValidator';
+import { ModelEssential } from '../ModelEssential';
 
-export class LeftOperand extends PolicyValidator {
+export class LeftOperand extends ModelEssential {
   private value: string;
 
   constructor(value: string) {
@@ -13,9 +13,12 @@ export class LeftOperand extends PolicyValidator {
   }
 
   public async visit(): Promise<string | number | null> {
-    // tmp testing purpose
-    if (this.value === 'age') {
-      return 21;
+    try {
+      if (ModelEssential.fetcher) {
+        return ModelEssential.fetcher.context[this.value]();
+      }
+    } catch (error: any) {
+      console.error(`LeftOperand function ${this.value} not found`);
     }
     return null;
   }

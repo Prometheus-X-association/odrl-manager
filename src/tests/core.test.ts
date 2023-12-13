@@ -1,10 +1,14 @@
 import instanciator from 'PolicyInstanciator';
 import evaluator from 'PolicyEvaluator';
 import { expect } from 'chai';
-import { _logObject } from './utils';
-
+import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
+import { ContextFetcher } from 'ContextFetcher';
+import { Custom } from 'ContextFetcher';
 describe('Testing Core units', async () => {
-  before(() => {
+  before(() => {});
+
+  it(`should validate a policy after parsing it.`, async function () {
+    _logCyan('\n> ' + this.test?.title);
     const json = {
       '@context': 'http://www.w3.org/ns/odrl/2/',
       '@type': 'Offer',
@@ -131,17 +135,16 @@ describe('Testing Core units', async () => {
     };
     instanciator.genPolicyFrom(json);
     instanciator.policy?.debug();
-  });
-
-  it('should validate a policy after parsing it.', async () => {
-    const valid = await instanciator.policy?.launchValidation();
+    const valid = await instanciator.policy?.validate();
     expect(valid).to.equal(true);
   });
 
-  it('should evaluate a simple permission with a custom left operand.', async () => {
+  it(`Should validate policy constraints and confirm performability
+    of "read" action on the specified target with customized data fetcher`, async function () {
+    _logCyan('\n> ' + this.test?.title);
     const json = {
       '@context': 'http://www.w3.org/ns/odrl/2/',
-      '@type': 'Offer',
+      '@type': 'Set',
       permission: [
         {
           action: 'read',
@@ -149,8 +152,21 @@ describe('Testing Core units', async () => {
           constraint: [
             {
               leftOperand: 'age',
+              operator: 'gteq',
+              rightOperand: 18,
+            },
+          ],
+        },
+      ],
+      prohibition: [
+        {
+          action: 'read',
+          target: 'http://contract-target',
+          constraint: [
+            {
+              leftOperand: 'age',
               operator: 'gt',
-              rightOperand: 17,
+              rightOperand: 21,
             },
           ],
         },
@@ -160,10 +176,143 @@ describe('Testing Core units', async () => {
     const { policy } = instanciator;
     expect(policy).to.not.be.null;
     expect(policy).to.not.be.undefined;
+    policy?.debug();
+    const valid = await policy?.validate();
+    expect(valid).to.equal(true);
+    if (policy) {
+      class Fetcher extends ContextFetcher {
+        private absolutePosition: number = 0;
+        constructor() {
+          super();
+          this.absolutePosition = 9;
+        }
+        // Overriding
+        protected async getAbsolutePosition(): Promise<number> {
+          return this.absolutePosition;
+        }
+        // Custom fetching
+        @Custom()
+        protected async getAge(): Promise<number> {
+          return 18;
+        }
+      }
+      evaluator.setPolicy(policy);
+      const fetcher = new Fetcher();
+      const age = await fetcher.context['age']();
+      expect(age).to.equal(18);
+      const absolutePosition = await fetcher.context.absolutePosition();
+      expect(absolutePosition).to.equal(9);
+      const language = await fetcher.context.language();
+      expect(language).to.equal('en');
+      evaluator.setFetcher(fetcher);
+      const isPerformable = await evaluator.isActionPerformable(
+        'read',
+        'http://contract-target',
+      );
+      expect(isPerformable).to.equal(true);
+    }
+  });
+
+  it(`Should retrieve performable actions on a specific target`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'use',
+          target: 'http://offering-target',
+        },
+        {
+          action: 'read',
+          target: 'http://contract-target',
+        },
+        {
+          action: 'write',
+          target: 'http://contract-target',
+        },
+      ],
+      prohibition: [
+        {
+          action: 'read',
+          target: 'http://contract-target',
+        },
+      ],
+    };
+    instanciator.genPolicyFrom(json);
+    const { policy } = instanciator;
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    const valid = await policy?.validate();
+    expect(valid).to.equal(true);
     if (policy) {
       evaluator.setPolicy(policy);
-      evaluator.setDataContext({ age: 18 });
-      await evaluator.visitTarget('http://contract-target');
+      const actions = await evaluator.getPerformableActions(
+        'http://contract-target',
+      );
+      _logYellow('\nPerformable actions:');
+      _logObject(actions);
+      expect(actions).to.deep.equal(['write']);
+    }
+  });
+
+  it(`Should confirm the exploitability of resources listed in a policy set.`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'use',
+          target: 'http://contract-target',
+        },
+        {
+          action: 'read',
+          target: 'http://contract-target/video',
+        },
+        {
+          action: 'write',
+          target: 'http://contract-target/cloud',
+        },
+      ],
+      prohibition: [
+        {
+          action: 'use',
+          target: 'http://contract-target',
+        },
+      ],
+    };
+    instanciator.genPolicyFrom(json);
+    const { policy } = instanciator;
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    const valid = await policy?.validate();
+    expect(valid).to.equal(true);
+    if (policy) {
+      evaluator.setPolicy(policy);
+      const resourcesPolicy = {
+        '@context': 'http://www.w3.org/ns/odrl/2/',
+        '@type': 'Set',
+        permission: [
+          {
+            action: 'use',
+            target: 'http://contract-target',
+          },
+          {
+            action: 'read',
+            target: 'http://contract-target/video',
+          },
+          {
+            action: 'write',
+            target: 'http://contract-target/cloud',
+          },
+        ],
+      };
+      const isAccessible =
+        await evaluator.evalResourcePerformabilities(resourcesPolicy);
+      expect(isAccessible).to.equal(false);
     }
   });
 });

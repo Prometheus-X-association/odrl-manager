@@ -1,6 +1,6 @@
-import { PolicyValidator } from '../PolicyValidator';
+import { ModelEssential } from '../ModelEssential';
 
-export class RightOperand extends PolicyValidator {
+export class RightOperand extends ModelEssential {
   public value: string | number;
 
   constructor(value: string | number) {

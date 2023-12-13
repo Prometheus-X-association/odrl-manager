@@ -1,10 +1,10 @@
-import { PolicyValidator } from '../PolicyValidator';
+import { ModelEssential } from '../ModelEssential';
 import { LeftOperand } from './LeftOperand';
 import { LogicalConstraint } from './LogicalConstraint';
 import { Operator } from './Operator';
 import { RightOperand } from './RightOperand';
 
-export abstract class Constraint extends PolicyValidator {
+export abstract class Constraint extends ModelEssential {
   public uid?: string;
   public dataType?: string;
   public unit?: string;

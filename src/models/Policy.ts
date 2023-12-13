@@ -1,10 +1,10 @@
-import { PolicyExplorer } from '../PolicyExplorer';
+import { Explorable } from '../Explorable';
 import { ConflictTerm } from './ConflictTerm';
 import { RuleDuty } from './RuleDuty';
 import { RulePermission } from './RulePermission';
 import { RuleProhibition } from './RuleProhibition';
 
-export abstract class Policy extends PolicyExplorer {
+export abstract class Policy extends Explorable {
   protected '@context': string = '';
   protected '@type': string;
   protected uid: string;
@@ -43,11 +43,17 @@ export abstract class Policy extends PolicyExplorer {
   public addDuty(prohibition: RuleDuty): void {
     this.obligation.push(prohibition);
   }
-  public async launchValidation(): Promise<boolean> {
-    const validations: Promise<boolean>[] = [];
-    this.validate(0, validations);
-    return Promise.all(validations).then((results) =>
+  public async validate(): Promise<boolean> {
+    const promises: Promise<boolean>[] = [];
+    super.validate(0, promises);
+    return Promise.all(promises).then((results) =>
       results.every((result) => result),
     );
+  }
+
+  public async explore(picker: Function, options?: any): Promise<Explorable[]> {
+    const explorables: Explorable[] = [];
+    super.explore(picker, 0, explorables, options);
+    return explorables;
   }
 }

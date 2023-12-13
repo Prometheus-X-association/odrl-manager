@@ -35,60 +35,67 @@ export class PolicyInstanciator {
 
   private static readonly instanciators: Record<string, InstanciatorFunction> =
     {
-      permission: PolicyInstanciator.permission,
-      prohibition: PolicyInstanciator.prohibition,
-      obligation: PolicyInstanciator.obligation,
-      duty: PolicyInstanciator.duty,
-      action: PolicyInstanciator.action,
-      target: PolicyInstanciator.target,
-      constraint: PolicyInstanciator.constraint,
-      refinement: PolicyInstanciator.refinement,
-      consequence: PolicyInstanciator.consequence,
+      permission: PolicyInstanciator.setPermission,
+      prohibition: PolicyInstanciator.setProhibition,
+      obligation: PolicyInstanciator.setObligation,
+      duty: PolicyInstanciator.setDuty,
+      action: PolicyInstanciator.setAction,
+      target: PolicyInstanciator.setTarget,
+      constraint: PolicyInstanciator.setConstraint,
+      refinement: PolicyInstanciator.setRefinement,
+      consequence: PolicyInstanciator.setConsequence,
     };
 
-  private static permission(element: any, parent: Policy): RulePermission {
+  private static setPermission(element: any, parent: Policy): RulePermission {
     const rule = new RulePermission();
+    rule.setParent(parent);
     parent.addPermission(rule);
     return rule;
   }
 
-  private static prohibition(element: any, parent: Policy): RuleProhibition {
+  private static setProhibition(element: any, parent: Policy): RuleProhibition {
     const rule = new RuleProhibition();
+    rule.setParent(parent);
     parent.addProhibition(rule);
     return rule;
   }
 
-  private static obligation(element: any, parent: Policy): RuleDuty {
+  private static setObligation(element: any, parent: Policy): RuleDuty {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
+    rule.setParent(parent);
     parent.addDuty(rule);
     return rule;
   }
 
-  private static duty(element: any, parent: RulePermission) {
+  private static setDuty(element: any, parent: RulePermission) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
+    rule.setParent(parent);
     parent.addDuty(rule);
     return rule;
   }
 
-  private static action(element: string | any, parent: Rule): Action {
+  private static setAction(element: string | any, parent: Rule): Action {
     if (typeof element === 'object') {
       const action = new Action(element.value, null);
+      action.setParent(parent);
       parent.addAction(action);
       return action;
     }
     const action = new Action(element, null);
+    action.setParent(parent);
     parent.setAction(action);
     return action;
   }
 
-  private static target(element: any, parent: Rule): void {
+  private static setTarget(element: any, parent: Rule): void {
     const asset = new Asset(element);
+    asset.setParent(parent);
     parent.setTarget(asset);
   }
 
-  private static constraint(
+  private static setConstraint(
     element: any,
     parent: LogicalConstraint | Rule | Action,
   ): Constraint {
@@ -117,15 +124,18 @@ export class PolicyInstanciator {
       ['constraint', 'leftOperand', 'operator', 'rightOperand'],
       CopyMode.exclude,
     );
+    if (constraint) {
+      constraint.setParent(parent);
+    }
     parent.addConstraint(constraint || element);
     return constraint;
   }
 
-  private static refinement(element: any, parent: Action): Constraint {
-    return PolicyInstanciator.constraint(element, parent);
+  private static setRefinement(element: any, parent: Action): Constraint {
+    return PolicyInstanciator.setConstraint(element, parent);
   }
 
-  private static consequence(element: any, parent: RuleDuty): RuleDuty {
+  private static setConsequence(element: any, parent: RuleDuty): RuleDuty {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     copy(
@@ -134,6 +144,7 @@ export class PolicyInstanciator {
       ['compensatedParty', 'compensatingParty'],
       CopyMode.include,
     );
+    rule.setParent(parent);
     parent.addConsequence(rule);
     return rule;
   }

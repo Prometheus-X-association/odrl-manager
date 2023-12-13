@@ -1,7 +1,7 @@
-import { PolicyValidator } from '../PolicyValidator';
+import { Explorable } from 'Explorable';
 import { AssetCollection } from './AssetCollection';
 
-export class Asset extends PolicyValidator {
+export class Asset extends Explorable {
   uid?: string;
   partOf?: AssetCollection[];
   hasPolicy?: string;
@@ -20,7 +20,9 @@ export class Asset extends PolicyValidator {
       this.hasPolicy = target.hasPolicy;
     }
   }
-
+  protected async visit(): Promise<boolean> {
+    return true;
+  }
   public async verify(): Promise<boolean> {
     return true;
   }

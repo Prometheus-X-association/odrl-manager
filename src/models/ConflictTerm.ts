@@ -1,6 +1,6 @@
-import { PolicyValidator } from '../PolicyValidator';
+import { ModelEssential } from '../ModelEssential';
 
-export class ConflictTerm extends PolicyValidator {
+export class ConflictTerm extends ModelEssential {
   public async verify(): Promise<boolean> {
     return true;
   }

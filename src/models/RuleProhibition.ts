@@ -8,6 +8,19 @@ export class RuleProhibition extends Rule {
   }
 
   public async visit(): Promise<boolean> {
+    try {
+      if (this.constraints) {
+        const all = await Promise.all(
+          this.constraints.map((constraint) => constraint.visit()),
+        );
+        if (all.length) {
+          return all.every((value) => value === false);
+        }
+        return false;
+      }
+    } catch (error) {
+      console.error('Error while evaluating rule:', error);
+    }
     return false;
   }
 
