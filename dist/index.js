@@ -43,10 +43,240 @@ var __async = (__this, __arguments, generator) => {
 // src/index.ts
 var src_exports = {};
 __export(src_exports, {
+  ContextFetcher: () => ContextFetcher,
+  Custom: () => Custom,
   evaluator: () => evaluator,
   instanciator: () => instanciator
 });
 module.exports = __toCommonJS(src_exports);
+
+// src/ContextFetcher.ts
+var Custom = () => {
+  return (target, key, descriptor) => {
+    if (descriptor && typeof descriptor.value === "function") {
+      target.customMethods = target.customMethods || [];
+      target.customMethods.push(key);
+    }
+  };
+};
+var ContextFetcher = class {
+  constructor() {
+    this.context = {
+      absolutePosition: this.getAbsolutePosition.bind(this),
+      absoluteSize: this.getAbsoluteSize.bind(this),
+      absoluteSpatialPosition: this.getAbsoluteSpatialPosition.bind(this),
+      absoluteTemporalPosition: this.getAbsoluteTemporalPosition.bind(this),
+      count: this.getCount.bind(this),
+      dateTime: this.getDateTime.bind(this),
+      delayPeriod: this.getDelayPeriod.bind(this),
+      deliveryChannel: this.getDeliveryChannel.bind(this),
+      device: this.getDevice.bind(this),
+      elapsedTime: this.getElapsedTime.bind(this),
+      event: this.getEvent.bind(this),
+      fileFormat: this.getFileFormat.bind(this),
+      industry: this.getIndustry.bind(this),
+      language: this.getLanguage.bind(this),
+      media: this.getMedia.bind(this),
+      meteredTime: this.getMeteredTime.bind(this),
+      payAmount: this.getPayAmount.bind(this),
+      percentage: this.getPercentage.bind(this),
+      product: this.getProduct.bind(this),
+      purpose: this.getPurpose.bind(this),
+      recipient: this.getRecipient.bind(this),
+      relativePosition: this.getRelativePosition.bind(this),
+      relativeSize: this.getRelativeSize.bind(this),
+      relativeSpatialPosition: this.getRelativeSpatialPosition.bind(this),
+      relativeTemporalPosition: this.getRelativeTemporalPosition.bind(this),
+      resolution: this.getResolution.bind(this),
+      spatial: this.getSpatial.bind(this),
+      spatialCoordinates: this.getSpatialCoordinates.bind(this),
+      system: this.getSystem.bind(this),
+      systemDevice: this.getSystemDevice.bind(this),
+      timeInterval: this.getTimeInterval.bind(this),
+      unitOfCount: this.getUnitOfCount.bind(this),
+      version: this.getVersion.bind(this),
+      virtualLocation: this.getVirtualLocation.bind(this)
+    };
+    const prototype = Object.getPrototypeOf(this);
+    const customs = prototype.customMethods || [];
+    customs.forEach((method) => {
+      const propertyName = method.replace(/^get/, "");
+      const lowercasePropertyName = propertyName.charAt(0).toLowerCase() + propertyName.slice(1);
+      this.context[lowercasePropertyName] = this[method].bind(this);
+    });
+  }
+  getAbsolutePosition() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getAbsoluteSize() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getAbsoluteSpatialPosition() {
+    return __async(this, null, function* () {
+      return [0, 0];
+    });
+  }
+  getAbsoluteTemporalPosition() {
+    return __async(this, null, function* () {
+      return /* @__PURE__ */ new Date();
+    });
+  }
+  getCount() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getDateTime() {
+    return __async(this, null, function* () {
+      return /* @__PURE__ */ new Date();
+    });
+  }
+  getDelayPeriod() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getDeliveryChannel() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getDevice() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getElapsedTime() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getEvent() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getFileFormat() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getIndustry() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getLanguage() {
+    return __async(this, null, function* () {
+      return "en";
+    });
+  }
+  getMedia() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getMeteredTime() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getPayAmount() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getPercentage() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getProduct() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getPurpose() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getRecipient() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getRelativePosition() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getRelativeSize() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getRelativeSpatialPosition() {
+    return __async(this, null, function* () {
+      return [0, 0];
+    });
+  }
+  getRelativeTemporalPosition() {
+    return __async(this, null, function* () {
+      return /* @__PURE__ */ new Date();
+    });
+  }
+  getResolution() {
+    return __async(this, null, function* () {
+      return 0;
+    });
+  }
+  getSpatial() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getSpatialCoordinates() {
+    return __async(this, null, function* () {
+      return [0, 0];
+    });
+  }
+  getSystem() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getSystemDevice() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getTimeInterval() {
+    return __async(this, null, function* () {
+      const now = /* @__PURE__ */ new Date();
+      return [now, now];
+    });
+  }
+  getUnitOfCount() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getVersion() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+  getVirtualLocation() {
+    return __async(this, null, function* () {
+      return "";
+    });
+  }
+};
 
 // src/ModelEssential.ts
 var import_node_crypto = require("crypto");
@@ -990,6 +1220,8 @@ var evaluator = PolicyEvaluator_default;
 var instanciator = PolicyInstanciator_default;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  ContextFetcher,
+  Custom,
   evaluator,
   instanciator
 });
