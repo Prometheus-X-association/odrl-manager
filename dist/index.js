@@ -48,50 +48,42 @@ __export(src_exports, {
 });
 module.exports = __toCommonJS(src_exports);
 
-// src/PolicyEvaluator.ts
-var PolicyEvaluator = class _PolicyEvaluator {
+// src/ModelEssential.ts
+var import_node_crypto = require("crypto");
+var _ModelEssential = class _ModelEssential {
   constructor() {
+    this._objectUID = (0, import_node_crypto.randomUUID)();
   }
-  static getInstance() {
-    if (!_PolicyEvaluator.instance) {
-      _PolicyEvaluator.instance = new _PolicyEvaluator();
-    }
-    return _PolicyEvaluator.instance;
+  static setFetcher(fetcher) {
+    _ModelEssential.fetcher = fetcher;
   }
-  setPolicy(policy) {
+  setParent(parent) {
+    _ModelEssential.parentRelations[this._objectUID] = parent;
   }
-  setDataContext(data) {
+  getParent() {
+    return _ModelEssential.parentRelations[this._objectUID];
   }
-  visitTarget(target) {
-    return __async(this, null, function* () {
-    });
-  }
-};
-var PolicyEvaluator_default = PolicyEvaluator.getInstance();
-
-// src/PolicyValidator.ts
-var PolicyValidator = class _PolicyValidator {
   //
-  validate(depth = 0, validations) {
-    validations.push(
+  validate(depth = 0, promises) {
+    promises.push(
       (() => __async(this, null, function* () {
         try {
-          validations.push(this.verify());
+          promises.push(this.verify());
           for (const prop in this) {
             if (this.hasOwnProperty(prop)) {
               const value = this[prop];
               if (Array.isArray(value)) {
                 for (const item of value) {
-                  if (item instanceof _PolicyValidator && typeof item.validate === "function") {
-                    item.validate(depth + 2, validations);
+                  if (item instanceof _ModelEssential && typeof item.validate === "function") {
+                    item.validate(depth + 2, promises);
                   } else {
                     throw new Error(
                       `Invalid entry: ${JSON.stringify(item, null, 2)}`
                     );
                   }
                 }
-              } else if (value instanceof _PolicyValidator && typeof value.validate === "function") {
-                value.validate(depth + 1, validations);
+              } else if (value instanceof _ModelEssential && typeof value.validate === "function") {
+                value.validate(depth + 1, promises);
               } else {
                 if (typeof value === "object" && value !== null) {
                   throw new Error(
@@ -121,7 +113,7 @@ var PolicyValidator = class _PolicyValidator {
         if (Array.isArray(value)) {
           console.log(`${indentation}  ${prop}: \x1B[36m[\x1B[37m`);
           for (const item of value) {
-            if (item instanceof _PolicyValidator && typeof item.debug === "function") {
+            if (item instanceof _ModelEssential && typeof item.debug === "function") {
               item.debug(depth + 2);
             } else {
               console.log(
@@ -130,7 +122,7 @@ var PolicyValidator = class _PolicyValidator {
             }
           }
           console.log(`${indentation}  \x1B[36m]\x1B[37m`);
-        } else if (value instanceof _PolicyValidator && typeof value.debug === "function") {
+        } else if (value instanceof _ModelEssential && typeof value.debug === "function") {
           value.debug(depth + 1);
         } else {
           if (typeof value === "object" && value !== null) {
@@ -140,18 +132,172 @@ var PolicyValidator = class _PolicyValidator {
               )}\x1B[37m`
             );
           } else {
-            console.log(
-              `${indentation}  \x1B[32m-\x1B[37m${prop}: \x1B[90m${value}\x1B[37m`
-            );
+            if (prop !== "_objectUID") {
+              console.log(
+                `${indentation}  \x1B[32m-\x1B[37m${prop}: \x1B[90m${value}\x1B[37m`
+              );
+            }
           }
         }
       }
     }
   }
 };
+_ModelEssential.parentRelations = {};
+var ModelEssential = _ModelEssential;
 
-// src/models/Action.ts
-var Action = class extends PolicyValidator {
+// src/Explorable.ts
+var Explorable = class _Explorable extends ModelEssential {
+  explore(pick, depth = 0, entities, options) {
+    if (pick(this, options)) {
+      entities.push(this);
+    }
+    for (const prop in this) {
+      if (this.hasOwnProperty(prop)) {
+        const value = this[prop];
+        if (Array.isArray(value)) {
+          for (const item of value) {
+            if (item instanceof _Explorable && typeof item.explore === "function") {
+              item.explore(pick, depth + 2, entities, options);
+            }
+          }
+        } else if (value instanceof _Explorable && typeof value.explore === "function") {
+          value.explore(pick, depth + 1, entities, options);
+        }
+      }
+    }
+  }
+};
+
+// src/models/odrl/Asset.ts
+var Asset = class extends Explorable {
+  constructor(target) {
+    super();
+    if (typeof target === "string") {
+      this.uid = target;
+    } else {
+      this.uid = target.uid;
+      this.partOf = target.partOf;
+      this.hasPolicy = target.hasPolicy;
+    }
+  }
+  visit() {
+    return __async(this, null, function* () {
+      return true;
+    });
+  }
+  verify() {
+    return __async(this, null, function* () {
+      return true;
+    });
+  }
+};
+
+// src/models/odrl/Rule.ts
+var Rule = class extends Explorable {
+  constructor(uid) {
+    super();
+    if (uid) {
+      this.uid = uid;
+    }
+  }
+  get constraints() {
+    if (this.constraint === void 0) {
+      this.constraint = [];
+    }
+    return this.constraint;
+  }
+  setTarget(asset) {
+    this.target = asset;
+  }
+  setAction(action) {
+    this.action = action;
+  }
+  addAction(action) {
+    if (this.action === void 0) {
+      this.action = [];
+    }
+    this.action.push(action);
+  }
+  addConstraint(constraint) {
+    this.constraints.push(constraint);
+  }
+  getTarget() {
+    return this.target;
+  }
+  getAction() {
+    return this.action;
+  }
+  getConstraints() {
+    return this.constraints;
+  }
+};
+
+// src/models/odrl/RulePermission.ts
+var RulePermission = class extends Rule {
+  constructor() {
+    super();
+  }
+  addDuty(duty) {
+    if (this.duty === void 0) {
+      this.duty = [];
+    }
+    this.duty.push(duty);
+  }
+  visit() {
+    return __async(this, null, function* () {
+      try {
+        if (this.constraints) {
+          const all = yield Promise.all(
+            this.constraints.map((constraint) => constraint.visit())
+          );
+          return all.every(Boolean);
+        }
+      } catch (error) {
+        console.error("Error while evaluating rule:", error);
+      }
+      return false;
+    });
+  }
+  verify() {
+    return __async(this, null, function* () {
+      return true;
+    });
+  }
+};
+
+// src/models/odrl/RuleProhibition.ts
+var RuleProhibition = class extends Rule {
+  constructor() {
+    super();
+  }
+  visit() {
+    return __async(this, null, function* () {
+      try {
+        if (this.constraints) {
+          const all = yield Promise.all(
+            this.constraints.map((constraint) => constraint.visit())
+          );
+          if (all.length) {
+            return all.every((value) => value === false);
+          }
+          return false;
+        }
+      } catch (error) {
+        console.error("Error while evaluating rule:", error);
+      }
+      return false;
+    });
+  }
+  verify() {
+    return __async(this, null, function* () {
+      return true;
+    });
+  }
+};
+
+// src/models/odrl/Action.ts
+var Action = class extends ModelEssential {
   constructor(value, includedIn) {
     super();
     this.value = value;
@@ -170,27 +316,8 @@ var Action = class extends PolicyValidator {
   }
 };
 
-// src/models/Asset.ts
-var Asset = class extends PolicyValidator {
-  constructor(target) {
-    super();
-    if (typeof target === "string") {
-      this.uid = target;
-    } else {
-      this.uid = target.uid;
-      this.partOf = target.partOf;
-      this.hasPolicy = target.hasPolicy;
-    }
-  }
-  verify() {
-    return __async(this, null, function* () {
-      return true;
-    });
-  }
-};
-
-// src/models/Operator.ts
-var _Operator = class _Operator extends PolicyValidator {
+// src/models/odrl/Operator.ts
+var _Operator = class _Operator extends ModelEssential {
   constructor(value) {
     super();
     this.value = value;
@@ -219,8 +346,8 @@ _Operator.IS_ANY_OF = "isAnyOf";
 _Operator.IS_NONE_OF = "isNoneOf";
 var Operator = _Operator;
 
-// src/models/RightOperand.ts
-var RightOperand = class extends PolicyValidator {
+// src/models/odrl/RightOperand.ts
+var RightOperand = class extends ModelEssential {
   constructor(value) {
     super();
     this.value = value;
@@ -232,8 +359,8 @@ var RightOperand = class extends PolicyValidator {
   }
 };
 
-// src/models/LeftOperand.ts
-var LeftOperand = class extends PolicyValidator {
+// src/models/odrl/LeftOperand.ts
+var LeftOperand = class extends ModelEssential {
   constructor(value) {
     super();
     this.value = value;
@@ -243,8 +370,12 @@ var LeftOperand = class extends PolicyValidator {
   }
   visit() {
     return __async(this, null, function* () {
-      if (this.value === "age") {
-        return 21;
+      try {
+        if (ModelEssential.fetcher) {
+          return ModelEssential.fetcher.context[this.value]();
+        }
+      } catch (error) {
+        console.error(`LeftOperand function ${this.value} not found`);
       }
       return null;
     });
@@ -256,8 +387,8 @@ var LeftOperand = class extends PolicyValidator {
   }
 };
 
-// src/models/Constraint.ts
-var Constraint = class extends PolicyValidator {
+// src/models/odrl/Constraint.ts
+var Constraint = class extends ModelEssential {
   constructor(leftOperand, operator, rightOperand) {
     super();
     this.leftOperand = leftOperand;
@@ -284,7 +415,7 @@ var Constraint = class extends PolicyValidator {
   }
 };
 
-// src/models/AtomicConstraint.ts
+// src/models/odrl/AtomicConstraint.ts
 var AtomicConstraint = class _AtomicConstraint extends Constraint {
   constructor(leftOperand, operator, rightOperand) {
     super(leftOperand, operator, rightOperand);
@@ -297,10 +428,16 @@ var AtomicConstraint = class _AtomicConstraint extends Constraint {
         switch ((_a = this.operator) == null ? void 0 : _a.value) {
           case Operator.EQ:
             return leftValue === this.rightOperand;
+          case Operator.NEQ:
+            return leftValue !== this.rightOperand;
           case Operator.GT:
             return leftValue > this.rightOperand.value;
+          case Operator.GEQ:
+            return leftValue >= this.rightOperand.value;
           case Operator.LT:
             return leftValue < this.rightOperand.value;
+          case Operator.LEQ:
+            return leftValue <= this.rightOperand.value;
         }
       }
       return false;
@@ -317,7 +454,7 @@ var AtomicConstraint = class _AtomicConstraint extends Constraint {
   }
 };
 
-// src/models/LogicalConstraint.ts
+// src/models/odrl/LogicalConstraint.ts
 var _LogicalConstraint = class _LogicalConstraint extends Constraint {
   constructor(operand) {
     super(null, null, null);
@@ -357,29 +494,8 @@ var _LogicalConstraint = class _LogicalConstraint extends Constraint {
 _LogicalConstraint.operands = ["and", "andSequence", "or", "xone"];
 var LogicalConstraint = _LogicalConstraint;
 
-// src/PolicyExplorer.ts
-var PolicyExplorer = class _PolicyExplorer extends PolicyValidator {
-  explore(depth = 0, evaluators) {
-    evaluators.push(this.visit());
-    for (const prop in this) {
-      if (this.hasOwnProperty(prop)) {
-        const value = this[prop];
-        if (Array.isArray(value)) {
-          for (const item of value) {
-            if (item instanceof _PolicyExplorer && typeof item.explore === "function") {
-              item.explore(depth + 2, evaluators);
-            }
-          }
-        } else if (value instanceof _PolicyExplorer && typeof value.explore === "function") {
-          value.explore(depth + 1, evaluators);
-        }
-      }
-    }
-  }
-};
-
-// src/models/Policy.ts
-var Policy = class extends PolicyExplorer {
+// src/models/odrl/Policy.ts
+var Policy = class _Policy extends Explorable {
   constructor(uid, context, type) {
     super();
     this["@context"] = "";
@@ -408,18 +524,25 @@ var Policy = class extends PolicyExplorer {
   addDuty(prohibition) {
     this.obligation.push(prohibition);
   }
-  launchValidation() {
+  validate() {
     return __async(this, null, function* () {
-      const validations = [];
-      this.validate(0, validations);
-      return Promise.all(validations).then(
+      const promises = [];
+      __superGet(_Policy.prototype, this, "validate").call(this, 0, promises);
+      return Promise.all(promises).then(
         (results) => results.every((result) => result)
       );
     });
   }
+  explore(picker, options) {
+    return __async(this, null, function* () {
+      const explorables = [];
+      __superGet(_Policy.prototype, this, "explore").call(this, picker, 0, explorables, options);
+      return explorables;
+    });
+  }
 };
 
-// src/models/PolicyAgreement.ts
+// src/models/odrl/PolicyAgreement.ts
 var PolicyAgreement = class extends Policy {
   constructor(uid, context) {
     super(uid, context, "Agreement");
@@ -440,7 +563,7 @@ var PolicyAgreement = class extends Policy {
   }
 };
 
-// src/models/PolicyOffer.ts
+// src/models/odrl/PolicyOffer.ts
 var PolicyOffer = class extends Policy {
   constructor(uid, context) {
     super(uid, context, "Offer");
@@ -461,7 +584,7 @@ var PolicyOffer = class extends Policy {
   }
 };
 
-// src/models/PolicySet.ts
+// src/models/odrl/PolicySet.ts
 var PolicySet = class extends Policy {
   constructor(uid, context) {
     super(uid, context, "Set");
@@ -480,62 +603,7 @@ var PolicySet = class extends Policy {
   }
 };
 
-// src/models/Rule.ts
-var Rule = class extends PolicyExplorer {
-  constructor(uid) {
-    super();
-    if (uid) {
-      this.uid = uid;
-    }
-  }
-  get constraints() {
-    if (this.constraint === void 0) {
-      this.constraint = [];
-    }
-    return this.constraint;
-  }
-  setTarget(asset) {
-    this.target = asset;
-  }
-  setAction(action) {
-    this.action = action;
-  }
-  addAction(action) {
-    if (this.action === void 0) {
-      this.action = [];
-    }
-    this.action.push(action);
-  }
-  addConstraint(constraint) {
-    this.constraints.push(constraint);
-  }
-  getTarget() {
-    return this.target;
-  }
-  getAction() {
-    return this.action;
-  }
-  getConstraints() {
-    return this.constraints;
-  }
-  visit() {
-    return __async(this, null, function* () {
-      try {
-        if (this.constraints) {
-          yield Promise.all(
-            this.constraints.map((constraint) => constraint.visit())
-          );
-        }
-        return true;
-      } catch (error) {
-        console.error("Error while evaluating rule:", error);
-        return false;
-      }
-    });
-  }
-};
-
-// src/models/RuleDuty.ts
+// src/models/odrl/RuleDuty.ts
 var RuleDuty = class extends Rule {
   constructor(assigner, assignee) {
     super();
@@ -561,46 +629,6 @@ var RuleDuty = class extends Rule {
       this.consequence = [];
     }
     this.consequence.push(consequence);
-  }
-};
-
-// src/models/RulePermission.ts
-var RulePermission = class extends Rule {
-  constructor() {
-    super();
-  }
-  addDuty(duty) {
-    if (this.duty === void 0) {
-      this.duty = [];
-    }
-    this.duty.push(duty);
-  }
-  visit() {
-    return __async(this, null, function* () {
-      return false;
-    });
-  }
-  verify() {
-    return __async(this, null, function* () {
-      return true;
-    });
-  }
-};
-
-// src/models/RuleProhibition.ts
-var RuleProhibition = class extends Rule {
-  constructor() {
-    super();
-  }
-  visit() {
-    return __async(this, null, function* () {
-      return false;
-    });
-  }
-  verify() {
-    return __async(this, null, function* () {
-      return true;
-    });
   }
 };
 
@@ -633,43 +661,50 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     }
     return _PolicyInstanciator.instance;
   }
-  static permission(element, parent) {
+  static setPermission(element, parent) {
     const rule = new RulePermission();
+    rule.setParent(parent);
     parent.addPermission(rule);
     return rule;
   }
-  static prohibition(element, parent) {
+  static setProhibition(element, parent) {
     const rule = new RuleProhibition();
+    rule.setParent(parent);
     parent.addProhibition(rule);
     return rule;
   }
-  static obligation(element, parent) {
+  static setObligation(element, parent) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
+    rule.setParent(parent);
     parent.addDuty(rule);
     return rule;
   }
-  static duty(element, parent) {
+  static setDuty(element, parent) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
+    rule.setParent(parent);
     parent.addDuty(rule);
     return rule;
   }
-  static action(element, parent) {
+  static setAction(element, parent) {
     if (typeof element === "object") {
       const action2 = new Action(element.value, null);
+      action2.setParent(parent);
       parent.addAction(action2);
       return action2;
     }
     const action = new Action(element, null);
+    action.setParent(parent);
     parent.setAction(action);
     return action;
   }
-  static target(element, parent) {
+  static setTarget(element, parent) {
     const asset = new Asset(element);
+    asset.setParent(parent);
     parent.setTarget(asset);
   }
-  static constraint(element, parent) {
+  static setConstraint(element, parent) {
     const {
       leftOperand,
       operator,
@@ -687,13 +722,16 @@ var _PolicyInstanciator = class _PolicyInstanciator {
       ["constraint", "leftOperand", "operator", "rightOperand"],
       1 /* exclude */
     );
+    if (constraint) {
+      constraint.setParent(parent);
+    }
     parent.addConstraint(constraint || element);
     return constraint;
   }
-  static refinement(element, parent) {
-    return _PolicyInstanciator.constraint(element, parent);
+  static setRefinement(element, parent) {
+    return _PolicyInstanciator.setConstraint(element, parent);
   }
-  static consequence(element, parent) {
+  static setConsequence(element, parent) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     copy(
@@ -702,6 +740,7 @@ var _PolicyInstanciator = class _PolicyInstanciator {
       ["compensatedParty", "compensatingParty"],
       2 /* include */
     );
+    rule.setParent(parent);
     parent.addConsequence(rule);
     return rule;
   }
@@ -756,18 +795,195 @@ var _PolicyInstanciator = class _PolicyInstanciator {
   }
 };
 _PolicyInstanciator.instanciators = {
-  permission: _PolicyInstanciator.permission,
-  prohibition: _PolicyInstanciator.prohibition,
-  obligation: _PolicyInstanciator.obligation,
-  duty: _PolicyInstanciator.duty,
-  action: _PolicyInstanciator.action,
-  target: _PolicyInstanciator.target,
-  constraint: _PolicyInstanciator.constraint,
-  refinement: _PolicyInstanciator.refinement,
-  consequence: _PolicyInstanciator.consequence
+  permission: _PolicyInstanciator.setPermission,
+  prohibition: _PolicyInstanciator.setProhibition,
+  obligation: _PolicyInstanciator.setObligation,
+  duty: _PolicyInstanciator.setDuty,
+  action: _PolicyInstanciator.setAction,
+  target: _PolicyInstanciator.setTarget,
+  constraint: _PolicyInstanciator.setConstraint,
+  refinement: _PolicyInstanciator.setRefinement,
+  consequence: _PolicyInstanciator.setConsequence
 };
 var PolicyInstanciator = _PolicyInstanciator;
 var PolicyInstanciator_default = PolicyInstanciator.getInstance();
+
+// src/PolicyEvaluator.ts
+var PolicyEvaluator = class _PolicyEvaluator {
+  constructor() {
+    this.pickers = {
+      target: {
+        pick: this.pickTarget.bind(this),
+        type: Asset
+      },
+      permission: {
+        pick: this.pickPermission.bind(this),
+        type: RulePermission
+      },
+      prohibition: {
+        pick: this.pickProhibition.bind(this),
+        type: RuleProhibition
+      }
+    };
+    this.pick = (explorable, options) => {
+      for (const key in options) {
+        if (options.hasOwnProperty(key)) {
+          const picker = this.pickers[key];
+          if (typeof picker.pick === "function" && explorable instanceof picker.type) {
+            const pickable = picker.pick(explorable, options);
+            if (pickable) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    };
+    this.policies = null;
+  }
+  static getInstance() {
+    if (!_PolicyEvaluator.instance) {
+      _PolicyEvaluator.instance = new _PolicyEvaluator();
+    }
+    return _PolicyEvaluator.instance;
+  }
+  pickTarget(explorable, options) {
+    if (explorable instanceof Asset) {
+      const uid = explorable.uid;
+      const target = options == null ? void 0 : options.target;
+      if (typeof target === "object") {
+        return target.all || uid === target.uid;
+      }
+      return uid === target;
+    }
+    return false;
+  }
+  pickPermission(explorable, options) {
+    console.log("pickPermission");
+    return true;
+  }
+  pickProhibition(explorable, options) {
+    console.log("pickProhibition");
+    return true;
+  }
+  /*
+  public setPolicy(policy: Policy): void {
+    this.policy = policy;
+  }
+  */
+  cleanPolicies() {
+    this.policies = [];
+  }
+  addPolicy(policy) {
+    if (this.policies === null) {
+      this.policies = [];
+    }
+    this.policies.push(policy);
+  }
+  setPolicy(policy) {
+    this.cleanPolicies();
+    this.addPolicy(policy);
+  }
+  setFetcher(fetcher) {
+    ModelEssential.setFetcher(fetcher);
+  }
+  explore(options) {
+    return __async(this, null, function* () {
+      if (this.policies && this.policies.length) {
+        const explorables = (yield Promise.all(
+          this.policies.map(
+            (policy) => __async(this, null, function* () {
+              return yield policy.explore(this.pick.bind(this), options);
+            })
+          )
+        )).flat();
+        return explorables;
+      }
+      return [];
+    });
+  }
+  /**
+   * Retrieves a list of performable actions on the specified target.
+   * @param target - A string representing the target
+   * @returns A promise resolved with an array of performables actions.
+   */
+  getPerformableActions(target) {
+    return __async(this, null, function* () {
+      const targets = yield this.explore({
+        target
+      });
+      const actionPromises = {};
+      targets.forEach((target2) => {
+        const parent = target2.getParent();
+        const action = parent.action;
+        if (!actionPromises[action.value]) {
+          actionPromises[action.value] = [];
+        }
+        actionPromises[action.value].push(parent.visit());
+      });
+      const actions = [];
+      for (const [action, promises] of Object.entries(actionPromises)) {
+        const results = yield Promise.all(promises);
+        const isPerformable = results.every((result) => result);
+        if (isPerformable) {
+          actions.push(action);
+        }
+      }
+      return actions;
+    });
+  }
+  /**
+   * Verify if a specific action can be performed on a given target.
+   * @param actionType - A string representing the action.
+   * @param target - A string representing the target.
+   * @returns Resolves with a boolean indicating action performability.
+   */
+  isActionPerformable(actionType, target) {
+    return __async(this, null, function* () {
+      const targets = yield this.explore({
+        target
+      });
+      const results = yield targets.reduce(
+        (promise, target2) => __async(this, null, function* () {
+          const acc = yield promise;
+          const parent = target2.getParent();
+          const action = parent.action;
+          return actionType === (action == null ? void 0 : action.value) ? [...acc, yield parent.visit()] : acc;
+        }),
+        Promise.resolve([])
+      );
+      return results.every((result) => result);
+    });
+  }
+  /**
+   * Evaluates the exploitability of listed resources within a set of policies.
+   * @param json - JSON representation of policies to be evaluated.
+   * @returns Resolves with a boolean indicating if the resources are exploitable.
+   */
+  evalResourcePerformabilities(json) {
+    return __async(this, null, function* () {
+      const instanciator2 = new PolicyInstanciator();
+      instanciator2.genPolicyFrom(json);
+      const evaluator2 = new _PolicyEvaluator();
+      if (instanciator2.policy) {
+        evaluator2.setPolicy(instanciator2.policy);
+      }
+      const targets = yield evaluator2.explore({
+        target: { uid: "", all: true }
+      });
+      const actionPromises = targets.map(
+        (target) => __async(this, null, function* () {
+          const parent = target.getParent();
+          const actionType = parent.action.value;
+          return target.uid ? this.isActionPerformable(actionType, target.uid) : false;
+        })
+      );
+      const results = yield Promise.all(actionPromises);
+      return results.every((result) => result);
+    });
+  }
+};
+var PolicyEvaluator_default = PolicyEvaluator.getInstance();
 
 // src/index.ts
 var evaluator = PolicyEvaluator_default;

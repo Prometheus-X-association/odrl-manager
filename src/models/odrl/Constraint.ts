@@ -1,4 +1,4 @@
-import { ModelEssential } from '../ModelEssential';
+import { ModelEssential } from '../../ModelEssential';
 import { LeftOperand } from './LeftOperand';
 import { LogicalConstraint } from './LogicalConstraint';
 import { Operator } from './Operator';

@@ -1,4 +1,4 @@
-import { ModelEssential } from '../ModelEssential';
+import { ModelEssential } from '../../ModelEssential';
 
 export class LeftOperand extends ModelEssential {
   private value: string;
