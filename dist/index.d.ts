@@ -1,3 +1,4 @@
+declare const Custom: () => MethodDecorator;
 interface LeftOperandFunctions {
     absolutePosition: () => Promise<number>;
     absoluteSize: () => Promise<number>;
@@ -314,4 +315,4 @@ declare class PolicyInstanciator {
 declare const evaluator: PolicyEvaluator;
 declare const instanciator: PolicyInstanciator;
 
-export { evaluator, instanciator };
+export { ContextFetcher, Custom, evaluator, instanciator };
