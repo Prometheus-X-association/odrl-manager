@@ -167,9 +167,14 @@ export class PolicyInstanciator {
   }
 
   public genPolicyFrom(json: any): Policy | null {
-    this.selectPolicyType(json);
-    this.traverse(json, this.policy);
-    return this.policy;
+    try {
+      this.selectPolicyType(json);
+      this.traverse(json, this.policy);
+      return this.policy;
+    } catch (error: any) {
+      console.error(error.message);
+    }
+    return null;
   }
 
   public traverse(node: any, parent: any): void {
