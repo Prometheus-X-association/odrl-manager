@@ -629,9 +629,9 @@ var AtomicConstraint = class _AtomicConstraint extends Constraint {
         const leftValue = yield this.leftOperand.visit();
         switch ((_a = this.operator) == null ? void 0 : _a.value) {
           case Operator.EQ:
-            return leftValue === this.rightOperand;
+            return leftValue === this.rightOperand.value;
           case Operator.NEQ:
-            return leftValue !== this.rightOperand;
+            return leftValue !== this.rightOperand.value;
           case Operator.GT:
             return leftValue > this.rightOperand.value;
           case Operator.GEQ:
@@ -963,9 +963,14 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     }
   }
   genPolicyFrom(json) {
-    this.selectPolicyType(json);
-    this.traverse(json, this.policy);
-    return this.policy;
+    try {
+      this.selectPolicyType(json);
+      this.traverse(json, this.policy);
+      return this.policy;
+    } catch (error) {
+      console.error(error.message);
+    }
+    return null;
   }
   traverse(node, parent) {
     const instanciate = (property, element) => {
