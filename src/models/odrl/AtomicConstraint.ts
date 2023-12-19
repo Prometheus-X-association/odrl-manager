@@ -17,9 +17,9 @@ export class AtomicConstraint extends Constraint {
       const leftValue: unknown = await this.leftOperand.visit();
       switch (this.operator?.value) {
         case Operator.EQ:
-          return leftValue === this.rightOperand;
+          return leftValue === this.rightOperand.value;
         case Operator.NEQ:
-          return leftValue !== this.rightOperand;
+          return leftValue !== this.rightOperand.value;
         case Operator.GT:
           return (leftValue as number) > (this.rightOperand.value as number);
         case Operator.GEQ:

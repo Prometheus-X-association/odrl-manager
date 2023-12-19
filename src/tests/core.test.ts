@@ -156,6 +156,17 @@ describe('Testing Core units', async () => {
             },
           ],
         },
+        {
+          action: 'read',
+          target: 'http://contract-target',
+          constraint: [
+            {
+              leftOperand: 'role',
+              operator: 'eq',
+              rightOperand: 'admin',
+            },
+          ],
+        },
       ],
       prohibition: [
         {
@@ -189,6 +200,10 @@ describe('Testing Core units', async () => {
           return this.absolutePosition;
         }
         // Custom fetching
+        @Custom()
+        protected async getRole(): Promise<string> {
+          return 'admin';
+        }
         @Custom()
         protected async getAge(): Promise<number> {
           return 18;
