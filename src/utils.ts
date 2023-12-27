@@ -24,3 +24,9 @@ export const copy = (
     });
   }
 };
+
+export const getLastTerm = (input: string): string | undefined => {
+  const a = input.split('/');
+  const b = a.pop();
+  return b === '' ? a.pop() : b;
+};

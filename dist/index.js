@@ -45,6 +45,8 @@ var src_exports = {};
 __export(src_exports, {
   ContextFetcher: () => ContextFetcher,
   Custom: () => Custom,
+  PolicyEvaluator: () => PolicyEvaluator,
+  PolicyInstanciator: () => PolicyInstanciator,
   evaluator: () => evaluator,
   instanciator: () => instanciator
 });
@@ -879,6 +881,11 @@ var copy = (instance, element, attributes = [], mode = 0) => {
     });
   }
 };
+var getLastTerm = (input) => {
+  const a = input.split("/");
+  const b = a.pop();
+  return b === "" ? a.pop() : b;
+};
 
 // src/PolicyInstanciator.ts
 var _PolicyInstanciator = class _PolicyInstanciator {
@@ -918,16 +925,20 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     return rule;
   }
   static setAction(element, parent) {
-    if (typeof element === "object") {
-      const action2 = new Action(element.value, null);
-      action2.setParent(parent);
-      parent.addAction(action2);
-      return action2;
+    try {
+      const value = getLastTerm(
+        typeof element === "object" ? element.value : element
+      );
+      if (!value) {
+        throw new Error("Invalid action");
+      }
+      const action = new Action(value, null);
+      action.setParent(parent);
+      parent.setAction(action);
+      return action;
+    } catch (error) {
+      throw new Error("Action is undefined");
     }
-    const action = new Action(element, null);
-    action.setParent(parent);
-    parent.setAction(action);
-    return action;
   }
   static setTarget(element, parent) {
     const asset = new Asset(element);
@@ -937,10 +948,11 @@ var _PolicyInstanciator = class _PolicyInstanciator {
   static setConstraint(element, parent) {
     const {
       leftOperand,
-      operator,
+      operator: _operator,
       rightOperand,
       constraint: constraints
     } = element;
+    const operator = _operator && getLastTerm(_operator);
     const constraint = leftOperand && operator && rightOperand !== void 0 && new AtomicConstraint(
       new LeftOperand(leftOperand),
       new Operator(operator),
@@ -1227,6 +1239,8 @@ var instanciator = PolicyInstanciator_default;
 0 && (module.exports = {
   ContextFetcher,
   Custom,
+  PolicyEvaluator,
+  PolicyInstanciator,
   evaluator,
   instanciator
 });
