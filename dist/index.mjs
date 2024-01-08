@@ -1083,11 +1083,6 @@ var PolicyEvaluator = class _PolicyEvaluator {
     console.log("pickProhibition");
     return true;
   }
-  /*
-  public setPolicy(policy: Policy): void {
-    this.policy = policy;
-  }
-  */
   cleanPolicies() {
     this.policies = [];
   }
@@ -1100,6 +1095,14 @@ var PolicyEvaluator = class _PolicyEvaluator {
   setPolicy(policy) {
     this.cleanPolicies();
     this.addPolicy(policy);
+  }
+  logPolicies() {
+    var _a;
+    if ((_a = this.policies) == null ? void 0 : _a.length) {
+      this.policies.forEach((policy) => {
+        policy.debug();
+      });
+    }
   }
   setFetcher(fetcher) {
     ModelEssential.setFetcher(fetcher);
@@ -1121,8 +1124,8 @@ var PolicyEvaluator = class _PolicyEvaluator {
   }
   /**
    * Retrieves a list of performable actions on the specified target.
-   * @param target - A string representing the target
-   * @returns A promise resolved with an array of performables actions.
+   * @param {string} target - A string representing the target.
+   * @returns {Promise<string[]>} A promise resolved with an array of performable actions.
    */
   getPerformableActions(target) {
     return __async(this, null, function* () {
@@ -1150,12 +1153,13 @@ var PolicyEvaluator = class _PolicyEvaluator {
     });
   }
   /**
-   * Verify if a specific action can be performed on a given target.
-   * @param actionType - A string representing the action.
-   * @param target - A string representing the target.
-   * @returns Resolves with a boolean indicating action performability.
+   * Verifies whether a specific action can be performed on a given target.
+   * @param {ActionType} actionType - A string representing the type of action.
+   * @param {string} target - A string representing the target.
+   * @param {boolean} defaultResult - A boolean defining the value to return if no corresponding target is found.
+   * @returns {Promise<boolean>} Resolves with a boolean indicating the feasibility of the action.
    */
-  isActionPerformable(actionType, target) {
+  isActionPerformable(actionType, target, defaultResult = false) {
     return __async(this, null, function* () {
       const targets = yield this.explore({
         target
@@ -1169,13 +1173,13 @@ var PolicyEvaluator = class _PolicyEvaluator {
         }),
         Promise.resolve([])
       );
-      return results.every((result) => result);
+      return results.length ? results.every((result) => result) : defaultResult;
     });
   }
   /**
    * Evaluates the exploitability of listed resources within a set of policies.
-   * @param json - JSON representation of policies to be evaluated.
-   * @returns Resolves with a boolean indicating if the resources are exploitable.
+   * @param {any} json - JSON representation of policies to be evaluated.
+   * @returns {Promise<boolean>} Resolves with a boolean indicating whether the resources are exploitable.
    */
   evalResourcePerformabilities(json) {
     return __async(this, null, function* () {

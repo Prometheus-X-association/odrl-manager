@@ -69,12 +69,6 @@ export class PolicyEvaluator {
     return true;
   }
 
-  /*
-  public setPolicy(policy: Policy): void {
-    this.policy = policy;
-  }
-  */
-
   public cleanPolicies(): void {
     this.policies = [];
   }
@@ -89,6 +83,14 @@ export class PolicyEvaluator {
   public setPolicy(policy: Policy): void {
     this.cleanPolicies();
     this.addPolicy(policy);
+  }
+
+  public logPolicies(): void {
+    if (this.policies?.length) {
+      this.policies.forEach((policy: Policy) => {
+        policy.debug();
+      });
+    }
   }
 
   public setFetcher(fetcher: ContextFetcher): void {
@@ -130,8 +132,8 @@ export class PolicyEvaluator {
 
   /**
    * Retrieves a list of performable actions on the specified target.
-   * @param target - A string representing the target
-   * @returns A promise resolved with an array of performables actions.
+   * @param {string} target - A string representing the target.
+   * @returns {Promise<string[]>} A promise resolved with an array of performable actions.
    */
   public async getPerformableActions(target: string): Promise<string[]> {
     const targets: Asset[] = (await this.explore({
@@ -158,14 +160,16 @@ export class PolicyEvaluator {
   }
 
   /**
-   * Verify if a specific action can be performed on a given target.
-   * @param actionType - A string representing the action.
-   * @param target - A string representing the target.
-   * @returns Resolves with a boolean indicating action performability.
+   * Verifies whether a specific action can be performed on a given target.
+   * @param {ActionType} actionType - A string representing the type of action.
+   * @param {string} target - A string representing the target.
+   * @param {boolean} defaultResult - A boolean defining the value to return if no corresponding target is found.
+   * @returns {Promise<boolean>} Resolves with a boolean indicating the feasibility of the action.
    */
   public async isActionPerformable(
     actionType: ActionType,
     target: string,
+    defaultResult: boolean = false,
   ): Promise<boolean> {
     const targets: Asset[] = (await this.explore({
       target,
@@ -181,13 +185,13 @@ export class PolicyEvaluator {
       },
       Promise.resolve([]),
     );
-    return results.every((result) => result);
+    return results.length ? results.every((result) => result) : defaultResult;
   }
 
   /**
    * Evaluates the exploitability of listed resources within a set of policies.
-   * @param json - JSON representation of policies to be evaluated.
-   * @returns Resolves with a boolean indicating if the resources are exploitable.
+   * @param {any} json - JSON representation of policies to be evaluated.
+   * @returns {Promise<boolean>} Resolves with a boolean indicating whether the resources are exploitable.
    */
   public async evalResourcePerformabilities(json: any): Promise<boolean> {
     const instanciator = new PolicyInstanciator();
