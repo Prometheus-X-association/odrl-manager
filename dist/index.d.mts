@@ -268,26 +268,28 @@ declare class PolicyEvaluator {
     cleanPolicies(): void;
     addPolicy(policy: Policy): void;
     setPolicy(policy: Policy): void;
+    logPolicies(): void;
     setFetcher(fetcher: ContextFetcher): void;
     private pick;
     private explore;
     /**
      * Retrieves a list of performable actions on the specified target.
-     * @param target - A string representing the target
-     * @returns A promise resolved with an array of performables actions.
+     * @param {string} target - A string representing the target.
+     * @returns {Promise<string[]>} A promise resolved with an array of performable actions.
      */
     getPerformableActions(target: string): Promise<string[]>;
     /**
-     * Verify if a specific action can be performed on a given target.
-     * @param actionType - A string representing the action.
-     * @param target - A string representing the target.
-     * @returns Resolves with a boolean indicating action performability.
+     * Verifies whether a specific action can be performed on a given target.
+     * @param {ActionType} actionType - A string representing the type of action.
+     * @param {string} target - A string representing the target.
+     * @param {boolean} defaultResult - A boolean defining the value to return if no corresponding target is found.
+     * @returns {Promise<boolean>} Resolves with a boolean indicating the feasibility of the action.
      */
-    isActionPerformable(actionType: ActionType, target: string): Promise<boolean>;
+    isActionPerformable(actionType: ActionType, target: string, defaultResult?: boolean): Promise<boolean>;
     /**
      * Evaluates the exploitability of listed resources within a set of policies.
-     * @param json - JSON representation of policies to be evaluated.
-     * @returns Resolves with a boolean indicating if the resources are exploitable.
+     * @param {any} json - JSON representation of policies to be evaluated.
+     * @returns {Promise<boolean>} Resolves with a boolean indicating whether the resources are exploitable.
      */
     evalResourcePerformabilities(json: any): Promise<boolean>;
 }
