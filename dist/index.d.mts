@@ -315,4 +315,4 @@ declare class PolicyInstanciator {
 declare const evaluator: PolicyEvaluator;
 declare const instanciator: PolicyInstanciator;
 
-export { ContextFetcher, Custom, evaluator, instanciator };
+export { type ActionType, ContextFetcher, Custom, PolicyEvaluator, PolicyInstanciator, evaluator, instanciator };

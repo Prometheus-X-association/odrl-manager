@@ -14,7 +14,7 @@ import { Rule } from './models/odrl/Rule';
 import { RuleDuty } from './models/odrl/RuleDuty';
 import { RulePermission } from './models/odrl/RulePermission';
 import { RuleProhibition } from './models/odrl/RuleProhibition';
-import { CopyMode, copy } from './utils';
+import { CopyMode, copy, getLastTerm } from './utils';
 
 type InstanciatorFunction = (node: any, parent: any) => any;
 
@@ -77,16 +77,20 @@ export class PolicyInstanciator {
   }
 
   private static setAction(element: string | any, parent: Rule): Action {
-    if (typeof element === 'object') {
-      const action = new Action(element.value, null);
+    try {
+      const value = getLastTerm(
+        typeof element === 'object' ? element.value : element,
+      );
+      if (!value) {
+        throw new Error('Invalid action');
+      }
+      const action = new Action(value, null);
       action.setParent(parent);
-      parent.addAction(action);
+      parent.setAction(action);
       return action;
+    } catch (error: any) {
+      throw new Error('Action is undefined');
     }
-    const action = new Action(element, null);
-    action.setParent(parent);
-    parent.setAction(action);
-    return action;
   }
 
   private static setTarget(element: any, parent: Rule): void {
@@ -101,10 +105,11 @@ export class PolicyInstanciator {
   ): Constraint {
     const {
       leftOperand,
-      operator,
+      operator: _operator,
       rightOperand,
       constraint: constraints,
     } = element;
+    const operator = _operator && getLastTerm(_operator);
     const constraint: Constraint =
       (leftOperand &&
         operator &&
