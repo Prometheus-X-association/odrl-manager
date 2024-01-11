@@ -1,7 +1,7 @@
 import { ModelEssential } from '../../ModelEssential';
 import { Constraint } from './Constraint';
 
-const actions = [
+export const actions = [
   'Attribution',
   'CommericalUse',
   'DerivativeWorks',
@@ -78,7 +78,11 @@ const actions = [
 
 export type ActionType = (typeof actions)[number];
 
+type InclusionMap = Map<string, Set<string>>;
+
 export class Action extends ModelEssential {
+  private static inclusions: InclusionMap = new Map();
+
   value: string;
   refinement?: Constraint[];
   includedIn: Action | null;
@@ -88,6 +92,19 @@ export class Action extends ModelEssential {
     super();
     this.value = value;
     this.includedIn = includedIn;
+
+    Action.includeIn(value, [this.value]);
+  }
+
+  public static includeIn(current: string, values: string[]) {
+    let inclusions: Set<string> | undefined = Action.inclusions.get(current);
+    if (!inclusions) {
+      inclusions = new Set<string>();
+      Action.inclusions.set(current, inclusions);
+    }
+    for (let value of values) {
+      inclusions.add(value);
+    }
   }
 
   public addConstraint(constraint: Constraint) {
@@ -96,6 +113,11 @@ export class Action extends ModelEssential {
     }
     this.refinement.push(constraint);
   }
+
+  public async isAllowed(value: string): Promise<boolean> {
+    return Action.inclusions.get(this.value)?.has(value) || false;
+  }
+
   public async verify(): Promise<boolean> {
     return true;
   }

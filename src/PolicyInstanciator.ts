@@ -1,4 +1,4 @@
-import { Action } from './models/odrl/Action';
+import { Action, actions } from './models/odrl/Action';
 import { Asset } from './models/odrl/Asset';
 import { AtomicConstraint } from './models/odrl/AtomicConstraint';
 import { Constraint } from './models/odrl/Constraint';
@@ -24,6 +24,56 @@ export class PolicyInstanciator {
 
   constructor() {
     this.policy = null;
+    Action.includeIn('use', [
+      'Attribution',
+      'CommericalUse',
+      'DerivativeWorks',
+      'Distribution',
+      'Notice',
+      'Reproduction',
+      'ShareAlike',
+      'Sharing',
+      'SourceCode',
+      'acceptTracking',
+      'aggregate',
+      'annotate',
+      'anonymize',
+      'archive',
+      'attribute',
+      'compensate',
+      'concurrentUse',
+      'delete',
+      'derive',
+      'digitize',
+      'distribute',
+      'ensureExclusivity',
+      'execute',
+      'grantUse',
+      'include',
+      'index',
+      'inform',
+      'install',
+      'modify',
+      'move',
+      'nextPolicy',
+      'obtainConsent',
+      'play',
+      'present',
+      'print',
+      'read',
+      'reproduce',
+      'reviewPolicy',
+      'stream',
+      'synchronize',
+      'textToSpeech',
+      'transform',
+      'translate',
+      'uninstall',
+      'watermark',
+    ]);
+    Action.includeIn('play', ['display']);
+    Action.includeIn('extract', ['reproduce']);
+    Action.includeIn('transfer', ['give', 'sell']);
   }
 
   public static getInstance(): PolicyInstanciator {

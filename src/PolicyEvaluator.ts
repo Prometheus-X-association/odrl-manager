@@ -179,7 +179,8 @@ export class PolicyEvaluator {
         const acc = await promise;
         const parent: ParentRule = target.getParent() as ParentRule;
         const action: Action = parent.action as Action;
-        return actionType === action?.value
+        // return actionType === action?.value
+        return (await action.isAllowed(actionType))
           ? [...acc, await parent.visit()]
           : acc;
       },
@@ -193,7 +194,10 @@ export class PolicyEvaluator {
    * @param {any} json - JSON representation of policies to be evaluated.
    * @returns {Promise<boolean>} Resolves with a boolean indicating whether the resources are exploitable.
    */
-  public async evalResourcePerformabilities(json: any): Promise<boolean> {
+  public async evalResourcePerformabilities(
+    json: any,
+    defaultResult: boolean = false,
+  ): Promise<boolean> {
     const instanciator = new PolicyInstanciator();
     instanciator.genPolicyFrom(json);
     const evaluator = new PolicyEvaluator();
@@ -213,7 +217,7 @@ export class PolicyEvaluator {
       },
     );
     const results = await Promise.all(actionPromises);
-    return results.every((result) => result);
+    return results.length ? results.every((result) => result) : defaultResult;
   }
 }
 
