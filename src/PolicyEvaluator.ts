@@ -148,15 +148,15 @@ export class PolicyEvaluator {
       }
       actionPromises[action.value].push(parent.visit());
     });
-    const actions: string[] = [];
+    const actions: ActionType[] = [];
     for (const [action, promises] of Object.entries(actionPromises)) {
       const results = await Promise.all(promises);
       const isPerformable = results.every((result) => result);
       if (isPerformable) {
-        actions.push(action);
+        actions.push(action as ActionType);
       }
     }
-    return actions;
+    return Action.getIncluded(actions);
   }
 
   /**
@@ -179,7 +179,6 @@ export class PolicyEvaluator {
         const acc = await promise;
         const parent: ParentRule = target.getParent() as ParentRule;
         const action: Action = parent.action as Action;
-        // return actionType === action?.value
         return (await action.isAllowed(actionType))
           ? [...acc, await parent.visit()]
           : acc;

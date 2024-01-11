@@ -118,6 +118,16 @@ export class Action extends ModelEssential {
     return Action.inclusions.get(this.value)?.has(value) || false;
   }
 
+  public static async getIncluded(values: ActionType[]): Promise<ActionType[]> {
+    const foundValues: ActionType[] = [];
+    values.forEach((value: ActionType) => {
+      const includedValues = Action.inclusions.get(value);
+      includedValues &&
+        foundValues.push(...(Array.from(includedValues) as ActionType[]));
+    });
+    return Array.from(new Set(foundValues));
+  }
+
   public async verify(): Promise<boolean> {
     return true;
   }
