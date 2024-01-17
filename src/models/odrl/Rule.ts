@@ -8,7 +8,9 @@ import { Relation } from './Relation';
 export abstract class Rule extends Explorable {
   action?: Action | Action[];
   target?: Asset;
+  // Legal or moral entity that has established the obligation / author of the policy.
   assigner?: Party;
+  // Individual or entity recipient of the obligation, required to comply with the policy.
   assignee?: Party;
   asset?: Asset;
   parties?: Party[];

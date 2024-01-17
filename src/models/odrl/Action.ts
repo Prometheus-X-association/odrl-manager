@@ -128,6 +128,20 @@ export class Action extends ModelEssential {
     return Array.from(new Set(foundValues));
   }
 
+  public async refine(): Promise<boolean> {
+    try {
+      if (this.refinement) {
+        const all = await Promise.all(
+          this.refinement.map((constraint) => constraint.visit()),
+        );
+        return all.every(Boolean);
+      }
+    } catch (error) {
+      console.error('Error while refining action:', error);
+    }
+    return false;
+  }
+
   public async verify(): Promise<boolean> {
     return true;
   }

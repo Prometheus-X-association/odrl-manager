@@ -214,7 +214,10 @@ export class PolicyInstanciator {
         this.policy = new PolicySet(json.uid, context);
         break;
       case 'Agreement':
-        this.policy = new PolicyAgreement(json.uid, context);
+        const policy = new PolicyAgreement(json.uid, context);
+        policy.assignee = json.assignee || null;
+        policy.assigner = json.assigner || null;
+        this.policy = policy;
         break;
       default:
         throw new Error(`Unknown policy type: ${json['@type']}`);
