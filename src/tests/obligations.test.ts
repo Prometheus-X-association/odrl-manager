@@ -3,6 +3,7 @@ import evaluator from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
 import { Policy } from 'models/odrl/Policy';
+import { ContextFetcher } from 'ContextFetcher';
 
 const assignee = 'http://example.com/person:44';
 const json = {
@@ -25,10 +26,32 @@ const json = {
             },
           ],
         },
+        {
+          value: 'compensate',
+          refinement: [
+            {
+              leftOperand: 'payAmount',
+              operator: 'lt',
+              rightOperand: 1000,
+              unit: 'http://dbpedia.org/resource/Euro',
+            },
+          ],
+        },
       ],
     },
   ],
 };
+
+class Fetcher extends ContextFetcher {
+  constructor() {
+    super();
+  }
+  // Overriding
+  protected async getPayAmount(): Promise<number> {
+    return 500;
+  }
+}
+const fetcher = new Fetcher();
 
 describe(`Testing 'Obligations' related units`, async () => {
   let policy: Policy | null;
@@ -41,6 +64,7 @@ describe(`Testing 'Obligations' related units`, async () => {
     const valid = await policy?.validate();
     expect(valid).to.equal(true);
     if (policy) {
+      evaluator.setFetcher(fetcher);
       evaluator.setPolicy(policy);
       evaluator.getAssignedDuties(assignee);
     }

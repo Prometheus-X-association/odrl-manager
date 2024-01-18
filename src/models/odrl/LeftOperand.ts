@@ -16,6 +16,8 @@ export class LeftOperand extends ModelEssential {
     try {
       if (ModelEssential.fetcher) {
         return ModelEssential.fetcher.context[this.value]();
+      } else {
+        console.warn(`No fetcher found, can't evaluate ${this.value}`);
       }
     } catch (error: any) {
       console.error(`LeftOperand function ${this.value} not found`);

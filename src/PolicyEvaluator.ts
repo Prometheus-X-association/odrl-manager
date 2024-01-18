@@ -315,7 +315,6 @@ export class PolicyEvaluator {
       permissionAssignee: assignee,
       prohibitionAssignee: assignee,
     })) as Explorable[];
-
     const results = await entities.reduce(
       async (promise: Promise<boolean[]>, entity: Explorable) => {
         const acc = await promise;
@@ -326,9 +325,11 @@ export class PolicyEvaluator {
             const processes = await Promise.all(
               actions.map((action) => action.refine()),
             );
+            console.log(JSON.stringify(processes, null, 2));
             acc.push(...processes);
           }
         }
+        // Todo, duty process for agreement
         /*
         const parent: ModelEssential = entity.getParent();
         if (parent instanceof Policy) {        
@@ -338,7 +339,6 @@ export class PolicyEvaluator {
       },
       Promise.resolve([]),
     );
-
     return results.length ? results.every((result) => result) : defaultResult;
   }
 }

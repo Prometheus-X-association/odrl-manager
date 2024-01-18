@@ -16,7 +16,11 @@ import { RulePermission } from './models/odrl/RulePermission';
 import { RuleProhibition } from './models/odrl/RuleProhibition';
 import { CopyMode, copy, getLastTerm } from './utils';
 
-type InstanciatorFunction = (node: any, parent: any) => any;
+type InstanciatorFunction = (
+  node: any,
+  parent: any,
+  fromArray?: boolean,
+) => any;
 
 export class PolicyInstanciator {
   public policy: Policy | null;
@@ -126,7 +130,11 @@ export class PolicyInstanciator {
     return rule;
   }
 
-  private static setAction(element: string | any, parent: Rule): Action {
+  private static setAction(
+    element: string | any,
+    parent: Rule,
+    fromArray?: boolean,
+  ): Action {
     try {
       const value = getLastTerm(
         typeof element === 'object' ? element.value : element,
@@ -136,7 +144,11 @@ export class PolicyInstanciator {
       }
       const action = new Action(value, null);
       action.setParent(parent);
-      parent.setAction(action);
+      if (!fromArray) {
+        parent.setAction(action);
+      } else {
+        parent.addAction(action);
+      }
       return action;
     } catch (error: any) {
       throw new Error('Action is undefined');
@@ -236,12 +248,22 @@ export class PolicyInstanciator {
   }
 
   public traverse(node: any, parent: any): void {
-    const instanciate = (property: string, element: any) => {
+    const instanciate = (
+      property: string,
+      element: any,
+      fromArray: boolean = false,
+    ) => {
       try {
         if (element) {
           const child: any =
             PolicyInstanciator.instanciators[property] &&
-            PolicyInstanciator.instanciators[property](element, parent);
+            ((PolicyInstanciator.instanciators[property].length == 3 &&
+              PolicyInstanciator.instanciators[property](
+                element,
+                parent,
+                fromArray,
+              )) ||
+              PolicyInstanciator.instanciators[property](element, parent));
           if (typeof element === 'object') {
             if (child) {
               this.traverse(element, child);
@@ -258,7 +280,7 @@ export class PolicyInstanciator {
       const element = node[property];
       if (Array.isArray(element)) {
         element.forEach((item: any) => {
-          instanciate(property, item);
+          instanciate(property, item, true);
         });
       } else {
         instanciate(property, element);
