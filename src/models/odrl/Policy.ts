@@ -28,21 +28,27 @@ export abstract class Policy extends Explorable {
   public get permissions(): RulePermission[] {
     return this.permission;
   }
+
   public get prohibitions(): RuleProhibition[] {
     return this.prohibition;
   }
+
   public get obligations(): RulePermission[] {
     return this.permission;
   }
+
   public addPermission(permission: RulePermission): void {
     this.permission.push(permission);
   }
+
   public addProhibition(prohibition: RuleProhibition): void {
     this.prohibition.push(prohibition);
   }
+
   public addDuty(prohibition: RuleDuty): void {
     this.obligation.push(prohibition);
   }
+
   public async validate(): Promise<boolean> {
     const promises: Promise<boolean>[] = [];
     super.validate(0, promises);

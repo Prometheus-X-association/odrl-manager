@@ -114,7 +114,7 @@ export class Action extends ModelEssential {
     this.refinement.push(constraint);
   }
 
-  public async isAllowed(value: string): Promise<boolean> {
+  public async includes(value: string): Promise<boolean> {
     return Action.inclusions.get(this.value)?.has(value) || false;
   }
 

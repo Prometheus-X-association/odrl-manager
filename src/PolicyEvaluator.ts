@@ -245,8 +245,9 @@ export class PolicyEvaluator {
         const acc = await promise;
         const parent: ParentRule = target.getParent() as ParentRule;
         const action: Action = parent.action as Action;
-        return (await action.isAllowed(actionType))
-          ? [...acc, await parent.visit()] // visit permission & prohibition
+        // ? [await parent.visit(), ...acc]
+        return (await action.includes(actionType))
+          ? acc.concat(await parent.visit()) // visit permission & prohibition
           : acc;
       },
       Promise.resolve([]),
@@ -257,6 +258,7 @@ export class PolicyEvaluator {
   /**
    * Evaluates the exploitability of listed resources within a set of policies.
    * @param {any} json - JSON representation of policies to be evaluated.
+   * @param {boolean} [defaultResult=false] - The default result if no resources are found.
    * @returns {Promise<boolean>} Resolves with a boolean indicating whether the resources are exploitable.
    */
   public async evalResourcePerformabilities(
@@ -297,6 +299,12 @@ export class PolicyEvaluator {
     return [];
   }
 
+  /**
+   * Evaluates whether the duties related to an assignee are fulfilled.
+   * @param {string} assignee - The string value representing the assignee.
+   * @param {boolean} [defaultResult=false] - The default result if no duties are found.
+   * @returns {Promise<boolean>} Resolves with a boolean indicating whether the duties are fulfilled.
+   */
   public async fulfillDuties(
     assignee: string,
     defaultResult: boolean = false,
@@ -307,26 +315,26 @@ export class PolicyEvaluator {
       permissionAssignee: assignee,
       prohibitionAssignee: assignee,
     })) as Explorable[];
-    console.log(entities);
+
     const results = await entities.reduce(
       async (promise: Promise<boolean[]>, entity: Explorable) => {
         const acc = await promise;
-        const rule = entity as Rule;
-        if (Array.isArray(rule.action)) {
+        if (entity instanceof Rule) {
+          const rule = entity as Rule;
+          const actions = rule.action;
+          if (Array.isArray(actions)) {
+            const processes = await Promise.all(
+              actions.map((action) => action.refine()),
+            );
+            acc.push(...processes);
+          }
         }
         /*
         const parent: ModelEssential = entity.getParent();
-        if (parent instanceof Policy) {
-        
+        if (parent instanceof Policy) {        
         }
         */
-        // console.log(parent, '<<');
         return acc;
-        /*
-        return (await action.isAllowed(actionType))
-          ? [...acc, await parent.visit()]
-          : acc;
-        */
       },
       Promise.resolve([]),
     );
