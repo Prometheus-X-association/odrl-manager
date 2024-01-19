@@ -16,6 +16,13 @@ export class RuleDuty extends Rule {
   }
 
   public async visit(): Promise<boolean> {
+    const actions = this.action;
+    if (Array.isArray(actions)) {
+      const processes = await Promise.all(
+        actions.map((action) => action.refine()),
+      );
+      return processes.every(Boolean);
+    }
     return false;
   }
 

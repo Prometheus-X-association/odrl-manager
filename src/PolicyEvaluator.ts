@@ -200,6 +200,7 @@ export class PolicyEvaluator {
    * @param {string} target - A string representing the target.
    * @returns {Promise<string[]>} A promise resolved with an array of performable actions.
    */
+  // Todo, include duties processes
   public async getPerformableActions(target: string): Promise<string[]> {
     const targets: Asset[] = (await this.explore({
       target,
@@ -232,7 +233,7 @@ export class PolicyEvaluator {
    * @returns {Promise<boolean>} Resolves with a boolean indicating the feasibility of the action.
    */
   public async isActionPerformable(
-    // Todo, include duties process
+    // Todo, include duties processes
     actionType: ActionType,
     target: string,
     defaultResult: boolean = false,
@@ -240,28 +241,18 @@ export class PolicyEvaluator {
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
-    let duties: RuleDuty[] = [];
     const results = await targets.reduce(
       async (promise: Promise<boolean[]>, target: Asset) => {
         const acc = await promise;
         const parent: ParentRule = target.getParent() as ParentRule;
         const action: Action = parent.action as Action;
-        // Duty process related to RulePermission
-        if (parent instanceof RulePermission) {
-          const duty = (parent as RulePermission).duty;
-          if (duty) {
-            duties = duties.concat(duty);
-          }
-        }
+        // visit permission & prohibition
         return (await action.includes(actionType))
-          ? acc.concat(await parent.visit()) // visit permission & prohibition
+          ? acc.concat(await parent.visit())
           : acc;
       },
       Promise.resolve([]),
     );
-    if (duties.length && !(await this.evalDuties(duties))) {
-      return false;
-    }
     return results.length ? results.every((result) => result) : defaultResult;
   }
 
@@ -328,6 +319,12 @@ export class PolicyEvaluator {
     return this.evalDuties(entities, defaultResult);
   }
 
+  /**
+   * Evaluates whether certain duties are fulfilled based on the related action conditions.
+   * @param {Explorable[]} entities - An array of entities to be explored.
+   * @param {boolean} [defaultResult=false] - The default result if no duties are found.
+   * @returns {Promise<boolean>} Resolves with a boolean indicating whether the duties are fulfilled.
+   */
   private async evalDuties(
     entities: Explorable[],
     defaultResult: boolean = false,
@@ -335,22 +332,10 @@ export class PolicyEvaluator {
     const results = await entities.reduce(
       async (promise: Promise<boolean[]>, entity: Explorable) => {
         const acc = await promise;
-        if (entity instanceof Rule) {
-          const rule = entity as Rule;
-          const actions = rule.action;
-          if (Array.isArray(actions)) {
-            const processes = await Promise.all(
-              actions.map((action) => action.refine()),
-            );
-            acc.push(...processes);
-          }
+        if (entity instanceof RuleDuty) {
+          return acc.concat(await (entity as RuleDuty).visit());
         }
         // Todo, duty process for agreement
-        /*
-        const parent: ModelEssential = entity.getParent();
-        if (parent instanceof Policy) {        
-        }
-        */
         return acc;
       },
       Promise.resolve([]),
