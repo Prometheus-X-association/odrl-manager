@@ -9,7 +9,6 @@ const assignee = 'http://example.com/person:44';
 const json = {
   '@context': 'https://www.w3.org/ns/odrl/2/',
   '@type': 'Agreement',
-  assignee,
   obligation: [
     {
       assigner: 'http://example.com/org:43',
@@ -42,6 +41,7 @@ const json = {
   ],
 };
 
+// Todo: take assignee, target and action into account
 class Fetcher extends ContextFetcher {
   constructor() {
     super();
@@ -52,6 +52,7 @@ class Fetcher extends ContextFetcher {
   }
 }
 const fetcher = new Fetcher();
+evaluator.setFetcher(fetcher);
 
 describe(`Testing 'Obligations' related units`, async () => {
   let policy: Policy | null;
@@ -59,12 +60,12 @@ describe(`Testing 'Obligations' related units`, async () => {
     policy = instanciator.genPolicyFrom(json);
     policy?.debug();
   });
+
   it(`Should retrieve assigned "RuleDuties" for specified "assignee"`, async function () {
     _logCyan('\n> ' + this.test?.title);
     const valid = await policy?.validate();
     expect(valid).to.equal(true);
     if (policy) {
-      evaluator.setFetcher(fetcher);
       evaluator.setPolicy(policy);
       evaluator.getAssignedDuties(assignee);
     }
@@ -74,7 +75,7 @@ describe(`Testing 'Obligations' related units`, async () => {
     const fulfilled = await evaluator.fulfillDuties(assignee);
     expect(fulfilled).to.equal(true);
   });
-  return;
+
   it(``, async function () {
     const json = {
       '@context': 'https://www.w3.org/ns/odrl/2/',
@@ -93,7 +94,7 @@ describe(`Testing 'Obligations' related units`, async () => {
                     {
                       leftOperand: 'payAmount',
                       operator: 'eq',
-                      rightOperand: 5,
+                      rightOperand: 500,
                       unit: 'http://dbpedia.org/resource/Euro',
                     },
                   ],
@@ -123,6 +124,7 @@ describe(`Testing 'Obligations' related units`, async () => {
         'play',
         'http://example.com/music/1999.mp3',
       );
+      expect(isPerformable).to.equal(true);
     }
   });
 });

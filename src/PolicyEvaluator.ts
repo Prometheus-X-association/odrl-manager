@@ -232,7 +232,7 @@ export class PolicyEvaluator {
    * @returns {Promise<boolean>} Resolves with a boolean indicating the feasibility of the action.
    */
   public async isActionPerformable(
-    // Todo, include duty process
+    // Todo, include duties process
     actionType: ActionType,
     target: string,
     defaultResult: boolean = false,
@@ -240,18 +240,28 @@ export class PolicyEvaluator {
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
+    let duties: RuleDuty[] = [];
     const results = await targets.reduce(
       async (promise: Promise<boolean[]>, target: Asset) => {
         const acc = await promise;
         const parent: ParentRule = target.getParent() as ParentRule;
         const action: Action = parent.action as Action;
-        // ? [await parent.visit(), ...acc]
+        // Duty process related to RulePermission
+        if (parent instanceof RulePermission) {
+          const duty = (parent as RulePermission).duty;
+          if (duty) {
+            duties = duties.concat(duty);
+          }
+        }
         return (await action.includes(actionType))
           ? acc.concat(await parent.visit()) // visit permission & prohibition
           : acc;
       },
       Promise.resolve([]),
     );
+    if (duties.length && !(await this.evalDuties(duties))) {
+      return false;
+    }
     return results.length ? results.every((result) => result) : defaultResult;
   }
 
@@ -315,6 +325,13 @@ export class PolicyEvaluator {
       permissionAssignee: assignee,
       prohibitionAssignee: assignee,
     })) as Explorable[];
+    return this.evalDuties(entities, defaultResult);
+  }
+
+  private async evalDuties(
+    entities: Explorable[],
+    defaultResult: boolean = false,
+  ): Promise<boolean> {
     const results = await entities.reduce(
       async (promise: Promise<boolean[]>, entity: Explorable) => {
         const acc = await promise;
@@ -325,7 +342,6 @@ export class PolicyEvaluator {
             const processes = await Promise.all(
               actions.map((action) => action.refine()),
             );
-            console.log(JSON.stringify(processes, null, 2));
             acc.push(...processes);
           }
         }
