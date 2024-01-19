@@ -4,6 +4,8 @@ This project is a partial implementation in Node.js dedicated to providing a lig
 
 ### Goals:
 
-- **JSON ODRL Policy Interpretation:** Implementation of an engine capable of interpreting ODRL policies in JSON format to determine the rights associated with a digital resource.
+- **JSON ODRL Policy Evaluation:** Implementation of an engine capable of interpreting ODRL policies in JSON format to determine the rights associated with a digital resource.
 
 - **JSON Policy Validation:** Feature enabling the validation of ODRL policies in JSON format against the official specification.
+
+- **ContextFetcher Implementation:** Integrate a ContextFetcher to retrieve values for evaluating the `leftOperand` in conditions and refinements of actions.
