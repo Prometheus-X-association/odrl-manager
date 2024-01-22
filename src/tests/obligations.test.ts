@@ -48,7 +48,14 @@ class Fetcher extends ContextFetcher {
   }
   // Overriding
   protected async getPayAmount(): Promise<number> {
-    return 500;
+    switch (this.options.assignee) {
+      case 'http://example.com/person:44':
+        return 500;
+      case 'http://example.com/person:45':
+        return 20;
+      default:
+        return 0;
+    }
   }
 }
 const fetcher = new Fetcher();
@@ -67,16 +74,21 @@ describe(`Testing 'Obligations' related units`, async () => {
     expect(valid).to.equal(true);
     if (policy) {
       evaluator.setPolicy(policy);
-      evaluator.getAssignedDuties(assignee);
+      const duties = await evaluator.getAssignedDuties(assignee);
+      // _logObject(duties);
+      expect(duties).to.have.lengthOf(1);
     }
   });
 
   it(`Should verify assignee's fulfillment of "Obligations"`, async function () {
+    _logCyan('\n> ' + this.test?.title);
     const fulfilled = await evaluator.fulfillDuties(assignee);
     expect(fulfilled).to.equal(true);
   });
 
-  it(``, async function () {
+  it(`Should validate policy and confirm performability of
+    "play" action on the specified target`, async function () {
+    _logCyan('\n> ' + this.test?.title);
     const json = {
       '@context': 'https://www.w3.org/ns/odrl/2/',
       '@type': 'Offer',
@@ -125,6 +137,48 @@ describe(`Testing 'Obligations' related units`, async () => {
         'http://example.com/music/1999.mp3',
       );
       expect(isPerformable).to.equal(true);
+    }
+  });
+
+  it(`Should a policy 'Agreement'`, async function () {
+    const json = {
+      '@context': 'https://www.w3.org/ns/odrl/2/',
+      '@type': 'Agreement',
+      assigner: 'http://example.com/org:43',
+      assignee: 'http://example.com/person:45',
+      obligation: [
+        {
+          action: 'delete',
+          target: 'http://example.com/document:XZY',
+          consequence: [
+            {
+              action: [
+                {
+                  value: 'compensate',
+                  refinement: [
+                    {
+                      leftOperand: 'payAmount',
+                      operator: 'eq',
+                      rightOperand: 10,
+                      unit: 'http://dbpedia.org/resource/Euro',
+                    },
+                  ],
+                },
+              ],
+              // compensatedParty: 'http://wwf.org',
+            },
+          ],
+        },
+      ],
+    };
+    const policy = instanciator.genPolicyFrom(json);
+    policy?.debug();
+    const valid = await policy?.validate();
+    expect(valid).to.equal(true);
+    if (policy) {
+      evaluator.setPolicy(policy);
+      const agreed = await evaluator.evalAgreementForAssignee();
+      expect(agreed).to.equal(false);
     }
   });
 });

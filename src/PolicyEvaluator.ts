@@ -174,8 +174,16 @@ export class PolicyEvaluator {
     }
   }
 
-  public setFetcher(fetcher: ContextFetcher): void {
+  private set fetcher(fetcher: ContextFetcher) {
     ModelEssential.setFetcher(fetcher);
+  }
+
+  private get fetcher(): ContextFetcher {
+    return ModelEssential.getFetcher();
+  }
+
+  public setFetcher(fetcher: ContextFetcher): void {
+    this.fetcher = fetcher;
   }
 
   private pick = (explorable: Explorable, options?: any): boolean => {
@@ -332,6 +340,9 @@ export class PolicyEvaluator {
     assignee: string,
     defaultResult: boolean = false,
   ): Promise<boolean> {
+    this.fetcher.setRequestOptions({
+      assignee,
+    });
     const entities: Explorable[] = (await this.explore({
       assignee,
       agreementAssignee: assignee,
@@ -379,6 +390,8 @@ export class PolicyEvaluator {
     );
     return results.length ? results.every((result) => result) : defaultResult;
   }
+
+  // Todo: Retrieve the expected value for a specific duty action
 }
 
 export default PolicyEvaluator.getInstance();

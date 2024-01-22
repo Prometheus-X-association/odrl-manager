@@ -15,6 +15,10 @@ export abstract class ModelEssential {
     ModelEssential.fetcher = fetcher;
   }
 
+  public static getFetcher(): ContextFetcher {
+    return ModelEssential.fetcher;
+  }
+
   public setParent(parent: ModelEssential): void {
     ModelEssential.parentRelations[this._objectUID] = parent;
   }

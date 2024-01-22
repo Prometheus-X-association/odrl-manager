@@ -50,6 +50,7 @@ interface LeftOperandFunctions {
 }
 
 export abstract class ContextFetcher {
+  protected options: any = {};
   public context: LeftOperandFunctions = {
     absolutePosition: this.getAbsolutePosition.bind(this),
     absoluteSize: this.getAbsoluteSize.bind(this),
@@ -98,6 +99,10 @@ export abstract class ContextFetcher {
       this.context[lowercasePropertyName as keyof ContextFetcher] =
         this[method as keyof ContextFetcher].bind(this);
     });
+  }
+
+  public setRequestOptions(options: any) {
+    this.options = options;
   }
 
   protected async getAbsolutePosition(): Promise<number> {
