@@ -9,7 +9,6 @@ import { Action, ActionType } from 'models/odrl/Action';
 import { RuleDuty } from 'models/odrl/RuleDuty';
 import { PolicyInstanciator } from 'PolicyInstanciator';
 import { PolicyAgreement } from 'models/odrl/PolicyAgreement';
-import { Rule } from 'models/odrl/Rule';
 
 interface Picker {
   pick: (explorable: Explorable, options?: any) => boolean;
@@ -20,13 +19,7 @@ type Pickers = {
 };
 
 type ParentRule = RulePermission | RuleProhibition | RuleDuty;
-/*
-type AssignedEntity = {
-  assignee: string;
-  assigner: string;
-  action?: Action | Action[];
-};
-*/
+
 export class PolicyEvaluator {
   public static instance: PolicyEvaluator;
   private policies: Policy[] | null;
@@ -44,9 +37,12 @@ export class PolicyEvaluator {
       pick: this.pickProhibition.bind(this),
       type: RuleProhibition,
     },
-    // Assignee
     assignee: {
       pick: this.pickAssignedDuty.bind(this),
+      type: RuleDuty,
+    },
+    assigner: {
+      pick: this.pickEmittedDuty.bind(this),
       type: RuleDuty,
     },
     permissionAssignee: {
@@ -60,6 +56,11 @@ export class PolicyEvaluator {
     agreementAssignee: {
       pick: this.pickAssignedAgreement.bind(this),
       type: PolicyAgreement,
+    },
+    // Pick all duties
+    pickAllDuties: {
+      pick: this.pickAllDuties.bind(this),
+      type: RuleDuty,
     },
   };
 
@@ -86,42 +87,53 @@ export class PolicyEvaluator {
     return false;
   }
 
-  private pickAssignedEntity(explorable: Explorable, options?: any): boolean {
+  private pickEntityFor(
+    entity: string,
+    explorable: Explorable,
+    options?: any,
+  ): boolean {
     if (
       explorable instanceof RuleDuty ||
       explorable instanceof RulePermission ||
       explorable instanceof RuleProhibition ||
       explorable instanceof PolicyAgreement
     ) {
-      const uid = explorable.assignee;
-      const assignee = options?.assignee;
-      return uid === assignee;
+      const uid = explorable[entity as keyof typeof explorable];
+      const _uid = options
+        ? options[entity as keyof typeof explorable]
+        : undefined;
+      return _uid ? uid === _uid : false;
     }
     return false;
   }
+
+  private pickEmittedDuty(explorable: Explorable, options?: any): boolean {
+    return this.pickEntityFor('assigner', explorable, options);
+  }
+
   private pickAssignedDuty(explorable: Explorable, options?: any): boolean {
-    return this.pickAssignedEntity(explorable, options);
+    return this.pickEntityFor('assignee', explorable, options);
   }
 
   private pickAssignedPermission(
     explorable: Explorable,
     options?: any,
   ): boolean {
-    return this.pickAssignedEntity(explorable, options);
+    return this.pickEntityFor('assignee', explorable, options);
   }
 
   private pickAssignedProhibition(
     explorable: Explorable,
     options?: any,
   ): boolean {
-    return this.pickAssignedEntity(explorable, options);
+    return this.pickEntityFor('assignee', explorable, options);
   }
 
   private pickAssignedAgreement(
     explorable: Explorable,
     options?: any,
   ): boolean {
-    return this.pickAssignedEntity(explorable, options);
+    return this.pickEntityFor('assignee', explorable, options);
   }
 
   private pickPermission(explorable: Explorable, options?: any): boolean {
@@ -132,6 +144,10 @@ export class PolicyEvaluator {
   private pickProhibition(explorable: Explorable, options?: any): boolean {
     console.log('pickProhibition');
     return true;
+  }
+
+  private pickAllDuties(explorable: Explorable, options?: any): boolean {
+    return explorable instanceof RuleDuty;
   }
 
   public cleanPolicies(): void {
@@ -288,16 +304,22 @@ export class PolicyEvaluator {
     return results.length ? results.every((result) => result) : defaultResult;
   }
 
-  public async getDuties(): Promise<any[]> {
-    return [];
+  public async getDuties(): Promise<RuleDuty[]> {
+    return (await this.explore({
+      pickAllDuties: true,
+    })) as RuleDuty[];
   }
 
-  public async getAssignedDuties(assignee: string): Promise<any[]> {
-    return [];
+  public async getAssignedDuties(assignee: string): Promise<RuleDuty[]> {
+    return (await this.explore({
+      assignee,
+    })) as RuleDuty[];
   }
 
   public async getEmittedDuties(assigner: string): Promise<any[]> {
-    return [];
+    return (await this.explore({
+      assigner,
+    })) as RuleDuty[];
   }
 
   /**
@@ -320,6 +342,22 @@ export class PolicyEvaluator {
   }
 
   /**
+   * Evaluates whether the agreement is fulfilled by the assignee.
+   * @param {boolean} [defaultResult=false] - The default result if no duties are found.
+   * @returns {Promise<boolean>} Resolves with a boolean indicating whether the agreement is fulfilled.
+   */
+  public async evalAgreementForAssignee(
+    defaultResult: boolean = false,
+  ): Promise<boolean> {
+    const entities: Explorable[] = (
+      await this.explore({
+        pickAllDuties: true,
+      })
+    ).filter((entity) => !(entity as RuleDuty).assignee) as Explorable[];
+    return this.evalDuties(entities, defaultResult);
+  }
+
+  /**
    * Evaluates whether certain duties are fulfilled based on the related action conditions.
    * @param {Explorable[]} entities - An array of entities to be explored.
    * @param {boolean} [defaultResult=false] - The default result if no duties are found.
@@ -335,7 +373,6 @@ export class PolicyEvaluator {
         if (entity instanceof RuleDuty) {
           return acc.concat(await (entity as RuleDuty).visit());
         }
-        // Todo, duty process for agreement
         return acc;
       },
       Promise.resolve([]),
