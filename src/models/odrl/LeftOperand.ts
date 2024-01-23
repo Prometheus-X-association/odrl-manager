@@ -14,8 +14,9 @@ export class LeftOperand extends ModelEssential {
 
   public async evaluate(): Promise<string | number | null> {
     try {
-      if (ModelEssential.fetcher) {
-        return ModelEssential.fetcher.context[this.value]();
+      const fetcher = ModelEssential.getFetcher();
+      if (fetcher) {
+        return fetcher.context[this.value]();
       } else {
         console.warn(`No fetcher found, can't evaluate ${this.value}`);
       }

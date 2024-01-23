@@ -1,11 +1,17 @@
 import instanciator from 'PolicyInstanciator';
-import evaluator from 'PolicyEvaluator';
+import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
 import { ContextFetcher } from 'ContextFetcher';
 import { Custom } from 'ContextFetcher';
+import { ModelEssential } from 'ModelEssential';
+
 describe('Testing Core units', async () => {
-  before(() => {});
+  let evaluator: PolicyEvaluator;
+  before(() => {
+    ModelEssential.cleanRelations();
+    evaluator = new PolicyEvaluator();
+  });
 
   it(`should validate a policy after parsing it.`, async function () {
     _logCyan('\n> ' + this.test?.title);
@@ -207,6 +213,9 @@ describe('Testing Core units', async () => {
         @Custom()
         protected async getAge(): Promise<number> {
           return 18;
+        }
+        protected async getPayAmount(): Promise<number> {
+          return 0;
         }
       }
       evaluator.setPolicy(policy);

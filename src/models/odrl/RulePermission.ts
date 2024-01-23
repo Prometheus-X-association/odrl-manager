@@ -28,6 +28,7 @@ export class RulePermission extends Rule {
         const all = await Promise.all(this.duty.map((duty) => duty.evaluate()));
         return all.every(Boolean);
       }
+      return true;
     } catch (error) {
       console.error('Error while evaluating rule:', error);
     }

@@ -31,13 +31,14 @@ export class RuleProhibition extends Rule {
         );
         return all.every(Boolean);
       }
+      return true;
     } catch (error) {
       console.error('Error while evaluating rule:', error);
     }
     return false;
   }
 
-  @HandleFailure()
+  // Todo: @HandleFailure()
   private async evaluateConstraints(): Promise<boolean> {
     try {
       if (this.constraints) {

@@ -1,4 +1,5 @@
 import { ContextFetcher } from 'ContextFetcher';
+import { Policy } from 'models/odrl/Policy';
 import { randomUUID } from 'node:crypto';
 interface ParentRelations {
   [key: string]: ModelEssential;
@@ -12,9 +13,9 @@ export const HandleFailure = (): MethodDecorator => {
   ) => {
     if (descriptor && typeof descriptor.value === 'function') {
       const originalMethod = descriptor.value;
-      descriptor.value = function (...args: any[]) {
-        const result = originalMethod.apply(this, args);
-        if ((this as any).parentMethod) {
+      descriptor.value = async function (...args: any[]) {
+        const result = await originalMethod.apply(this, args);
+        if ((this as any).handleFailure && !result) {
           (this as any).handleFailure();
         }
         return result;
@@ -25,8 +26,10 @@ export const HandleFailure = (): MethodDecorator => {
 };
 
 export abstract class ModelEssential {
+  // Todo: move to PolicyInstanciator
   private static parentRelations: ParentRelations = {};
-  protected static fetcher: ContextFetcher;
+  private static fetcher?: ContextFetcher;
+
   public _objectUID: string;
   constructor() {
     this._objectUID = randomUUID();
@@ -35,12 +38,17 @@ export abstract class ModelEssential {
   protected handleFailure() {
     console.log(JSON.stringify(this, null, 2), '<handleFailure>');
   }
+
   public static setFetcher(fetcher: ContextFetcher): void {
     ModelEssential.fetcher = fetcher;
   }
 
-  public static getFetcher(): ContextFetcher {
+  public static getFetcher(): ContextFetcher | undefined {
     return ModelEssential.fetcher;
+  }
+
+  public static cleanRelations(): void {
+    ModelEssential.parentRelations = {};
   }
 
   public setParent(parent: ModelEssential): void {

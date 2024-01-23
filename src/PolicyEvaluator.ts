@@ -9,6 +9,7 @@ import { Action, ActionType } from 'models/odrl/Action';
 import { RuleDuty } from 'models/odrl/RuleDuty';
 import { PolicyInstanciator } from 'PolicyInstanciator';
 import { PolicyAgreement } from 'models/odrl/PolicyAgreement';
+import { todo } from 'node:test';
 
 interface Picker {
   pick: (explorable: Explorable, options?: any) => boolean;
@@ -178,7 +179,7 @@ export class PolicyEvaluator {
     ModelEssential.setFetcher(fetcher);
   }
 
-  private get fetcher(): ContextFetcher {
+  private get fetcher(): ContextFetcher | undefined {
     return ModelEssential.getFetcher();
   }
 
@@ -340,7 +341,7 @@ export class PolicyEvaluator {
     assignee: string,
     defaultResult: boolean = false,
   ): Promise<boolean> {
-    this.fetcher.setRequestOptions({
+    this.fetcher?.setRequestOptions({
       assignee,
     });
     const entities: Explorable[] = (await this.explore({
@@ -349,6 +350,7 @@ export class PolicyEvaluator {
       permissionAssignee: assignee,
       prohibitionAssignee: assignee,
     })) as Explorable[];
+
     return this.evalDuties(entities, defaultResult);
   }
 
@@ -358,8 +360,19 @@ export class PolicyEvaluator {
    * @returns {Promise<boolean>} Resolves with a boolean indicating whether the agreement is fulfilled.
    */
   public async evalAgreementForAssignee(
+    assignee?: string,
     defaultResult: boolean = false,
   ): Promise<boolean> {
+    // Todo:
+    /*
+    if (!assignee) {
+      assignee = (this.policies?.[0] as PolicyAgreement).assignee;
+    }
+    */
+    this.fetcher?.setRequestOptions({
+      assignee,
+    });
+
     const entities: Explorable[] = (
       await this.explore({
         pickAllDuties: true,

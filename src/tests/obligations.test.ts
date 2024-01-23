@@ -1,9 +1,10 @@
 import instanciator from 'PolicyInstanciator';
-import evaluator from 'PolicyEvaluator';
+import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
 import { Policy } from 'models/odrl/Policy';
 import { ContextFetcher } from 'ContextFetcher';
+import { ModelEssential } from 'ModelEssential';
 
 const assignee = 'http://example.com/person:44';
 const json = {
@@ -52,18 +53,21 @@ class Fetcher extends ContextFetcher {
       case 'http://example.com/person:44':
         return 500;
       case 'http://example.com/person:45':
-        return 20;
+        return 10;
       default:
         return 0;
     }
   }
 }
-const fetcher = new Fetcher();
-evaluator.setFetcher(fetcher);
 
 describe(`Testing 'Obligations' related units`, async () => {
   let policy: Policy | null;
+  let evaluator: PolicyEvaluator;
   before(() => {
+    ModelEssential.cleanRelations();
+    const fetcher = new Fetcher();
+    evaluator = new PolicyEvaluator();
+    evaluator.setFetcher(fetcher);
     policy = instanciator.genPolicyFrom(json);
     policy?.debug();
   });
@@ -140,7 +144,7 @@ describe(`Testing 'Obligations' related units`, async () => {
     }
   });
 
-  it(`Should a policy 'Agreement'`, async function () {
+  it(`Should validate a policy 'Agreement'`, async function () {
     const json = {
       '@context': 'https://www.w3.org/ns/odrl/2/',
       '@type': 'Agreement',
@@ -148,6 +152,7 @@ describe(`Testing 'Obligations' related units`, async () => {
       assignee: 'http://example.com/person:45',
       obligation: [
         {
+          // Todo:
           action: 'delete',
           target: 'http://example.com/document:XZY',
           consequence: [
@@ -177,8 +182,10 @@ describe(`Testing 'Obligations' related units`, async () => {
     expect(valid).to.equal(true);
     if (policy) {
       evaluator.setPolicy(policy);
-      const agreed = await evaluator.evalAgreementForAssignee();
-      expect(agreed).to.equal(false);
+      const agreed = await evaluator.evalAgreementForAssignee(
+        'http://example.com/person:45',
+      );
+      expect(agreed).to.equal(true);
     }
   });
 });
