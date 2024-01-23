@@ -9,7 +9,7 @@ export class PolicySet extends Policy {
     super(uid, context, 'Set');
   }
 
-  public async visit(): Promise<boolean> {
+  public async evaluate(): Promise<boolean> {
     return false;
   }
 

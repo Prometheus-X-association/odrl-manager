@@ -15,7 +15,7 @@ export class RuleDuty extends Rule {
     }
   }
 
-  public async visit(): Promise<boolean> {
+  public async evaluate(): Promise<boolean> {
     const actions = this.action;
     if (Array.isArray(actions)) {
       const processes = await Promise.all(

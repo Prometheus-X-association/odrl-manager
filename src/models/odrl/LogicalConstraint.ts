@@ -14,18 +14,18 @@ export class LogicalConstraint extends Constraint {
     this.constraint.push(constraint);
   }
   // Todo
-  async visit(): Promise<boolean> {
+  async evaluate(): Promise<boolean> {
     switch (this.operand) {
       case 'and':
         return (
           await Promise.all(
-            this.constraint.map((constraint) => constraint.visit()),
+            this.constraint.map((constraint) => constraint.evaluate()),
           )
         ).every((result) => result);
       case 'or':
         return (
           await Promise.all(
-            this.constraint.map((constraint) => constraint.visit()),
+            this.constraint.map((constraint) => constraint.evaluate()),
           )
         ).some((result) => result);
       default:

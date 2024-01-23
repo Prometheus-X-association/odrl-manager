@@ -12,7 +12,7 @@ export class PolicyOffer extends Policy {
     super(uid, context, 'Offer');
   }
 
-  public async visit(): Promise<boolean> {
+  public async evaluate(): Promise<boolean> {
     return false;
   }
 

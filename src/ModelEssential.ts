@@ -3,6 +3,27 @@ import { randomUUID } from 'node:crypto';
 interface ParentRelations {
   [key: string]: ModelEssential;
 }
+
+export const HandleFailure = (): MethodDecorator => {
+  return (
+    target: any,
+    key: string | symbol,
+    descriptor: PropertyDescriptor,
+  ) => {
+    if (descriptor && typeof descriptor.value === 'function') {
+      const originalMethod = descriptor.value;
+      descriptor.value = function (...args: any[]) {
+        const result = originalMethod.apply(this, args);
+        if ((this as any).parentMethod) {
+          (this as any).handleFailure();
+        }
+        return result;
+      };
+    }
+    return descriptor;
+  };
+};
+
 export abstract class ModelEssential {
   private static parentRelations: ParentRelations = {};
   protected static fetcher: ContextFetcher;
@@ -11,6 +32,9 @@ export abstract class ModelEssential {
     this._objectUID = randomUUID();
   }
 
+  protected handleFailure() {
+    console.log(JSON.stringify(this, null, 2), '<handleFailure>');
+  }
   public static setFetcher(fetcher: ContextFetcher): void {
     ModelEssential.fetcher = fetcher;
   }

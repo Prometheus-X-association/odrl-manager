@@ -236,7 +236,7 @@ export class PolicyEvaluator {
       if (!actionPromises[action.value]) {
         actionPromises[action.value] = [];
       }
-      actionPromises[action.value].push(parent.visit());
+      actionPromises[action.value].push(parent.evaluate());
     });
     const actions: ActionType[] = [];
     for (const [action, promises] of Object.entries(actionPromises)) {
@@ -270,9 +270,9 @@ export class PolicyEvaluator {
         const acc = await promise;
         const parent: ParentRule = target.getParent() as ParentRule;
         const action: Action = parent.action as Action;
-        // visit permission & prohibition
+        // evaluate permission & prohibition
         return (await action.includes(actionType))
-          ? acc.concat(await parent.visit())
+          ? acc.concat(await parent.evaluate())
           : acc;
       },
       Promise.resolve([]),
@@ -382,7 +382,7 @@ export class PolicyEvaluator {
       async (promise: Promise<boolean[]>, entity: Explorable) => {
         const acc = await promise;
         if (entity instanceof RuleDuty) {
-          return acc.concat(await (entity as RuleDuty).visit());
+          return acc.concat(await (entity as RuleDuty).evaluate());
         }
         return acc;
       },

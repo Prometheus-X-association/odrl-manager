@@ -10,7 +10,7 @@ export class PolicyPreference extends Policy {
     super(uid, context, 'Preference');
   }
 
-  public async visit(): Promise<boolean> {
+  public async evaluate(): Promise<boolean> {
     return false;
   }
 

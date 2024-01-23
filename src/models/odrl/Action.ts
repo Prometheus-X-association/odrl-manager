@@ -132,7 +132,7 @@ export class Action extends ModelEssential {
     try {
       if (this.refinement) {
         const all = await Promise.all(
-          this.refinement.map((constraint) => constraint.visit()),
+          this.refinement.map((constraint) => constraint.evaluate()),
         );
         return all.every(Boolean);
       }

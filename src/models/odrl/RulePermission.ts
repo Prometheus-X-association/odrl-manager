@@ -14,18 +14,18 @@ export class RulePermission extends Rule {
     this.duty.push(duty);
   }
 
-  public async visit(): Promise<boolean> {
+  public async evaluate(): Promise<boolean> {
     const result = await Promise.all([
-      this.visitConstraint(),
-      this.visitDuties(),
+      this.evaluateConstraints(),
+      this.evaluateDuties(),
     ]);
     return result.every(Boolean);
   }
 
-  private async visitDuties(): Promise<boolean> {
+  private async evaluateDuties(): Promise<boolean> {
     try {
       if (this.duty) {
-        const all = await Promise.all(this.duty.map((duty) => duty.visit()));
+        const all = await Promise.all(this.duty.map((duty) => duty.evaluate()));
         return all.every(Boolean);
       }
     } catch (error) {
@@ -34,11 +34,11 @@ export class RulePermission extends Rule {
     return false;
   }
 
-  private async visitConstraint(): Promise<boolean> {
+  private async evaluateConstraints(): Promise<boolean> {
     try {
       if (this.constraints) {
         const all = await Promise.all(
-          this.constraints.map((constraint) => constraint.visit()),
+          this.constraints.map((constraint) => constraint.evaluate()),
         );
         return all.every(Boolean);
       }

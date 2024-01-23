@@ -25,7 +25,7 @@ export abstract class Constraint extends ModelEssential {
     this.rightOperand = rightOperand;
   }
 
-  async visit(): Promise<boolean> {
+  async evaluate(): Promise<boolean> {
     return false;
   }
 

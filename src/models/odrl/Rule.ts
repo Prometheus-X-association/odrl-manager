@@ -13,8 +13,8 @@ export abstract class Rule extends Explorable {
   // Individual or entity recipient of the obligation, required to comply with the policy.
   assignee?: Party;
   asset?: Asset;
-  parties?: Party[];
-  failures?: Rule[];
+  function?: Party[];
+  failure?: Rule[];
   protected constraint?: Constraint[];
   uid?: string;
   relation?: Relation;

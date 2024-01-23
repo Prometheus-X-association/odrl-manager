@@ -12,7 +12,7 @@ export class LeftOperand extends ModelEssential {
     return this.value;
   }
 
-  public async visit(): Promise<string | number | null> {
+  public async evaluate(): Promise<string | number | null> {
     try {
       if (ModelEssential.fetcher) {
         return ModelEssential.fetcher.context[this.value]();

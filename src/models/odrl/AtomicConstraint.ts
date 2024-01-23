@@ -12,9 +12,9 @@ export class AtomicConstraint extends Constraint {
     super(leftOperand, operator, rightOperand);
   }
 
-  async visit(): Promise<boolean> {
+  async evaluate(): Promise<boolean> {
     if (this.leftOperand && this.rightOperand) {
-      const leftValue: unknown = await this.leftOperand.visit();
+      const leftValue: unknown = await this.leftOperand.evaluate();
       switch (this.operator?.value) {
         case Operator.EQ:
           return leftValue === this.rightOperand.value;
