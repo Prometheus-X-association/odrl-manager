@@ -1,3 +1,4 @@
+import { PolicyDataFetcher } from 'PolicyDataFetcher';
 import { ModelBasic } from '../ModelBasic';
 
 export class LeftOperand extends ModelBasic {
@@ -14,7 +15,9 @@ export class LeftOperand extends ModelBasic {
 
   public async evaluate(): Promise<string | number | null> {
     try {
-      const fetcher = ModelBasic.getFetcher();
+      const fetcher = this._rootUID
+        ? ModelBasic.getFetcher(this._rootUID)
+        : undefined;
       if (fetcher) {
         return fetcher.context[this.value]();
       } else {

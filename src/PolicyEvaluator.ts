@@ -22,6 +22,7 @@ type Pickers = {
 type ParentRule = RulePermission | RuleProhibition | RuleDuty;
 
 export class PolicyEvaluator {
+  // private static fetcher?: PolicyDataFetcher;
   public static instance: PolicyEvaluator;
   private policies: Policy[] | null;
 
@@ -176,11 +177,16 @@ export class PolicyEvaluator {
   }
 
   private set fetcher(fetcher: PolicyDataFetcher) {
-    ModelBasic.setFetcher(fetcher);
+    // ModelBasic.setFetcher(fetcher);
+    const policy = this.policies?.[0];
+    if (policy) {
+      // Todo
+    }
   }
 
   private get fetcher(): PolicyDataFetcher | undefined {
-    return ModelBasic.getFetcher();
+    const rootUID = this.policies?.[0]?._rootUID;
+    return rootUID ? ModelBasic.getFetcher(rootUID) : undefined;
   }
 
   public setFetcher(fetcher: PolicyDataFetcher): void {

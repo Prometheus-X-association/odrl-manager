@@ -1,8 +1,12 @@
 import { PolicyDataFetcher } from 'PolicyDataFetcher';
 import { Policy } from 'models/odrl/Policy';
 import { randomUUID } from 'node:crypto';
+
+interface EntityReferences {
+  [key: string]: any;
+}
 interface ParentRelations {
-  [key: string]: ModelBasic;
+  [key: string]: string;
 }
 
 export const HandleFailure = (): MethodDecorator => {
@@ -26,37 +30,44 @@ export const HandleFailure = (): MethodDecorator => {
 };
 
 export abstract class ModelBasic {
-  // Todo: move to PolicyInstanciator
   private static parentRelations: ParentRelations = {};
-  private static fetcher?: PolicyDataFetcher;
+  private static entityReferences: EntityReferences = {};
 
+  public _rootUID?: string;
   public _objectUID: string;
+  private _fetcherUID?: string;
+
   constructor() {
     this._objectUID = randomUUID();
+    ModelBasic.entityReferences[this._objectUID] = this;
   }
 
   protected handleFailure() {
-    console.log(JSON.stringify(this, null, 2), '<handleFailure>');
+    // Todo: Handle Failure
+    console.log('handleFailure');
   }
 
-  public static setFetcher(fetcher: PolicyDataFetcher): void {
-    ModelBasic.fetcher = fetcher;
+  public static getFetcher(rootUID: string): PolicyDataFetcher | undefined {
+    const root: ModelBasic = ModelBasic.entityReferences[rootUID];
+    return root?._fetcherUID
+      ? ModelBasic.entityReferences[root._fetcherUID]
+      : undefined;
   }
 
-  public static getFetcher(): PolicyDataFetcher | undefined {
-    return ModelBasic.fetcher;
-  }
+  public static addReference(): void {}
 
-  public static cleanRelations(): void {
+  public static cleanReferences(): void {
     ModelBasic.parentRelations = {};
+    ModelBasic.entityReferences = {};
   }
 
   public setParent(parent: ModelBasic): void {
-    ModelBasic.parentRelations[this._objectUID] = parent;
+    ModelBasic.parentRelations[this._objectUID] = parent._objectUID;
   }
 
   public getParent(): ModelBasic {
-    return ModelBasic.parentRelations[this._objectUID];
+    const uid = ModelBasic.parentRelations[this._objectUID];
+    return ModelBasic.entityReferences[uid];
   }
 
   protected abstract verify(): Promise<boolean>;

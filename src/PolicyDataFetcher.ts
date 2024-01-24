@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 export const Custom = (): MethodDecorator => {
   return (
     target: any,
@@ -50,7 +52,6 @@ interface LeftOperandFunctions {
 }
 
 export abstract class PolicyDataFetcher {
-  protected options: any = {};
   public context: LeftOperandFunctions = {
     absolutePosition: this.getAbsolutePosition.bind(this),
     absoluteSize: this.getAbsoluteSize.bind(this),
@@ -88,16 +89,20 @@ export abstract class PolicyDataFetcher {
     virtualLocation: this.getVirtualLocation.bind(this),
   };
 
+  public _objectUID: string;
+  protected options: any = {};
+
   constructor() {
+    this._objectUID = randomUUID();
     const prototype = Object.getPrototypeOf(this);
     const customs = prototype.customMethods || [];
-    //
-    customs.forEach((method: any) => {
+    customs.forEach((method: string) => {
       const propertyName = method.replace(/^get/, '');
       const lowercasePropertyName =
         propertyName.charAt(0).toLowerCase() + propertyName.slice(1);
-      this.context[lowercasePropertyName as keyof PolicyDataFetcher] =
-        this[method as keyof PolicyDataFetcher].bind(this);
+      this.context[lowercasePropertyName as keyof PolicyDataFetcher] = (
+        this[method as keyof PolicyDataFetcher] as Function
+      ).bind(this);
     });
   }
 
