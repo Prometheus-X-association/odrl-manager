@@ -37,8 +37,9 @@ interface LeftOperandFunctions {
     [key: string]: Function;
 }
 declare abstract class PolicyDataFetcher {
-    protected options: any;
     context: LeftOperandFunctions;
+    _objectUID: string;
+    protected options: any;
     constructor();
     setRequestOptions(options: any): void;
     protected getAbsolutePosition(): Promise<number>;
@@ -78,14 +79,11 @@ declare abstract class PolicyDataFetcher {
 }
 
 declare abstract class ModelBasic {
-    private static parentRelations;
-    private static fetcher?;
+    _rootUID?: string;
     _objectUID: string;
+    _fetcherUID?: string;
     constructor();
     protected handleFailure(): void;
-    static setFetcher(fetcher: PolicyDataFetcher): void;
-    static getFetcher(): PolicyDataFetcher | undefined;
-    static cleanRelations(): void;
     setParent(parent: ModelBasic): void;
     getParent(): ModelBasic;
     protected abstract verify(): Promise<boolean>;
@@ -289,12 +287,10 @@ declare class PolicyEvaluator {
     private pickProhibition;
     private pickAllDuties;
     cleanPolicies(): void;
-    addPolicy(policy: Policy): void;
-    setPolicy(policy: Policy): void;
+    addPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void;
+    setPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void;
     logPolicies(): void;
-    private set fetcher(value);
-    private get fetcher();
-    setFetcher(fetcher: PolicyDataFetcher): void;
+    private setFetcherOptions;
     private pick;
     private explore;
     /**

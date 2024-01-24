@@ -4,7 +4,6 @@ import { Explorable } from 'models/Explorable';
 import { Asset } from 'models/odrl/Asset';
 import { RulePermission } from 'models/odrl/RulePermission';
 import { RuleProhibition } from 'models/odrl/RuleProhibition';
-import { ModelBasic } from 'models/ModelBasic';
 import { Action, ActionType } from 'models/odrl/Action';
 import { RuleDuty } from 'models/odrl/RuleDuty';
 import { PolicyInstanciator } from 'PolicyInstanciator';
@@ -151,19 +150,20 @@ export class PolicyEvaluator {
   private pickAllDuties(explorable: Explorable, options?: any): boolean {
     return explorable instanceof RuleDuty;
   }
-
   public cleanPolicies(): void {
     this.policies = [];
   }
 
-  // Todo: optionnal fetcher
-  public addPolicy(policy: Policy): void {
+  public addPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void {
+    if (fetcher) {
+      policy._fetcherUID = fetcher._objectUID;
+    }
     this.policies.push(policy);
   }
 
-  public setPolicy(policy: Policy): void {
+  public setPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void {
     this.cleanPolicies();
-    this.addPolicy(policy);
+    this.addPolicy(policy, fetcher);
   }
 
   public logPolicies(): void {
@@ -172,32 +172,26 @@ export class PolicyEvaluator {
     });
   }
 
-  private set fetcher(fetcher: PolicyDataFetcher) {
+  private setFetcherOptions(options: any): void {
     try {
       if (!this.policies.length) {
         throw new Error(
-          'PolicyDataFetcher should be set after providing the reference policy.',
+          '[PolicyDataFetcher/setFetcherOptions]: Policy not found.',
         );
       }
       this.policies.forEach((policy: Policy) => {
-        policy._fetcherUID = fetcher._objectUID;
+        const fetcher = EntityRegistry.getFetcherFromPolicy(policy._objectUID);
+        if (!fetcher) {
+          throw new Error(
+            '[PolicyDataFetcher/setFetcherOptions]: Fetcher not found.',
+          );
+        } else {
+          fetcher.setRequestOptions(options);
+        }
       });
     } catch (error: any) {
       console.warn(`\x1b[93m/!\\${error.message}\x1b[37m`);
     }
-  }
-
-  // Todo: review
-  private get fetcher(): PolicyDataFetcher | undefined {
-    const fetcherUID = this.policies?.[0]?._fetcherUID;
-    if (fetcherUID) {
-      const fetcher = EntityRegistry.getEntity(fetcherUID);
-      return fetcher;
-    }
-  }
-
-  public setFetcher(fetcher: PolicyDataFetcher): void {
-    this.fetcher = fetcher;
   }
 
   private pick = (explorable: Explorable, options?: any): boolean => {
@@ -354,14 +348,7 @@ export class PolicyEvaluator {
     assignee: string,
     defaultResult: boolean = false,
   ): Promise<boolean> {
-    const fetcher = this.fetcher;
-    if (!fetcher) {
-      throw new Error('[PolicyEvaluator/fulfillDuties]: Fetcher not found');
-    } else {
-      fetcher.setRequestOptions({
-        assignee,
-      });
-    }
+    this.setFetcherOptions({ assignee });
     const entities: Explorable[] = (await this.explore({
       assignee,
       agreementAssignee: assignee,
@@ -387,16 +374,7 @@ export class PolicyEvaluator {
       assignee = (this.policies?.[0] as PolicyAgreement).assignee;
     }
     */
-    const fetcher = this.fetcher;
-    if (!fetcher) {
-      throw new Error(
-        '[PolicyEvaluator/evalAgreementForAssignee]: Fetcher not found',
-      );
-    } else {
-      fetcher.setRequestOptions({
-        assignee,
-      });
-    }
+    this.setFetcherOptions({ assignee });
     const entities: Explorable[] = (
       await this.explore({
         pickAllDuties: true,

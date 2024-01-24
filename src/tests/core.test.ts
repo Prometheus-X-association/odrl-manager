@@ -218,15 +218,14 @@ describe('Testing Core units', async () => {
           return 0;
         }
       }
-      evaluator.setPolicy(policy);
       const fetcher = new Fetcher();
+      evaluator.setPolicy(policy, fetcher);
       const age = await fetcher.context['age']();
       expect(age).to.equal(18);
       const absolutePosition = await fetcher.context.absolutePosition();
       expect(absolutePosition).to.equal(9);
       const language = await fetcher.context.language();
       expect(language).to.equal('en');
-      evaluator.setFetcher(fetcher);
       const isPerformable = await evaluator.isActionPerformable(
         'read',
         'http://contract-target',

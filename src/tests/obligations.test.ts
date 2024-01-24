@@ -42,7 +42,6 @@ const json = {
   ],
 };
 
-// Todo: take assignee, target and action into account
 class Fetcher extends PolicyDataFetcher {
   constructor() {
     super();
@@ -77,8 +76,7 @@ describe(`Testing 'Obligations' related units`, async () => {
     const valid = await policy?.validate();
     expect(valid).to.equal(true);
     if (policy) {
-      evaluator.setPolicy(policy);
-      evaluator.setFetcher(fetcher);
+      evaluator.setPolicy(policy, fetcher);
       const duties = await evaluator.getAssignedDuties(assignee);
       // _logObject(duties);
       expect(duties).to.have.lengthOf(1);
@@ -136,8 +134,7 @@ describe(`Testing 'Obligations' related units`, async () => {
     const valid = await policy?.validate();
     expect(valid).to.equal(true);
     if (policy) {
-      evaluator.setPolicy(policy);
-      evaluator.setFetcher(fetcher);
+      evaluator.setPolicy(policy, fetcher);
       const isPerformable = await evaluator.isActionPerformable(
         'play',
         'http://example.com/music/1999.mp3',
@@ -183,8 +180,7 @@ describe(`Testing 'Obligations' related units`, async () => {
     const valid = await policy?.validate();
     expect(valid).to.equal(true);
     if (policy) {
-      evaluator.setPolicy(policy);
-      evaluator.setFetcher(fetcher);
+      evaluator.setPolicy(policy, fetcher);
       const agreed = await evaluator.evalAgreementForAssignee(
         'http://example.com/person:45',
       );

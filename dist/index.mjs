@@ -22,7 +22,36 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
+// src/EntityRegistry.ts
+var _EntityRegistry = class _EntityRegistry {
+  static getFetcherFromPolicy(rootUID) {
+    const root = _EntityRegistry.entityReferences[rootUID];
+    return (root == null ? void 0 : root._fetcherUID) ? _EntityRegistry.entityReferences[root._fetcherUID] : void 0;
+  }
+  static getEntity(uid) {
+    return _EntityRegistry.entityReferences[uid];
+  }
+  static addReference(model) {
+    _EntityRegistry.entityReferences[model._objectUID] = model;
+  }
+  static cleanReferences() {
+    _EntityRegistry.parentRelations = {};
+    _EntityRegistry.entityReferences = {};
+  }
+  static setParent(child, parent) {
+    _EntityRegistry.parentRelations[child._objectUID] = parent._objectUID;
+  }
+  static getParent(child) {
+    const uid = _EntityRegistry.parentRelations[child._objectUID];
+    return _EntityRegistry.entityReferences[uid];
+  }
+};
+_EntityRegistry.parentRelations = {};
+_EntityRegistry.entityReferences = {};
+var EntityRegistry = _EntityRegistry;
+
 // src/PolicyDataFetcher.ts
+import { randomUUID } from "crypto";
 var Custom = () => {
   return (target, key, descriptor) => {
     if (descriptor && typeof descriptor.value === "function") {
@@ -33,7 +62,6 @@ var Custom = () => {
 };
 var PolicyDataFetcher = class {
   constructor() {
-    this.options = {};
     this.context = {
       absolutePosition: this.getAbsolutePosition.bind(this),
       absoluteSize: this.getAbsoluteSize.bind(this),
@@ -70,6 +98,9 @@ var PolicyDataFetcher = class {
       version: this.getVersion.bind(this),
       virtualLocation: this.getVirtualLocation.bind(this)
     };
+    this.options = {};
+    this._objectUID = randomUUID();
+    EntityRegistry.addReference(this);
     const prototype = Object.getPrototypeOf(this);
     const customs = prototype.customMethods || [];
     customs.forEach((method) => {
@@ -255,28 +286,20 @@ var PolicyDataFetcher = class {
 };
 
 // src/models/ModelBasic.ts
-import { randomUUID } from "crypto";
-var _ModelBasic = class _ModelBasic {
+import { randomUUID as randomUUID2 } from "crypto";
+var ModelBasic = class _ModelBasic {
   constructor() {
-    this._objectUID = randomUUID();
+    this._objectUID = randomUUID2();
+    EntityRegistry.addReference(this);
   }
   handleFailure() {
-    console.log(JSON.stringify(this, null, 2), "<handleFailure>");
-  }
-  static setFetcher(fetcher) {
-    _ModelBasic.fetcher = fetcher;
-  }
-  static getFetcher() {
-    return _ModelBasic.fetcher;
-  }
-  static cleanRelations() {
-    _ModelBasic.parentRelations = {};
+    console.log("handleFailure");
   }
   setParent(parent) {
-    _ModelBasic.parentRelations[this._objectUID] = parent;
+    EntityRegistry.setParent(this, parent);
   }
   getParent() {
-    return _ModelBasic.parentRelations[this._objectUID];
+    return EntityRegistry.getParent(this);
   }
   //
   validate(depth = 0, promises) {
@@ -358,9 +381,6 @@ var _ModelBasic = class _ModelBasic {
     }
   }
 };
-// Todo: move to PolicyInstanciator
-_ModelBasic.parentRelations = {};
-var ModelBasic = _ModelBasic;
 
 // src/models/Explorable.ts
 var Explorable = class _Explorable extends ModelBasic {
@@ -722,11 +742,13 @@ var LeftOperand = class extends ModelBasic {
   evaluate() {
     return __async(this, null, function* () {
       try {
-        const fetcher = ModelBasic.getFetcher();
+        const fetcher = this._rootUID ? EntityRegistry.getFetcherFromPolicy(this._rootUID) : void 0;
         if (fetcher) {
           return fetcher.context[this.value]();
         } else {
-          console.warn(`No fetcher found, can't evaluate ${this.value}`);
+          console.warn(
+            `\x1B[93m/!\\No fetcher found, can't evaluate ${this.value}\x1B[37m`
+          );
         }
       } catch (error) {
         console.error(`LeftOperand function ${this.value} not found`);
@@ -1041,33 +1063,33 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     }
     return _PolicyInstanciator.instance;
   }
-  static setPermission(element, parent) {
+  static setPermission(element, parent, root) {
     const rule = new RulePermission();
     rule.setParent(parent);
     parent.addPermission(rule);
     return rule;
   }
-  static setProhibition(element, parent) {
+  static setProhibition(element, parent, root) {
     const rule = new RuleProhibition();
     rule.setParent(parent);
     parent.addProhibition(rule);
     return rule;
   }
-  static setObligation(element, parent) {
+  static setObligation(element, parent, root) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     rule.setParent(parent);
     parent.addDuty(rule);
     return rule;
   }
-  static setDuty(element, parent) {
+  static setDuty(element, parent, root) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     rule.setParent(parent);
     parent.addDuty(rule);
     return rule;
   }
-  static setAction(element, parent, fromArray) {
+  static setAction(element, parent, root, fromArray) {
     try {
       const value = getLastTerm(
         typeof element === "object" ? element.value : element
@@ -1087,12 +1109,12 @@ var _PolicyInstanciator = class _PolicyInstanciator {
       throw new Error("Action is undefined");
     }
   }
-  static setTarget(element, parent) {
+  static setTarget(element, parent, root) {
     const asset = new Asset(element);
     asset.setParent(parent);
     parent.setTarget(asset);
   }
-  static setConstraint(element, parent) {
+  static setConstraint(element, parent, root) {
     const {
       leftOperand,
       operator: _operator,
@@ -1101,7 +1123,11 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     } = element;
     const operator = _operator && getLastTerm(_operator);
     const constraint = leftOperand && operator && rightOperand !== void 0 && new AtomicConstraint(
-      new LeftOperand(leftOperand),
+      (() => {
+        const _leftOperand = new LeftOperand(leftOperand);
+        _leftOperand._rootUID = root == null ? void 0 : root._objectUID;
+        return _leftOperand;
+      })(),
       new Operator(operator),
       new RightOperand(rightOperand)
     ) || operator && Array.isArray(constraints) && constraints.length > 0 && new LogicalConstraint(operator);
@@ -1117,10 +1143,10 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     parent.addConstraint(constraint || element);
     return constraint;
   }
-  static setRefinement(element, parent) {
-    return _PolicyInstanciator.setConstraint(element, parent);
+  static setRefinement(element, parent, root) {
+    return _PolicyInstanciator.setConstraint(element, parent, root);
   }
-  static setConsequence(element, parent) {
+  static setConsequence(element, parent, root) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     copy(
@@ -1166,16 +1192,23 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     const instanciate = (property, element, fromArray = false) => {
       try {
         if (element) {
-          const child = _PolicyInstanciator.instanciators[property] && (_PolicyInstanciator.instanciators[property].length == 3 && _PolicyInstanciator.instanciators[property](
+          const child = _PolicyInstanciator.instanciators[property] && (_PolicyInstanciator.instanciators[property].length == 4 && _PolicyInstanciator.instanciators[property](
             element,
             parent,
+            this.policy,
             fromArray
-          ) || _PolicyInstanciator.instanciators[property](element, parent));
+          ) || _PolicyInstanciator.instanciators[property](
+            element,
+            parent,
+            this.policy
+          ));
           if (typeof element === "object") {
             if (child) {
               this.traverse(element, child);
             } else {
-              console.warn(`Traversal stopped for "${property}".`);
+              console.warn(
+                `\x1B[93m/!\\Traversal stopped for "${property}".\x1B[37m`
+              );
             }
           }
         }
@@ -1265,7 +1298,7 @@ var PolicyEvaluator = class _PolicyEvaluator {
       }
       return false;
     };
-    this.policies = null;
+    this.policies = [];
   }
   static getInstance() {
     if (!_PolicyEvaluator.instance) {
@@ -1321,36 +1354,45 @@ var PolicyEvaluator = class _PolicyEvaluator {
   cleanPolicies() {
     this.policies = [];
   }
-  addPolicy(policy) {
-    if (this.policies === null) {
-      this.policies = [];
+  addPolicy(policy, fetcher) {
+    if (fetcher) {
+      policy._fetcherUID = fetcher._objectUID;
     }
     this.policies.push(policy);
   }
-  setPolicy(policy) {
+  setPolicy(policy, fetcher) {
     this.cleanPolicies();
-    this.addPolicy(policy);
+    this.addPolicy(policy, fetcher);
   }
   logPolicies() {
-    var _a;
-    if ((_a = this.policies) == null ? void 0 : _a.length) {
+    this.policies.forEach((policy) => {
+      policy.debug();
+    });
+  }
+  setFetcherOptions(options) {
+    try {
+      if (!this.policies.length) {
+        throw new Error(
+          "[PolicyDataFetcher/setFetcherOptions]: Policy not found."
+        );
+      }
       this.policies.forEach((policy) => {
-        policy.debug();
+        const fetcher = EntityRegistry.getFetcherFromPolicy(policy._objectUID);
+        if (!fetcher) {
+          throw new Error(
+            "[PolicyDataFetcher/setFetcherOptions]: Fetcher not found."
+          );
+        } else {
+          fetcher.setRequestOptions(options);
+        }
       });
+    } catch (error) {
+      console.warn(`\x1B[93m/!\\${error.message}\x1B[37m`);
     }
-  }
-  set fetcher(fetcher) {
-    ModelBasic.setFetcher(fetcher);
-  }
-  get fetcher() {
-    return ModelBasic.getFetcher();
-  }
-  setFetcher(fetcher) {
-    this.fetcher = fetcher;
   }
   explore(options) {
     return __async(this, null, function* () {
-      if (this.policies && this.policies.length) {
+      if (this.policies.length) {
         const explorables = (yield Promise.all(
           this.policies.map(
             (policy) => __async(this, null, function* () {
@@ -1475,10 +1517,7 @@ var PolicyEvaluator = class _PolicyEvaluator {
    */
   fulfillDuties(assignee, defaultResult = false) {
     return __async(this, null, function* () {
-      var _a;
-      (_a = this.fetcher) == null ? void 0 : _a.setRequestOptions({
-        assignee
-      });
+      this.setFetcherOptions({ assignee });
       const entities = yield this.explore({
         assignee,
         agreementAssignee: assignee,
@@ -1495,10 +1534,7 @@ var PolicyEvaluator = class _PolicyEvaluator {
    */
   evalAgreementForAssignee(assignee, defaultResult = false) {
     return __async(this, null, function* () {
-      var _a;
-      (_a = this.fetcher) == null ? void 0 : _a.setRequestOptions({
-        assignee
-      });
+      this.setFetcherOptions({ assignee });
       const entities = (yield this.explore({
         pickAllDuties: true
       })).filter((entity) => !entity.assignee);
