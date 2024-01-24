@@ -1,4 +1,4 @@
-import { Explorable } from '../../Explorable';
+import { Explorable } from '../Explorable';
 import { ConflictTerm } from './ConflictTerm';
 import { RuleDuty } from './RuleDuty';
 import { RulePermission } from './RulePermission';

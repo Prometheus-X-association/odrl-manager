@@ -1,4 +1,4 @@
-import { Explorable } from '../../Explorable';
+import { Explorable } from '../Explorable';
 import { Action } from './Action';
 import { Asset } from './Asset';
 import { Constraint } from './Constraint';

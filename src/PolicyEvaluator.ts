@@ -1,10 +1,10 @@
-import { ContextFetcher } from 'ContextFetcher';
+import { PolicyDataFetcher } from 'PolicyDataFetcher';
 import { Policy } from './models/odrl/Policy';
-import { Explorable } from 'Explorable';
+import { Explorable } from 'models/Explorable';
 import { Asset } from 'models/odrl/Asset';
 import { RulePermission } from 'models/odrl/RulePermission';
 import { RuleProhibition } from 'models/odrl/RuleProhibition';
-import { ModelEssential } from 'ModelEssential';
+import { ModelBasic } from 'models/ModelBasic';
 import { Action, ActionType } from 'models/odrl/Action';
 import { RuleDuty } from 'models/odrl/RuleDuty';
 import { PolicyInstanciator } from 'PolicyInstanciator';
@@ -175,15 +175,15 @@ export class PolicyEvaluator {
     }
   }
 
-  private set fetcher(fetcher: ContextFetcher) {
-    ModelEssential.setFetcher(fetcher);
+  private set fetcher(fetcher: PolicyDataFetcher) {
+    ModelBasic.setFetcher(fetcher);
   }
 
-  private get fetcher(): ContextFetcher | undefined {
-    return ModelEssential.getFetcher();
+  private get fetcher(): PolicyDataFetcher | undefined {
+    return ModelBasic.getFetcher();
   }
 
-  public setFetcher(fetcher: ContextFetcher): void {
+  public setFetcher(fetcher: PolicyDataFetcher): void {
     this.fetcher = fetcher;
   }
 

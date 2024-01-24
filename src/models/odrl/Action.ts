@@ -1,4 +1,4 @@
-import { ModelEssential } from '../../ModelEssential';
+import { ModelBasic } from '../ModelBasic';
 import { Constraint } from './Constraint';
 
 export const actions = [
@@ -80,7 +80,7 @@ export type ActionType = (typeof actions)[number];
 
 type InclusionMap = Map<string, Set<string>>;
 
-export class Action extends ModelEssential {
+export class Action extends ModelBasic {
   private static inclusions: InclusionMap = new Map();
 
   value: string;

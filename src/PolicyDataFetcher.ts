@@ -49,7 +49,7 @@ interface LeftOperandFunctions {
   [key: string]: Function;
 }
 
-export abstract class ContextFetcher {
+export abstract class PolicyDataFetcher {
   protected options: any = {};
   public context: LeftOperandFunctions = {
     absolutePosition: this.getAbsolutePosition.bind(this),
@@ -96,8 +96,8 @@ export abstract class ContextFetcher {
       const propertyName = method.replace(/^get/, '');
       const lowercasePropertyName =
         propertyName.charAt(0).toLowerCase() + propertyName.slice(1);
-      this.context[lowercasePropertyName as keyof ContextFetcher] =
-        this[method as keyof ContextFetcher].bind(this);
+      this.context[lowercasePropertyName as keyof PolicyDataFetcher] =
+        this[method as keyof PolicyDataFetcher].bind(this);
     });
   }
 

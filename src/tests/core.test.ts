@@ -2,14 +2,14 @@ import instanciator from 'PolicyInstanciator';
 import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
-import { ContextFetcher } from 'ContextFetcher';
-import { Custom } from 'ContextFetcher';
-import { ModelEssential } from 'ModelEssential';
+import { PolicyDataFetcher } from 'PolicyDataFetcher';
+import { Custom } from 'PolicyDataFetcher';
+import { ModelBasic } from 'models/ModelBasic';
 
 describe('Testing Core units', async () => {
   let evaluator: PolicyEvaluator;
   before(() => {
-    ModelEssential.cleanRelations();
+    ModelBasic.cleanRelations();
     evaluator = new PolicyEvaluator();
   });
 
@@ -195,7 +195,7 @@ describe('Testing Core units', async () => {
     const valid = await policy?.validate();
     expect(valid).to.equal(true);
     if (policy) {
-      class Fetcher extends ContextFetcher {
+      class Fetcher extends PolicyDataFetcher {
         private absolutePosition: number = 0;
         constructor() {
           super();

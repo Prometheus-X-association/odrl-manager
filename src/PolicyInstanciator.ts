@@ -1,4 +1,4 @@
-import { ModelEssential } from 'ModelEssential';
+import { ModelBasic } from 'models/ModelBasic';
 import { Action, actions } from './models/odrl/Action';
 import { Asset } from './models/odrl/Asset';
 import { AtomicConstraint } from './models/odrl/AtomicConstraint';
@@ -256,7 +256,7 @@ export class PolicyInstanciator {
     ) => {
       try {
         if (element) {
-          const child: ModelEssential =
+          const child: ModelBasic =
             PolicyInstanciator.instanciators[property] &&
             ((PolicyInstanciator.instanciators[property].length == 3 &&
               PolicyInstanciator.instanciators[property](

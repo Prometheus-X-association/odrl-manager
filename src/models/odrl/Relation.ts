@@ -1,11 +1,11 @@
-import { ModelEssential } from '../../ModelEssential';
+import { ModelBasic } from '../ModelBasic';
 import { Asset } from './Asset';
 
 export enum RelationType {
   TARGET = 'target',
 }
 
-export class Relation extends ModelEssential {
+export class Relation extends ModelBasic {
   type: RelationType;
   asset: Asset;
 

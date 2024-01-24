@@ -1,4 +1,4 @@
-import { Explorable } from 'Explorable';
+import { Explorable } from 'models/Explorable';
 import { AssetCollection } from './AssetCollection';
 
 export class Asset extends Explorable {

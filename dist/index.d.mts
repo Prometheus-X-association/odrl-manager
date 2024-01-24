@@ -36,9 +36,11 @@ interface LeftOperandFunctions {
     virtualLocation: () => Promise<string>;
     [key: string]: Function;
 }
-declare abstract class ContextFetcher {
+declare abstract class PolicyDataFetcher {
+    protected options: any;
     context: LeftOperandFunctions;
     constructor();
+    setRequestOptions(options: any): void;
     protected getAbsolutePosition(): Promise<number>;
     protected getAbsoluteSize(): Promise<number>;
     protected getAbsoluteSpatialPosition(): Promise<[number, number]>;
@@ -75,41 +77,44 @@ declare abstract class ContextFetcher {
     protected getVirtualLocation(): Promise<string>;
 }
 
-declare abstract class ModelEssential {
+declare abstract class ModelBasic {
     private static parentRelations;
-    protected static fetcher: ContextFetcher;
+    private static fetcher?;
     _objectUID: string;
     constructor();
-    static setFetcher(fetcher: ContextFetcher): void;
-    setParent(parent: ModelEssential): void;
-    getParent(): ModelEssential;
+    protected handleFailure(): void;
+    static setFetcher(fetcher: PolicyDataFetcher): void;
+    static getFetcher(): PolicyDataFetcher | undefined;
+    static cleanRelations(): void;
+    setParent(parent: ModelBasic): void;
+    getParent(): ModelBasic;
     protected abstract verify(): Promise<boolean>;
     protected validate(depth: number | undefined, promises: Promise<boolean>[]): void;
     debug(depth?: number): void;
 }
 
-declare abstract class Explorable extends ModelEssential {
-    protected abstract visit(): Promise<boolean>;
+declare abstract class Explorable extends ModelBasic {
+    protected abstract evaluate(): Promise<boolean>;
     protected explore(pick: Function, depth: number | undefined, entities: Explorable[], options?: any): void;
 }
 
-declare class ConflictTerm extends ModelEssential {
+declare class ConflictTerm extends ModelBasic {
     verify(): Promise<boolean>;
 }
 
-declare class Party extends ModelEssential {
+declare class Party extends ModelBasic {
     verify(): Promise<boolean>;
 }
 
-declare class LeftOperand extends ModelEssential {
+declare class LeftOperand extends ModelBasic {
     private value;
     constructor(value: string);
     getValue(): string;
-    visit(): Promise<string | number | null>;
+    evaluate(): Promise<string | number | null>;
     verify(): Promise<boolean>;
 }
 
-declare class Operator extends ModelEssential {
+declare class Operator extends ModelBasic {
     static readonly EQ: string;
     static readonly NEQ: string;
     static readonly GT: string;
@@ -127,13 +132,14 @@ declare class Operator extends ModelEssential {
     verify(): Promise<boolean>;
 }
 
-declare class RightOperand extends ModelEssential {
+declare class RightOperand extends ModelBasic {
+    '@id'?: string;
     value: string | number;
     constructor(value: string | number);
     verify(): Promise<boolean>;
 }
 
-declare abstract class Constraint extends ModelEssential {
+declare abstract class Constraint extends ModelBasic {
     uid?: string;
     dataType?: string;
     unit?: string;
@@ -144,19 +150,24 @@ declare abstract class Constraint extends ModelEssential {
     private rightOperandReference?;
     private logicalConstraints?;
     constructor(leftOperand: LeftOperand | null, operator: Operator | null, rightOperand: RightOperand | null);
-    visit(): Promise<boolean>;
+    evaluate(): Promise<boolean>;
     protected verify(): Promise<boolean>;
 }
 
 declare const actions: readonly ["Attribution", "CommericalUse", "DerivativeWorks", "Distribution", "Notice", "Reproduction", "ShareAlike", "Sharing", "SourceCode", "acceptTracking", "adHocShare", "aggregate", "annotate", "anonymize", "append", "appendTo", "archive", "attachPolicy", "attachSource", "attribute", "commercialize", "compensate", "concurrentUse", "copy", "delete", "derive", "digitize", "display", "distribute", "ensureExclusivity", "execute", "export", "extract", "extractChar", "extractPage", "extractWord", "give", "grantUse", "include", "index", "inform", "install", "lease", "lend", "license", "modify", "move", "nextPolicy", "obtainConsent", "pay", "play", "present", "preview", "print", "read", "reproduce", "reviewPolicy", "secondaryUse", "sell", "share", "shareAlike", "stream", "synchronize", "textToSpeech", "transfer", "transform", "translate", "uninstall", "use", "watermark", "write", "writeTo"];
 type ActionType = (typeof actions)[number];
-declare class Action extends ModelEssential {
+declare class Action extends ModelBasic {
+    private static inclusions;
     value: string;
     refinement?: Constraint[];
     includedIn: Action | null;
     implies?: Action[];
     constructor(value: string, includedIn: Action | null);
+    static includeIn(current: string, values: string[]): void;
     addConstraint(constraint: Constraint): void;
+    includes(value: string): Promise<boolean>;
+    static getIncluded(values: ActionType[]): Promise<ActionType[]>;
+    refine(): Promise<boolean>;
     verify(): Promise<boolean>;
 }
 
@@ -174,14 +185,14 @@ declare class Asset extends Explorable {
         partOf?: AssetCollection[];
         hasPolicy?: string;
     });
-    protected visit(): Promise<boolean>;
+    protected evaluate(): Promise<boolean>;
     verify(): Promise<boolean>;
 }
 
 declare enum RelationType {
     TARGET = "target"
 }
-declare class Relation extends ModelEssential {
+declare class Relation extends ModelBasic {
     type: RelationType;
     asset: Asset;
     constructor(type: RelationType, asset: Asset);
@@ -194,8 +205,8 @@ declare abstract class Rule extends Explorable {
     assigner?: Party;
     assignee?: Party;
     asset?: Asset;
-    parties?: Party[];
-    failures?: Rule[];
+    function?: Party[];
+    failure?: Rule[];
     protected constraint?: Constraint[];
     uid?: string;
     relation?: Relation;
@@ -215,7 +226,7 @@ declare class RuleDuty extends Rule {
     compensatedParty?: string;
     compensatingParty?: string;
     constructor(assigner?: Party, assignee?: Party);
-    visit(): Promise<boolean>;
+    evaluate(): Promise<boolean>;
     verify(): Promise<boolean>;
     addConsequence(consequence: RuleDuty): void;
 }
@@ -224,14 +235,19 @@ declare class RulePermission extends Rule {
     duty?: RuleDuty[];
     constructor();
     addDuty(duty: RuleDuty): void;
-    visit(): Promise<boolean>;
+    evaluate(): Promise<boolean>;
+    private evaluateDuties;
+    private evaluateConstraints;
     verify(): Promise<boolean>;
 }
 
 declare class RuleProhibition extends Rule {
     remedy?: RuleDuty[];
     constructor();
-    visit(): Promise<boolean>;
+    addRemedy(duty: RuleDuty): void;
+    evaluate(): Promise<boolean>;
+    private evaluateRemedies;
+    private evaluateConstraints;
     verify(): Promise<boolean>;
 }
 
@@ -263,13 +279,22 @@ declare class PolicyEvaluator {
     constructor();
     static getInstance(): PolicyEvaluator;
     private pickTarget;
+    private pickEntityFor;
+    private pickEmittedDuty;
+    private pickAssignedDuty;
+    private pickAssignedPermission;
+    private pickAssignedProhibition;
+    private pickAssignedAgreement;
     private pickPermission;
     private pickProhibition;
+    private pickAllDuties;
     cleanPolicies(): void;
     addPolicy(policy: Policy): void;
     setPolicy(policy: Policy): void;
     logPolicies(): void;
-    setFetcher(fetcher: ContextFetcher): void;
+    private set fetcher(value);
+    private get fetcher();
+    setFetcher(fetcher: PolicyDataFetcher): void;
     private pick;
     private explore;
     /**
@@ -289,9 +314,33 @@ declare class PolicyEvaluator {
     /**
      * Evaluates the exploitability of listed resources within a set of policies.
      * @param {any} json - JSON representation of policies to be evaluated.
+     * @param {boolean} [defaultResult=false] - The default result if no resources are found.
      * @returns {Promise<boolean>} Resolves with a boolean indicating whether the resources are exploitable.
      */
-    evalResourcePerformabilities(json: any): Promise<boolean>;
+    evalResourcePerformabilities(json: any, defaultResult?: boolean): Promise<boolean>;
+    getDuties(): Promise<RuleDuty[]>;
+    getAssignedDuties(assignee: string): Promise<RuleDuty[]>;
+    getEmittedDuties(assigner: string): Promise<any[]>;
+    /**
+     * Evaluates whether the duties related to an assignee are fulfilled.
+     * @param {string} assignee - The string value representing the assignee.
+     * @param {boolean} [defaultResult=false] - The default result if no duties are found.
+     * @returns {Promise<boolean>} Resolves with a boolean indicating whether the duties are fulfilled.
+     */
+    fulfillDuties(assignee: string, defaultResult?: boolean): Promise<boolean>;
+    /**
+     * Evaluates whether the agreement is fulfilled by the assignee.
+     * @param {boolean} [defaultResult=false] - The default result if no duties are found.
+     * @returns {Promise<boolean>} Resolves with a boolean indicating whether the agreement is fulfilled.
+     */
+    evalAgreementForAssignee(assignee?: string, defaultResult?: boolean): Promise<boolean>;
+    /**
+     * Evaluates whether certain duties are fulfilled based on the related action conditions.
+     * @param {Explorable[]} entities - An array of entities to be explored.
+     * @param {boolean} [defaultResult=false] - The default result if no duties are found.
+     * @returns {Promise<boolean>} Resolves with a boolean indicating whether the duties are fulfilled.
+     */
+    private evalDuties;
 }
 
 declare class PolicyInstanciator {
@@ -317,4 +366,4 @@ declare class PolicyInstanciator {
 declare const evaluator: PolicyEvaluator;
 declare const instanciator: PolicyInstanciator;
 
-export { type ActionType, ContextFetcher, Custom, PolicyEvaluator, PolicyInstanciator, evaluator, instanciator };
+export { type ActionType, Custom, PolicyDataFetcher, PolicyEvaluator, PolicyInstanciator, evaluator, instanciator };

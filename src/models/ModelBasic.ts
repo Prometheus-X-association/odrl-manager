@@ -1,8 +1,8 @@
-import { ContextFetcher } from 'ContextFetcher';
+import { PolicyDataFetcher } from 'PolicyDataFetcher';
 import { Policy } from 'models/odrl/Policy';
 import { randomUUID } from 'node:crypto';
 interface ParentRelations {
-  [key: string]: ModelEssential;
+  [key: string]: ModelBasic;
 }
 
 export const HandleFailure = (): MethodDecorator => {
@@ -25,10 +25,10 @@ export const HandleFailure = (): MethodDecorator => {
   };
 };
 
-export abstract class ModelEssential {
+export abstract class ModelBasic {
   // Todo: move to PolicyInstanciator
   private static parentRelations: ParentRelations = {};
-  private static fetcher?: ContextFetcher;
+  private static fetcher?: PolicyDataFetcher;
 
   public _objectUID: string;
   constructor() {
@@ -39,24 +39,24 @@ export abstract class ModelEssential {
     console.log(JSON.stringify(this, null, 2), '<handleFailure>');
   }
 
-  public static setFetcher(fetcher: ContextFetcher): void {
-    ModelEssential.fetcher = fetcher;
+  public static setFetcher(fetcher: PolicyDataFetcher): void {
+    ModelBasic.fetcher = fetcher;
   }
 
-  public static getFetcher(): ContextFetcher | undefined {
-    return ModelEssential.fetcher;
+  public static getFetcher(): PolicyDataFetcher | undefined {
+    return ModelBasic.fetcher;
   }
 
   public static cleanRelations(): void {
-    ModelEssential.parentRelations = {};
+    ModelBasic.parentRelations = {};
   }
 
-  public setParent(parent: ModelEssential): void {
-    ModelEssential.parentRelations[this._objectUID] = parent;
+  public setParent(parent: ModelBasic): void {
+    ModelBasic.parentRelations[this._objectUID] = parent;
   }
 
-  public getParent(): ModelEssential {
-    return ModelEssential.parentRelations[this._objectUID];
+  public getParent(): ModelBasic {
+    return ModelBasic.parentRelations[this._objectUID];
   }
 
   protected abstract verify(): Promise<boolean>;
@@ -72,7 +72,7 @@ export abstract class ModelEssential {
               if (Array.isArray(value)) {
                 for (const item of value) {
                   if (
-                    item instanceof ModelEssential &&
+                    item instanceof ModelBasic &&
                     typeof item.validate === 'function'
                   ) {
                     item.validate(depth + 2, promises);
@@ -83,7 +83,7 @@ export abstract class ModelEssential {
                   }
                 }
               } else if (
-                value instanceof ModelEssential &&
+                value instanceof ModelBasic &&
                 typeof value.validate === 'function'
               ) {
                 value.validate(depth + 1, promises);
@@ -119,7 +119,7 @@ export abstract class ModelEssential {
           console.log(`${indentation}  ${prop}: \x1b[36m[\x1b[37m`);
           for (const item of value) {
             if (
-              item instanceof ModelEssential &&
+              item instanceof ModelBasic &&
               typeof item.debug === 'function'
             ) {
               item.debug(depth + 2);
@@ -131,7 +131,7 @@ export abstract class ModelEssential {
           }
           console.log(`${indentation}  \x1b[36m]\x1b[37m`);
         } else if (
-          value instanceof ModelEssential &&
+          value instanceof ModelBasic &&
           typeof value.debug === 'function'
         ) {
           value.debug(depth + 1);

@@ -1,6 +1,6 @@
-import { ModelEssential } from './ModelEssential';
+import { ModelBasic } from './ModelBasic';
 
-export abstract class Explorable extends ModelEssential {
+export abstract class Explorable extends ModelBasic {
   protected abstract evaluate(): Promise<boolean>;
 
   protected explore(

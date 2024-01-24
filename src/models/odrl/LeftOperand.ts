@@ -1,6 +1,6 @@
-import { ModelEssential } from '../../ModelEssential';
+import { ModelBasic } from '../ModelBasic';
 
-export class LeftOperand extends ModelEssential {
+export class LeftOperand extends ModelBasic {
   private value: string;
 
   constructor(value: string) {
@@ -14,7 +14,7 @@ export class LeftOperand extends ModelEssential {
 
   public async evaluate(): Promise<string | number | null> {
     try {
-      const fetcher = ModelEssential.getFetcher();
+      const fetcher = ModelBasic.getFetcher();
       if (fetcher) {
         return fetcher.context[this.value]();
       } else {

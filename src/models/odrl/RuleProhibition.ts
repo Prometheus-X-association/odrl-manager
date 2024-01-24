@@ -1,4 +1,4 @@
-import { HandleFailure } from 'ModelEssential';
+import { HandleFailure } from 'models/ModelBasic';
 import { Rule } from './Rule';
 import { RuleDuty } from './RuleDuty';
 

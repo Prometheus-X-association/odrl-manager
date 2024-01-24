@@ -1,6 +1,6 @@
-import { ModelEssential } from '../../ModelEssential';
+import { ModelBasic } from '../ModelBasic';
 
-export class Operator extends ModelEssential {
+export class Operator extends ModelBasic {
   public static readonly EQ: string = 'eq';
   public static readonly NEQ: string = 'neq';
   public static readonly GT: string = 'gt';

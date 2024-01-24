@@ -3,8 +3,8 @@ import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
 import { Policy } from 'models/odrl/Policy';
-import { ContextFetcher } from 'ContextFetcher';
-import { ModelEssential } from 'ModelEssential';
+import { PolicyDataFetcher } from 'PolicyDataFetcher';
+import { ModelBasic } from 'models/ModelBasic';
 
 const assignee = 'http://example.com/person:44';
 const json = {
@@ -43,7 +43,7 @@ const json = {
 };
 
 // Todo: take assignee, target and action into account
-class Fetcher extends ContextFetcher {
+class Fetcher extends PolicyDataFetcher {
   constructor() {
     super();
   }
@@ -64,7 +64,7 @@ describe(`Testing 'Obligations' related units`, async () => {
   let policy: Policy | null;
   let evaluator: PolicyEvaluator;
   before(() => {
-    ModelEssential.cleanRelations();
+    ModelBasic.cleanRelations();
     const fetcher = new Fetcher();
     evaluator = new PolicyEvaluator();
     evaluator.setFetcher(fetcher);
