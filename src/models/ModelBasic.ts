@@ -1,13 +1,5 @@
-import { PolicyDataFetcher } from 'PolicyDataFetcher';
-import { Policy } from 'models/odrl/Policy';
+import { EntityRegistry } from 'EntityRegistry';
 import { randomUUID } from 'node:crypto';
-
-interface EntityReferences {
-  [key: string]: any;
-}
-interface ParentRelations {
-  [key: string]: string;
-}
 
 export const HandleFailure = (): MethodDecorator => {
   return (
@@ -30,16 +22,13 @@ export const HandleFailure = (): MethodDecorator => {
 };
 
 export abstract class ModelBasic {
-  private static parentRelations: ParentRelations = {};
-  private static entityReferences: EntityReferences = {};
-
   public _rootUID?: string;
   public _objectUID: string;
-  private _fetcherUID?: string;
+  public _fetcherUID?: string;
 
   constructor() {
     this._objectUID = randomUUID();
-    ModelBasic.entityReferences[this._objectUID] = this;
+    EntityRegistry.addReference(this);
   }
 
   protected handleFailure() {
@@ -47,27 +36,12 @@ export abstract class ModelBasic {
     console.log('handleFailure');
   }
 
-  public static getFetcher(rootUID: string): PolicyDataFetcher | undefined {
-    const root: ModelBasic = ModelBasic.entityReferences[rootUID];
-    return root?._fetcherUID
-      ? ModelBasic.entityReferences[root._fetcherUID]
-      : undefined;
-  }
-
-  public static addReference(): void {}
-
-  public static cleanReferences(): void {
-    ModelBasic.parentRelations = {};
-    ModelBasic.entityReferences = {};
-  }
-
   public setParent(parent: ModelBasic): void {
-    ModelBasic.parentRelations[this._objectUID] = parent._objectUID;
+    EntityRegistry.setParent(this, parent);
   }
 
   public getParent(): ModelBasic {
-    const uid = ModelBasic.parentRelations[this._objectUID];
-    return ModelBasic.entityReferences[uid];
+    return EntityRegistry.getParent(this);
   }
 
   protected abstract verify(): Promise<boolean>;

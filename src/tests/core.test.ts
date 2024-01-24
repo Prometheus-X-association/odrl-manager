@@ -4,12 +4,12 @@ import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
 import { PolicyDataFetcher } from 'PolicyDataFetcher';
 import { Custom } from 'PolicyDataFetcher';
-import { ModelBasic } from 'models/ModelBasic';
+import { EntityRegistry } from 'EntityRegistry';
 
 describe('Testing Core units', async () => {
   let evaluator: PolicyEvaluator;
   before(() => {
-    ModelBasic.cleanRelations();
+    EntityRegistry.cleanReferences();
     evaluator = new PolicyEvaluator();
   });
 

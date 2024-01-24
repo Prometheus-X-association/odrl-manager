@@ -1,3 +1,4 @@
+import { EntityRegistry } from 'EntityRegistry';
 import { randomUUID } from 'node:crypto';
 
 export const Custom = (): MethodDecorator => {
@@ -94,6 +95,8 @@ export abstract class PolicyDataFetcher {
 
   constructor() {
     this._objectUID = randomUUID();
+    EntityRegistry.addReference(this);
+
     const prototype = Object.getPrototypeOf(this);
     const customs = prototype.customMethods || [];
     customs.forEach((method: string) => {

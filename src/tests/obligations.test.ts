@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
 import { Policy } from 'models/odrl/Policy';
 import { PolicyDataFetcher } from 'PolicyDataFetcher';
-import { ModelBasic } from 'models/ModelBasic';
+import { EntityRegistry } from 'EntityRegistry';
 
 const assignee = 'http://example.com/person:44';
 const json = {
@@ -63,13 +63,13 @@ class Fetcher extends PolicyDataFetcher {
 describe(`Testing 'Obligations' related units`, async () => {
   let policy: Policy | null;
   let evaluator: PolicyEvaluator;
+  let fetcher: Fetcher;
   before(() => {
-    ModelBasic.cleanRelations();
-    const fetcher = new Fetcher();
-    evaluator = new PolicyEvaluator();
-    evaluator.setFetcher(fetcher);
+    EntityRegistry.cleanReferences();
     policy = instanciator.genPolicyFrom(json);
     policy?.debug();
+    fetcher = new Fetcher();
+    evaluator = new PolicyEvaluator();
   });
 
   it(`Should retrieve assigned "RuleDuties" for specified "assignee"`, async function () {
@@ -78,6 +78,7 @@ describe(`Testing 'Obligations' related units`, async () => {
     expect(valid).to.equal(true);
     if (policy) {
       evaluator.setPolicy(policy);
+      evaluator.setFetcher(fetcher);
       const duties = await evaluator.getAssignedDuties(assignee);
       // _logObject(duties);
       expect(duties).to.have.lengthOf(1);
@@ -136,6 +137,7 @@ describe(`Testing 'Obligations' related units`, async () => {
     expect(valid).to.equal(true);
     if (policy) {
       evaluator.setPolicy(policy);
+      evaluator.setFetcher(fetcher);
       const isPerformable = await evaluator.isActionPerformable(
         'play',
         'http://example.com/music/1999.mp3',
@@ -182,6 +184,7 @@ describe(`Testing 'Obligations' related units`, async () => {
     expect(valid).to.equal(true);
     if (policy) {
       evaluator.setPolicy(policy);
+      evaluator.setFetcher(fetcher);
       const agreed = await evaluator.evalAgreementForAssignee(
         'http://example.com/person:45',
       );

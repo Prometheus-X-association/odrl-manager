@@ -20,6 +20,7 @@ import { CopyMode, copy, getLastTerm } from './utils';
 type InstanciatorFunction = (
   node: any,
   parent: any,
+  root: Policy | null,
   fromArray?: boolean,
 ) => any;
 
@@ -101,21 +102,33 @@ export class PolicyInstanciator {
       consequence: PolicyInstanciator.setConsequence,
     };
 
-  private static setPermission(element: any, parent: Policy): RulePermission {
+  private static setPermission(
+    element: any,
+    parent: Policy,
+    root: Policy | null,
+  ): RulePermission {
     const rule = new RulePermission();
     rule.setParent(parent);
     parent.addPermission(rule);
     return rule;
   }
 
-  private static setProhibition(element: any, parent: Policy): RuleProhibition {
+  private static setProhibition(
+    element: any,
+    parent: Policy,
+    root: Policy | null,
+  ): RuleProhibition {
     const rule = new RuleProhibition();
     rule.setParent(parent);
     parent.addProhibition(rule);
     return rule;
   }
 
-  private static setObligation(element: any, parent: Policy): RuleDuty {
+  private static setObligation(
+    element: any,
+    parent: Policy,
+    root: Policy | null,
+  ): RuleDuty {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     rule.setParent(parent);
@@ -123,7 +136,11 @@ export class PolicyInstanciator {
     return rule;
   }
 
-  private static setDuty(element: any, parent: RulePermission) {
+  private static setDuty(
+    element: any,
+    parent: RulePermission,
+    root: Policy | null,
+  ) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     rule.setParent(parent);
@@ -134,6 +151,7 @@ export class PolicyInstanciator {
   private static setAction(
     element: string | any,
     parent: Rule,
+    root: Policy | null,
     fromArray?: boolean,
   ): Action {
     try {
@@ -156,7 +174,11 @@ export class PolicyInstanciator {
     }
   }
 
-  private static setTarget(element: any, parent: Rule): void {
+  private static setTarget(
+    element: any,
+    parent: Rule,
+    root: Policy | null,
+  ): void {
     const asset = new Asset(element);
     asset.setParent(parent);
     parent.setTarget(asset);
@@ -165,6 +187,7 @@ export class PolicyInstanciator {
   private static setConstraint(
     element: any,
     parent: LogicalConstraint | Rule | Action,
+    root: Policy | null,
   ): Constraint {
     const {
       leftOperand,
@@ -178,7 +201,11 @@ export class PolicyInstanciator {
         operator &&
         rightOperand !== undefined &&
         new AtomicConstraint(
-          new LeftOperand(leftOperand),
+          (() => {
+            const _leftOperand = new LeftOperand(leftOperand);
+            _leftOperand._rootUID = root?._objectUID;
+            return _leftOperand;
+          })(),
           new Operator(operator),
           new RightOperand(rightOperand),
         )) ||
@@ -199,11 +226,19 @@ export class PolicyInstanciator {
     return constraint;
   }
 
-  private static setRefinement(element: any, parent: Action): Constraint {
-    return PolicyInstanciator.setConstraint(element, parent);
+  private static setRefinement(
+    element: any,
+    parent: Action,
+    root: Policy | null,
+  ): Constraint {
+    return PolicyInstanciator.setConstraint(element, parent, root);
   }
 
-  private static setConsequence(element: any, parent: RuleDuty): RuleDuty {
+  private static setConsequence(
+    element: any,
+    parent: RuleDuty,
+    root: Policy | null,
+  ): RuleDuty {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     copy(
@@ -258,18 +293,25 @@ export class PolicyInstanciator {
         if (element) {
           const child: ModelBasic =
             PolicyInstanciator.instanciators[property] &&
-            ((PolicyInstanciator.instanciators[property].length == 3 &&
+            ((PolicyInstanciator.instanciators[property].length == 4 &&
               PolicyInstanciator.instanciators[property](
                 element,
                 parent,
+                this.policy,
                 fromArray,
               )) ||
-              PolicyInstanciator.instanciators[property](element, parent));
+              PolicyInstanciator.instanciators[property](
+                element,
+                parent,
+                this.policy,
+              ));
           if (typeof element === 'object') {
             if (child) {
               this.traverse(element, child);
             } else {
-              console.warn(`Traversal stopped for "${property}".`);
+              console.warn(
+                `\x1b[93m/!\\Traversal stopped for "${property}".\x1b[37m`,
+              );
             }
           }
         }
