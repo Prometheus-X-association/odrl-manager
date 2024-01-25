@@ -5,8 +5,8 @@ import { Policy } from './Policy';
 export class PolicyOffer extends Policy {
   '@type': 'Offer' = 'Offer';
   permission: RulePermission[] = [];
-  assigner: Party | null = null;
-  assignee: Party | null = null;
+  assigner?: Party;
+  assignee?: Party;
 
   constructor(uid: string, context: string) {
     super(uid, context, 'Offer');

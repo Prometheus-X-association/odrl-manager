@@ -56,3 +56,15 @@ export const isInstanceOfAny = (classes: any[], object: any): boolean => {
   }
   return false;
 };
+
+export const getNode = (obj: any, path: string): any | undefined => {
+  return (
+    path &&
+    path
+      .split('.')
+      .reduce(
+        (acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined),
+        obj,
+      )
+  );
+};

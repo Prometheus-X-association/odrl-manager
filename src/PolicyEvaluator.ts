@@ -9,16 +9,21 @@ import { RuleDuty } from 'models/odrl/RuleDuty';
 import { PolicyInstanciator } from 'PolicyInstanciator';
 import { PolicyAgreement } from 'models/odrl/PolicyAgreement';
 import { EntityRegistry } from 'EntityRegistry';
-import { isInstanceOfAny } from 'utils';
+import { getNode } from 'utils';
+import { Party } from 'models/odrl/Party';
 
 interface Picker {
   pick: (explorable: Explorable, options?: any) => boolean;
   type: Function;
 }
-type Pickers = {
+interface Pickers {
   [key: string]: Picker;
-};
-
+}
+interface DutyOptionPayload {
+  propertyName: string;
+  uidPath: string;
+  uidValue: string;
+}
 type ParentRule = RulePermission | RuleProhibition | RuleDuty;
 
 export class PolicyEvaluator {
@@ -48,6 +53,7 @@ export class PolicyEvaluator {
       type: RuleDuty,
     },
     //
+    /*
     permissionAssignee: {
       pick: this.pickAssignedPermission.bind(this),
       type: RulePermission,
@@ -60,6 +66,7 @@ export class PolicyEvaluator {
       pick: this.pickAssignedAgreement.bind(this),
       type: PolicyAgreement,
     },
+    */
     pickDuties: {
       pick: this.pickDuties.bind(this),
       type: RuleDuty,
@@ -90,21 +97,19 @@ export class PolicyEvaluator {
   }
 
   private pickEntityFor(
-    entity: string,
+    optionKey: string,
     explorable: Explorable,
-    options?: any,
+    options: any,
   ): boolean {
+    const payload: DutyOptionPayload = options[optionKey];
     if (
-      explorable instanceof RuleDuty ||
+      (payload && explorable instanceof RuleDuty) ||
       explorable instanceof RulePermission ||
       explorable instanceof RuleProhibition ||
       explorable instanceof PolicyAgreement
     ) {
-      const uid = explorable[entity as keyof typeof explorable];
-      const _uid = options
-        ? options[entity as keyof typeof explorable]
-        : undefined;
-      return _uid ? uid === _uid : false;
+      const uid = getNode(explorable, payload.uidPath);
+      return uid && uid === payload.uidValue;
     }
     return false;
   }
@@ -117,6 +122,7 @@ export class PolicyEvaluator {
     return this.pickEntityFor('assignee', explorable, options);
   }
 
+  /*
   private pickAssignedPermission(
     explorable: Explorable,
     options?: any,
@@ -137,6 +143,7 @@ export class PolicyEvaluator {
   ): boolean {
     return this.pickEntityFor('assignee', explorable, options);
   }
+  */
 
   private pickPermission(explorable: Explorable, options?: any): boolean {
     console.log('pickPermission');
@@ -151,11 +158,10 @@ export class PolicyEvaluator {
   private pickDuties(explorable: Explorable, options?: any): boolean {
     const isRuleDuty = explorable instanceof RuleDuty;
     if (isRuleDuty) {
-      const parent = explorable.getParent();
       const pickable =
         options?.all === true ||
-        (options.parentEntityClass?.length &&
-          isInstanceOfAny(options.parentEntityClass, parent));
+        ((explorable as RuleDuty)._type !== 'consequence' &&
+          (explorable as RuleDuty)._type !== 'remedy');
       return pickable;
     }
     return false;
@@ -236,6 +242,24 @@ export class PolicyEvaluator {
       return explorables;
     }
     return [];
+  }
+
+  private static getAssigneePayload(assignee: string): DutyOptionPayload {
+    const payload: DutyOptionPayload = {
+      propertyName: 'assignee',
+      uidPath: 'assignee.uid',
+      uidValue: assignee,
+    };
+    return payload;
+  }
+
+  private static getAssignerPayload(assigner: string): DutyOptionPayload {
+    const payload: DutyOptionPayload = {
+      propertyName: 'assigner',
+      uidPath: 'assigner.uid',
+      uidValue: assigner,
+    };
+    return payload;
   }
 
   /**
@@ -338,14 +362,16 @@ export class PolicyEvaluator {
   }
 
   public async getAssignedDuties(assignee: string): Promise<RuleDuty[]> {
+    const payload = PolicyEvaluator.getAssigneePayload(assignee);
     return (await this.explore({
-      assignee,
+      assignee: payload,
     })) as RuleDuty[];
   }
 
   public async getEmittedDuties(assigner: string): Promise<any[]> {
+    const payload = PolicyEvaluator.getAssigneePayload(assigner);
     return (await this.explore({
-      assigner,
+      assigner: payload,
     })) as RuleDuty[];
   }
 
@@ -360,13 +386,13 @@ export class PolicyEvaluator {
     defaultResult: boolean = false,
   ): Promise<boolean> {
     this.setFetcherOptions({ assignee });
+    const payload = PolicyEvaluator.getAssigneePayload(assignee);
     const entities: Explorable[] = (await this.explore({
-      assignee,
-      agreementAssignee: assignee,
-      permissionAssignee: assignee,
-      prohibitionAssignee: assignee,
+      assignee: payload,
+      // agreementAssignee: payload,
+      // permissionAssignee: payload,
+      // prohibitionAssignee: payload,
     })) as Explorable[];
-
     return this.evalDuties(entities, defaultResult);
   }
 
@@ -391,7 +417,10 @@ export class PolicyEvaluator {
         parentEntityClass: [Policy],
       },
     });
-    entities.filter((entity) => !(entity as RuleDuty).assignee) as Explorable[];
+    entities.filter((entity) => {
+      const party: Party | undefined = (entity as RuleDuty).assignee;
+      return !party?.uid;
+    }) as Explorable[];
     return this.evalDuties(entities, defaultResult);
   }
 

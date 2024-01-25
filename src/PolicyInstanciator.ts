@@ -16,6 +16,7 @@ import { RuleDuty } from './models/odrl/RuleDuty';
 import { RulePermission } from './models/odrl/RulePermission';
 import { RuleProhibition } from './models/odrl/RuleProhibition';
 import { CopyMode, copy, getLastTerm } from './utils';
+import { Party } from 'models/odrl/Party';
 
 type InstanciatorFunction = (
   node: any,
@@ -131,7 +132,10 @@ export class PolicyInstanciator {
     root: Policy | null,
   ): RuleDuty {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee),
+    );
     rule.setParent(parent);
     rule._type = 'obligation';
     parent.addDuty(rule);
@@ -144,7 +148,10 @@ export class PolicyInstanciator {
     root: Policy | null,
   ) {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee),
+    );
     rule.setParent(parent);
     rule._type = 'duty';
     parent.addDuty(rule);
@@ -243,7 +250,10 @@ export class PolicyInstanciator {
     root: Policy | null,
   ): RuleDuty {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee),
+    );
     rule.setParent(parent);
     rule._type = 'remedy';
     parent.addRemedy(rule);
@@ -256,7 +266,10 @@ export class PolicyInstanciator {
     root: Policy | null,
   ): RuleDuty {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee),
+    );
     copy(
       rule,
       element,
@@ -280,8 +293,8 @@ export class PolicyInstanciator {
         break;
       case 'Agreement':
         const policy = new PolicyAgreement(json.uid, context);
-        policy.assignee = json.assignee || null;
-        policy.assigner = json.assigner || null;
+        policy.setAssignee(json.assignee && new Party(json.assignee));
+        policy.setAssigner(json.assigner && new Party(json.assigner));
         this.policy = policy;
         break;
       default:

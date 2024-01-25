@@ -1,9 +1,8 @@
+import { Action } from './Action';
 import { Party } from './Party';
 import { Rule } from './Rule';
 
 export class RuleDuty extends Rule {
-  // public _isConsequence?: boolean;
-  // public _isRemedy?: boolean;
   public _type?: 'consequence' | 'remedy' | 'obligation' | 'duty';
   private consequence?: RuleDuty[];
   public compensatedParty?: string;
@@ -20,12 +19,14 @@ export class RuleDuty extends Rule {
   }
 
   public async evaluate(): Promise<boolean> {
-    const actions = this.action;
-    if (Array.isArray(actions)) {
+    if (Array.isArray(this.action)) {
       const processes = await Promise.all(
-        actions.map((action) => action.refine()),
+        this.action.map((action) => action.refine()),
       );
       return processes.every(Boolean);
+    } else if (this.action instanceof Action) {
+      // Todo
+      return true;
     }
     return false;
   }
