@@ -2,9 +2,13 @@ import { Party } from './Party';
 import { Rule } from './Rule';
 
 export class RuleDuty extends Rule {
+  // public _isConsequence?: boolean;
+  // public _isRemedy?: boolean;
+  public _type?: 'consequence' | 'remedy' | 'obligation' | 'duty';
   private consequence?: RuleDuty[];
   public compensatedParty?: string;
   public compensatingParty?: string;
+  private status?: 'notInfringed' | 'infringed';
   constructor(assigner?: Party, assignee?: Party) {
     super();
     if (assigner) {

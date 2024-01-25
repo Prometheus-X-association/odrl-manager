@@ -100,6 +100,7 @@ export class PolicyInstanciator {
       constraint: PolicyInstanciator.setConstraint,
       refinement: PolicyInstanciator.setRefinement,
       consequence: PolicyInstanciator.setConsequence,
+      remedy: PolicyInstanciator.setRemedy,
     };
 
   private static setPermission(
@@ -132,6 +133,7 @@ export class PolicyInstanciator {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     rule.setParent(parent);
+    rule._type = 'obligation';
     parent.addDuty(rule);
     return rule;
   }
@@ -144,6 +146,7 @@ export class PolicyInstanciator {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(assigner, assignee);
     rule.setParent(parent);
+    rule._type = 'duty';
     parent.addDuty(rule);
     return rule;
   }
@@ -234,6 +237,19 @@ export class PolicyInstanciator {
     return PolicyInstanciator.setConstraint(element, parent, root);
   }
 
+  private static setRemedy(
+    element: any,
+    parent: RuleProhibition,
+    root: Policy | null,
+  ): RuleDuty {
+    const { assigner, assignee } = element;
+    const rule = new RuleDuty(assigner, assignee);
+    rule.setParent(parent);
+    rule._type = 'remedy';
+    parent.addRemedy(rule);
+    return rule;
+  }
+
   private static setConsequence(
     element: any,
     parent: RuleDuty,
@@ -248,6 +264,7 @@ export class PolicyInstanciator {
       CopyMode.include,
     );
     rule.setParent(parent);
+    rule._type = 'consequence';
     parent.addConsequence(rule);
     return rule;
   }

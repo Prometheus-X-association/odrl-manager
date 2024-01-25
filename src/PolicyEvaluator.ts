@@ -9,6 +9,7 @@ import { RuleDuty } from 'models/odrl/RuleDuty';
 import { PolicyInstanciator } from 'PolicyInstanciator';
 import { PolicyAgreement } from 'models/odrl/PolicyAgreement';
 import { EntityRegistry } from 'EntityRegistry';
+import { isInstanceOfAny } from 'utils';
 
 interface Picker {
   pick: (explorable: Explorable, options?: any) => boolean;
@@ -46,6 +47,7 @@ export class PolicyEvaluator {
       pick: this.pickEmittedDuty.bind(this),
       type: RuleDuty,
     },
+    //
     permissionAssignee: {
       pick: this.pickAssignedPermission.bind(this),
       type: RulePermission,
@@ -58,9 +60,8 @@ export class PolicyEvaluator {
       pick: this.pickAssignedAgreement.bind(this),
       type: PolicyAgreement,
     },
-    // Pick all duties
-    pickAllDuties: {
-      pick: this.pickAllDuties.bind(this),
+    pickDuties: {
+      pick: this.pickDuties.bind(this),
       type: RuleDuty,
     },
   };
@@ -147,9 +148,19 @@ export class PolicyEvaluator {
     return true;
   }
 
-  private pickAllDuties(explorable: Explorable, options?: any): boolean {
-    return explorable instanceof RuleDuty;
+  private pickDuties(explorable: Explorable, options?: any): boolean {
+    const isRuleDuty = explorable instanceof RuleDuty;
+    if (isRuleDuty) {
+      const parent = explorable.getParent();
+      const pickable =
+        options?.all === true ||
+        (options.parentEntityClass?.length &&
+          isInstanceOfAny(options.parentEntityClass, parent));
+      return pickable;
+    }
+    return false;
   }
+
   public cleanPolicies(): void {
     this.policies = [];
   }
@@ -375,11 +386,12 @@ export class PolicyEvaluator {
     }
     */
     this.setFetcherOptions({ assignee });
-    const entities: Explorable[] = (
-      await this.explore({
-        pickAllDuties: true,
-      })
-    ).filter((entity) => !(entity as RuleDuty).assignee) as Explorable[];
+    const entities: Explorable[] = await this.explore({
+      pickDuties: {
+        parentEntityClass: [Policy],
+      },
+    });
+    entities.filter((entity) => !(entity as RuleDuty).assignee) as Explorable[];
     return this.evalDuties(entities, defaultResult);
   }
 
