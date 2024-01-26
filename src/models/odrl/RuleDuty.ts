@@ -21,12 +21,11 @@ export class RuleDuty extends Rule {
   public async evaluate(): Promise<boolean> {
     if (Array.isArray(this.action)) {
       const processes = await Promise.all(
-        this.action.map((action) => action.refine()),
+        this.action.map((action: Action) => action.refine()),
       );
       return processes.every(Boolean);
     } else if (this.action instanceof Action) {
-      // Todo
-      return true;
+      return this.action.evaluate();
     }
     return false;
   }

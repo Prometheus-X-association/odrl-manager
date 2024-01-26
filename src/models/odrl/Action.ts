@@ -1,5 +1,7 @@
+import { EntityRegistry } from 'EntityRegistry';
 import { ModelBasic } from '../ModelBasic';
 import { Constraint } from './Constraint';
+import { RuleDuty } from './RuleDuty';
 
 export const actions = [
   'Attribution',
@@ -128,6 +130,35 @@ export class Action extends ModelBasic {
     return Array.from(new Set(foundValues));
   }
 
+  public async evaluate(): Promise<boolean> {
+    const refine = this.refine();
+    const rule = this.getParent();
+    if (rule instanceof RuleDuty) {
+      const all = await Promise.all([
+        refine,
+        (async (): Promise<boolean> => {
+          try {
+            const fetcher = this._rootUID
+              ? EntityRegistry.getStateFetcherFromPolicy(this._rootUID)
+              : undefined;
+            if (fetcher) {
+              return fetcher.context[this.value]();
+            } else {
+              console.warn(
+                `\x1b[93m/!\\No state fetcher found, can't evaluate "${this.value}" action\x1b[37m`,
+              );
+            }
+          } catch (error: any) {
+            console.error(`No state found for "${this.value}" action`);
+          }
+          return false;
+        })(),
+      ]);
+      return all.every(Boolean);
+    }
+    return refine;
+  }
+
   public async refine(): Promise<boolean> {
     try {
       if (this.refinement) {
@@ -139,7 +170,7 @@ export class Action extends ModelBasic {
     } catch (error) {
       console.error('Error while refining action:', error);
     }
-    return false;
+    return true;
   }
 
   public async verify(): Promise<boolean> {

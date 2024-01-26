@@ -27,7 +27,6 @@ interface DutyOptionPayload {
 type ParentRule = RulePermission | RuleProhibition | RuleDuty;
 
 export class PolicyEvaluator {
-  // private static fetcher?: PolicyDataFetcher;
   public static instance: PolicyEvaluator;
   private policies: Policy[];
 
@@ -52,21 +51,6 @@ export class PolicyEvaluator {
       pick: this.pickEmittedDuty.bind(this),
       type: RuleDuty,
     },
-    //
-    /*
-    permissionAssignee: {
-      pick: this.pickAssignedPermission.bind(this),
-      type: RulePermission,
-    },
-    prohibitionAssignee: {
-      pick: this.pickAssignedProhibition.bind(this),
-      type: RuleProhibition,
-    },
-    agreementAssignee: {
-      pick: this.pickAssignedAgreement.bind(this),
-      type: PolicyAgreement,
-    },
-    */
     pickDuties: {
       pick: this.pickDuties.bind(this),
       type: RuleDuty,
@@ -122,29 +106,6 @@ export class PolicyEvaluator {
     return this.pickEntityFor('assignee', explorable, options);
   }
 
-  /*
-  private pickAssignedPermission(
-    explorable: Explorable,
-    options?: any,
-  ): boolean {
-    return this.pickEntityFor('assignee', explorable, options);
-  }
-
-  private pickAssignedProhibition(
-    explorable: Explorable,
-    options?: any,
-  ): boolean {
-    return this.pickEntityFor('assignee', explorable, options);
-  }
-
-  private pickAssignedAgreement(
-    explorable: Explorable,
-    options?: any,
-  ): boolean {
-    return this.pickEntityFor('assignee', explorable, options);
-  }
-  */
-
   private pickPermission(explorable: Explorable, options?: any): boolean {
     console.log('pickPermission');
     return true;
@@ -197,7 +158,9 @@ export class PolicyEvaluator {
         );
       }
       this.policies.forEach((policy: Policy) => {
-        const fetcher = EntityRegistry.getFetcherFromPolicy(policy._objectUID);
+        const fetcher = EntityRegistry.getDataFetcherFromPolicy(
+          policy._objectUID,
+        );
         if (!fetcher) {
           throw new Error(
             '[PolicyDataFetcher/setFetcherOptions]: Fetcher not found.',

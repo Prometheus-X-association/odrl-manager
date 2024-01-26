@@ -1,4 +1,5 @@
 import { PolicyDataFetcher } from 'PolicyDataFetcher';
+import { PolicyStateFetcher } from 'PolicyStateFetcher';
 import { ModelBasic } from 'models/ModelBasic';
 
 interface EntityReferences {
@@ -12,7 +13,7 @@ export class EntityRegistry {
   private static parentRelations: ParentRelations = {};
   private static entityReferences: EntityReferences = {};
 
-  public static getFetcherFromPolicy(
+  public static getDataFetcherFromPolicy(
     rootUID: string,
   ): PolicyDataFetcher | undefined {
     const root: ModelBasic = EntityRegistry.entityReferences[rootUID];
@@ -21,11 +22,20 @@ export class EntityRegistry {
       : undefined;
   }
 
+  public static getStateFetcherFromPolicy(
+    rootUID: string,
+  ): PolicyStateFetcher | undefined {
+    const root: ModelBasic = EntityRegistry.entityReferences[rootUID];
+    return root?._stateFetcherUID
+      ? EntityRegistry.entityReferences[root._stateFetcherUID]
+      : undefined;
+  }
+
   public static getEntity(uid: string): any | undefined {
     return EntityRegistry.entityReferences[uid];
   }
 
-  public static addReference(model: ModelBasic | PolicyDataFetcher): void {
+  public static addReference(model: any): void {
     EntityRegistry.entityReferences[model._objectUID] = model;
   }
 

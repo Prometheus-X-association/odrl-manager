@@ -25,6 +25,7 @@ export abstract class ModelBasic {
   public _rootUID?: string;
   public _objectUID: string;
   public _fetcherUID?: string;
+  public _stateFetcherUID?: string;
 
   constructor() {
     this._objectUID = randomUUID();

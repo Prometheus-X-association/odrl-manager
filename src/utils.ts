@@ -68,3 +68,16 @@ export const getNode = (obj: any, path: string): any | undefined => {
       )
   );
 };
+
+export const Custom = (): MethodDecorator => {
+  return (
+    target: any,
+    key: string | symbol,
+    descriptor: PropertyDescriptor,
+  ) => {
+    if (descriptor && typeof descriptor.value === 'function') {
+      target.customMethods = target.customMethods || [];
+      target.customMethods.push(key);
+    }
+  };
+};

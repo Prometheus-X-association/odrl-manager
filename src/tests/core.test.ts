@@ -2,8 +2,8 @@ import instanciator from 'PolicyInstanciator';
 import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
-import { PolicyDataFetcher } from 'PolicyDataFetcher';
-import { Custom } from 'PolicyDataFetcher';
+import { PolicyDataFetcher, Custom } from 'PolicyDataFetcher';
+// import { Custom } from 'PolicyFetcher';
 import { EntityRegistry } from 'EntityRegistry';
 
 describe('Testing Core units', async () => {
