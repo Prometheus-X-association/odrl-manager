@@ -184,7 +184,7 @@ describe(`Testing 'Obligations' related units`, async () => {
       const agreed = await evaluator.evalAgreementForAssignee(
         'http://example.com/person:45',
       );
-      expect(agreed).to.equal(true);
+      expect(agreed).to.equal(false);
     }
   });
 });

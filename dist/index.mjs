@@ -1,5 +1,21 @@
+var __defProp = Object.defineProperty;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
 var __reflectGet = Reflect.get;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
 var __superGet = (cls, obj, key) => __reflectGet(__getProtoOf(cls), key, obj);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
@@ -24,9 +40,13 @@ var __async = (__this, __arguments, generator) => {
 
 // src/EntityRegistry.ts
 var _EntityRegistry = class _EntityRegistry {
-  static getFetcherFromPolicy(rootUID) {
+  static getDataFetcherFromPolicy(rootUID) {
     const root = _EntityRegistry.entityReferences[rootUID];
     return (root == null ? void 0 : root._fetcherUID) ? _EntityRegistry.entityReferences[root._fetcherUID] : void 0;
+  }
+  static getStateFetcherFromPolicy(rootUID) {
+    const root = _EntityRegistry.entityReferences[rootUID];
+    return (root == null ? void 0 : root._stateFetcherUID) ? _EntityRegistry.entityReferences[root._stateFetcherUID] : void 0;
   }
   static getEntity(uid) {
     return _EntityRegistry.entityReferences[uid];
@@ -50,8 +70,28 @@ _EntityRegistry.parentRelations = {};
 _EntityRegistry.entityReferences = {};
 var EntityRegistry = _EntityRegistry;
 
-// src/PolicyDataFetcher.ts
+// src/PolicyFetcher.ts
 import { randomUUID } from "crypto";
+var PolicyFetcher = class {
+  constructor() {
+    this._context = {};
+    this.options = {};
+    this._objectUID = randomUUID();
+    EntityRegistry.addReference(this);
+    const prototype = Object.getPrototypeOf(this);
+    const customs = prototype.customMethods || [];
+    customs.forEach((method) => {
+      const propertyName = method.replace(/^get/, "");
+      const lowercasePropertyName = propertyName.charAt(0).toLowerCase() + propertyName.slice(1);
+      this._context[lowercasePropertyName] = this[method].bind(this);
+    });
+  }
+  setRequestOptions(options) {
+    this.options = options;
+  }
+};
+
+// src/PolicyDataFetcher.ts
 var Custom = () => {
   return (target, key, descriptor) => {
     if (descriptor && typeof descriptor.value === "function") {
@@ -60,9 +100,19 @@ var Custom = () => {
     }
   };
 };
-var PolicyDataFetcher = class {
+var PolicyDataFetcher = class extends PolicyFetcher {
   constructor() {
-    this.context = {
+    super();
+    this.types = {
+      date: [
+        "dateTime",
+        "absoluteTemporalPosition",
+        "relativeTemporalPosition",
+        "timeInterval"
+      ]
+      // boolean: [''],
+    };
+    this._context = __spreadValues({
       absolutePosition: this.getAbsolutePosition.bind(this),
       absoluteSize: this.getAbsoluteSize.bind(this),
       absoluteSpatialPosition: this.getAbsoluteSpatialPosition.bind(this),
@@ -97,20 +147,13 @@ var PolicyDataFetcher = class {
       unitOfCount: this.getUnitOfCount.bind(this),
       version: this.getVersion.bind(this),
       virtualLocation: this.getVirtualLocation.bind(this)
-    };
-    this.options = {};
-    this._objectUID = randomUUID();
-    EntityRegistry.addReference(this);
-    const prototype = Object.getPrototypeOf(this);
-    const customs = prototype.customMethods || [];
-    customs.forEach((method) => {
-      const propertyName = method.replace(/^get/, "");
-      const lowercasePropertyName = propertyName.charAt(0).toLowerCase() + propertyName.slice(1);
-      this.context[lowercasePropertyName] = this[method].bind(this);
-    });
+    }, this._context);
   }
-  setRequestOptions(options) {
-    this.options = options;
+  getTypes(leftOperand) {
+    return Object.entries(this.types).flatMap(([key, values]) => values.includes(leftOperand) ? key : []).filter(Boolean);
+  }
+  get context() {
+    return this._context;
   }
   getAbsolutePosition() {
     return __async(this, null, function* () {
@@ -405,6 +448,54 @@ var Explorable = class _Explorable extends ModelBasic {
   }
 };
 
+// src/models/odrl/Policy.ts
+var Policy = class _Policy extends Explorable {
+  constructor(uid, context, type) {
+    super();
+    this["@context"] = "";
+    this["@type"] = type;
+    this["@context"] = context;
+    this.uid = uid;
+    this.permission = [];
+    this.prohibition = [];
+    this.obligation = [];
+  }
+  get permissions() {
+    return this.permission;
+  }
+  get prohibitions() {
+    return this.prohibition;
+  }
+  get obligations() {
+    return this.permission;
+  }
+  addPermission(permission) {
+    this.permission.push(permission);
+  }
+  addProhibition(prohibition) {
+    this.prohibition.push(prohibition);
+  }
+  addDuty(prohibition) {
+    this.obligation.push(prohibition);
+  }
+  validate() {
+    return __async(this, null, function* () {
+      const promises = [];
+      __superGet(_Policy.prototype, this, "validate").call(this, 0, promises);
+      return Promise.all(promises).then(
+        (results) => results.every((result) => result)
+      );
+    });
+  }
+  explore(picker, options) {
+    return __async(this, null, function* () {
+      const explorables = [];
+      __superGet(_Policy.prototype, this, "explore").call(this, picker, 0, explorables, options);
+      return explorables;
+    });
+  }
+};
+
 // src/models/odrl/Asset.ts
 var Asset = class extends Explorable {
   constructor(target) {
@@ -587,6 +678,43 @@ var RuleProhibition = class extends Rule {
   }
 };
 
+// src/models/odrl/RuleDuty.ts
+var RuleDuty = class extends Rule {
+  constructor(assigner, assignee) {
+    super();
+    if (assigner) {
+      this.assigner = assigner;
+    }
+    if (assignee) {
+      this.assignee = assignee;
+    }
+  }
+  evaluate() {
+    return __async(this, null, function* () {
+      if (Array.isArray(this.action)) {
+        const processes = yield Promise.all(
+          this.action.map((action) => action.refine())
+        );
+        return processes.every(Boolean);
+      } else if (this.action instanceof Action) {
+        return this.action.evaluate();
+      }
+      return false;
+    });
+  }
+  verify() {
+    return __async(this, null, function* () {
+      return true;
+    });
+  }
+  addConsequence(consequence) {
+    if (this.consequence === void 0) {
+      this.consequence = [];
+    }
+    this.consequence.push(consequence);
+  }
+};
+
 // src/models/odrl/Action.ts
 var _Action = class _Action extends ModelBasic {
   constructor(value, includedIn) {
@@ -627,6 +755,34 @@ var _Action = class _Action extends ModelBasic {
       return Array.from(new Set(foundValues));
     });
   }
+  evaluate() {
+    return __async(this, null, function* () {
+      const refine = this.refine();
+      const rule = this.getParent();
+      if (rule instanceof RuleDuty) {
+        const all = yield Promise.all([
+          refine,
+          (() => __async(this, null, function* () {
+            try {
+              const fetcher = this._rootUID ? EntityRegistry.getStateFetcherFromPolicy(this._rootUID) : void 0;
+              if (fetcher) {
+                return fetcher.context[this.value]();
+              } else {
+                console.warn(
+                  `\x1B[93m/!\\No state fetcher found, can't evaluate "${this.value}" action\x1B[37m`
+                );
+              }
+            } catch (error) {
+              console.error(`No state found for "${this.value}" action`);
+            }
+            return false;
+          }))()
+        ]);
+        return all.every(Boolean);
+      }
+      return refine;
+    });
+  }
   refine() {
     return __async(this, null, function* () {
       try {
@@ -639,7 +795,7 @@ var _Action = class _Action extends ModelBasic {
       } catch (error) {
         console.error("Error while refining action:", error);
       }
-      return false;
+      return true;
     });
   }
   verify() {
@@ -650,42 +806,6 @@ var _Action = class _Action extends ModelBasic {
 };
 _Action.inclusions = /* @__PURE__ */ new Map();
 var Action = _Action;
-
-// src/models/odrl/RuleDuty.ts
-var RuleDuty = class extends Rule {
-  constructor(assigner, assignee) {
-    super();
-    if (assigner) {
-      this.assigner = assigner;
-    }
-    if (assignee) {
-      this.assignee = assignee;
-    }
-  }
-  evaluate() {
-    return __async(this, null, function* () {
-      const actions2 = this.action;
-      if (Array.isArray(actions2)) {
-        const processes = yield Promise.all(
-          actions2.map((action) => action.refine())
-        );
-        return processes.every(Boolean);
-      }
-      return false;
-    });
-  }
-  verify() {
-    return __async(this, null, function* () {
-      return true;
-    });
-  }
-  addConsequence(consequence) {
-    if (this.consequence === void 0) {
-      this.consequence = [];
-    }
-    this.consequence.push(consequence);
-  }
-};
 
 // src/models/odrl/Operator.ts
 var _Operator = class _Operator extends ModelBasic {
@@ -742,16 +862,27 @@ var LeftOperand = class extends ModelBasic {
   evaluate() {
     return __async(this, null, function* () {
       try {
-        const fetcher = this._rootUID ? EntityRegistry.getFetcherFromPolicy(this._rootUID) : void 0;
+        const fetcher = this._rootUID ? EntityRegistry.getDataFetcherFromPolicy(this._rootUID) : void 0;
         if (fetcher) {
-          return fetcher.context[this.value]();
+          const types = fetcher.getTypes(this.value);
+          const value = yield fetcher.context[this.value]();
+          if (types.length && types.includes("date")) {
+            const dateTime = new Date(value).getTime();
+            if (isNaN(dateTime)) {
+              console.warn(
+                `\x1B[93m/!\\"${value}" is not a supported Date\x1B[37m`
+              );
+            }
+            return [dateTime, types];
+          }
+          return [value, types];
         } else {
           console.warn(
-            `\x1B[93m/!\\No fetcher found, can't evaluate ${this.value}\x1B[37m`
+            `\x1B[93m/!\\No data fetcher found, can't evaluate "${this.value}"\x1B[37m`
           );
         }
       } catch (error) {
-        console.error(`LeftOperand function ${this.value} not found`);
+        console.error(`LeftOperand function "${this.value}" not found`);
       }
       return null;
     });
@@ -800,20 +931,32 @@ var AtomicConstraint = class _AtomicConstraint extends Constraint {
     return __async(this, null, function* () {
       var _a;
       if (this.leftOperand && this.rightOperand) {
-        const leftValue = yield this.leftOperand.evaluate();
-        switch ((_a = this.operator) == null ? void 0 : _a.value) {
-          case Operator.EQ:
-            return leftValue === this.rightOperand.value;
-          case Operator.NEQ:
-            return leftValue !== this.rightOperand.value;
-          case Operator.GT:
-            return leftValue > this.rightOperand.value;
-          case Operator.GEQ:
-            return leftValue >= this.rightOperand.value;
-          case Operator.LT:
-            return leftValue < this.rightOperand.value;
-          case Operator.LEQ:
-            return leftValue <= this.rightOperand.value;
+        const evaluation = yield this.leftOperand.evaluate();
+        if (evaluation) {
+          const [leftValue, types] = evaluation;
+          let rightValue = this.rightOperand.value;
+          if (types && types.includes("date")) {
+            rightValue = new Date(rightValue).getTime();
+            if (isNaN(rightValue)) {
+              console.warn(
+                `\x1B[93m/!\\"${rightValue}" is not a supported Date\x1B[37m`
+              );
+            }
+          }
+          switch ((_a = this.operator) == null ? void 0 : _a.value) {
+            case Operator.EQ:
+              return leftValue === rightValue;
+            case Operator.NEQ:
+              return leftValue !== rightValue;
+            case Operator.GT:
+              return leftValue > rightValue;
+            case Operator.GEQ:
+              return leftValue >= rightValue;
+            case Operator.LT:
+              return leftValue < rightValue;
+            case Operator.LEQ:
+              return leftValue <= rightValue;
+          }
         }
       }
       return false;
@@ -870,62 +1013,18 @@ var _LogicalConstraint = class _LogicalConstraint extends Constraint {
 _LogicalConstraint.operands = ["and", "andSequence", "or", "xone"];
 var LogicalConstraint = _LogicalConstraint;
 
-// src/models/odrl/Policy.ts
-var Policy = class _Policy extends Explorable {
-  constructor(uid, context, type) {
-    super();
-    this["@context"] = "";
-    this["@type"] = type;
-    this["@context"] = context;
-    this.uid = uid;
-    this.permission = [];
-    this.prohibition = [];
-    this.obligation = [];
-  }
-  get permissions() {
-    return this.permission;
-  }
-  get prohibitions() {
-    return this.prohibition;
-  }
-  get obligations() {
-    return this.permission;
-  }
-  addPermission(permission) {
-    this.permission.push(permission);
-  }
-  addProhibition(prohibition) {
-    this.prohibition.push(prohibition);
-  }
-  addDuty(prohibition) {
-    this.obligation.push(prohibition);
-  }
-  validate() {
-    return __async(this, null, function* () {
-      const promises = [];
-      __superGet(_Policy.prototype, this, "validate").call(this, 0, promises);
-      return Promise.all(promises).then(
-        (results) => results.every((result) => result)
-      );
-    });
-  }
-  explore(picker, options) {
-    return __async(this, null, function* () {
-      const explorables = [];
-      __superGet(_Policy.prototype, this, "explore").call(this, picker, 0, explorables, options);
-      return explorables;
-    });
-  }
-};
-
 // src/models/odrl/PolicyAgreement.ts
 var PolicyAgreement = class extends Policy {
   constructor(uid, context) {
     super(uid, context, "Agreement");
     this["@type"] = "Agreement";
     this.permission = [];
-    this.assigner = null;
-    this.assignee = null;
+  }
+  setAssigner(assigner) {
+    this.assigner = assigner;
+  }
+  setAssignee(assignee) {
+    this.assignee = assignee;
   }
   evaluate() {
     return __async(this, null, function* () {
@@ -945,8 +1044,6 @@ var PolicyOffer = class extends Policy {
     super(uid, context, "Offer");
     this["@type"] = "Offer";
     this.permission = [];
-    this.assigner = null;
-    this.assignee = null;
   }
   evaluate() {
     return __async(this, null, function* () {
@@ -1000,6 +1097,25 @@ var getLastTerm = (input) => {
   const a = input.split("/");
   const b = a.pop();
   return b === "" ? a.pop() : b;
+};
+var getNode = (obj, path) => {
+  return path && path.split(".").reduce(
+    (acc, key) => acc && acc[key] !== void 0 ? acc[key] : void 0,
+    obj
+  );
+};
+
+// src/models/odrl/Party.ts
+var Party = class extends ModelBasic {
+  constructor(uid) {
+    super();
+    this.uid = uid;
+  }
+  verify() {
+    return __async(this, null, function* () {
+      return true;
+    });
+  }
 };
 
 // src/PolicyInstanciator.ts
@@ -1077,15 +1193,23 @@ var _PolicyInstanciator = class _PolicyInstanciator {
   }
   static setObligation(element, parent, root) {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee)
+    );
     rule.setParent(parent);
+    rule._type = "obligation";
     parent.addDuty(rule);
     return rule;
   }
   static setDuty(element, parent, root) {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee)
+    );
     rule.setParent(parent);
+    rule._type = "duty";
     parent.addDuty(rule);
     return rule;
   }
@@ -1146,9 +1270,23 @@ var _PolicyInstanciator = class _PolicyInstanciator {
   static setRefinement(element, parent, root) {
     return _PolicyInstanciator.setConstraint(element, parent, root);
   }
+  static setRemedy(element, parent, root) {
+    const { assigner, assignee } = element;
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee)
+    );
+    rule.setParent(parent);
+    rule._type = "remedy";
+    parent.addRemedy(rule);
+    return rule;
+  }
   static setConsequence(element, parent, root) {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee)
+    );
     copy(
       rule,
       element,
@@ -1156,6 +1294,7 @@ var _PolicyInstanciator = class _PolicyInstanciator {
       2 /* include */
     );
     rule.setParent(parent);
+    rule._type = "consequence";
     parent.addConsequence(rule);
     return rule;
   }
@@ -1170,8 +1309,8 @@ var _PolicyInstanciator = class _PolicyInstanciator {
         break;
       case "Agreement":
         const policy = new PolicyAgreement(json.uid, context);
-        policy.assignee = json.assignee || null;
-        policy.assigner = json.assigner || null;
+        policy.setAssignee(json.assignee && new Party(json.assignee));
+        policy.setAssigner(json.assigner && new Party(json.assigner));
         this.policy = policy;
         break;
       default:
@@ -1237,7 +1376,8 @@ _PolicyInstanciator.instanciators = {
   target: _PolicyInstanciator.setTarget,
   constraint: _PolicyInstanciator.setConstraint,
   refinement: _PolicyInstanciator.setRefinement,
-  consequence: _PolicyInstanciator.setConsequence
+  consequence: _PolicyInstanciator.setConsequence,
+  remedy: _PolicyInstanciator.setRemedy
 };
 var PolicyInstanciator = _PolicyInstanciator;
 var PolicyInstanciator_default = PolicyInstanciator.getInstance();
@@ -1266,21 +1406,8 @@ var PolicyEvaluator = class _PolicyEvaluator {
         pick: this.pickEmittedDuty.bind(this),
         type: RuleDuty
       },
-      permissionAssignee: {
-        pick: this.pickAssignedPermission.bind(this),
-        type: RulePermission
-      },
-      prohibitionAssignee: {
-        pick: this.pickAssignedProhibition.bind(this),
-        type: RuleProhibition
-      },
-      agreementAssignee: {
-        pick: this.pickAssignedAgreement.bind(this),
-        type: PolicyAgreement
-      },
-      // Pick all duties
-      pickAllDuties: {
-        pick: this.pickAllDuties.bind(this),
+      pickDuties: {
+        pick: this.pickDuties.bind(this),
         type: RuleDuty
       }
     };
@@ -1317,11 +1444,11 @@ var PolicyEvaluator = class _PolicyEvaluator {
     }
     return false;
   }
-  pickEntityFor(entity, explorable, options) {
-    if (explorable instanceof RuleDuty || explorable instanceof RulePermission || explorable instanceof RuleProhibition || explorable instanceof PolicyAgreement) {
-      const uid = explorable[entity];
-      const _uid = options ? options[entity] : void 0;
-      return _uid ? uid === _uid : false;
+  pickEntityFor(optionKey, explorable, options) {
+    const payload = options[optionKey];
+    if (payload && explorable instanceof RuleDuty || explorable instanceof RulePermission || explorable instanceof RuleProhibition || explorable instanceof PolicyAgreement) {
+      const uid = getNode(explorable, payload.uidPath);
+      return uid && uid === payload.uidValue;
     }
     return false;
   }
@@ -1329,15 +1456,6 @@ var PolicyEvaluator = class _PolicyEvaluator {
     return this.pickEntityFor("assigner", explorable, options);
   }
   pickAssignedDuty(explorable, options) {
-    return this.pickEntityFor("assignee", explorable, options);
-  }
-  pickAssignedPermission(explorable, options) {
-    return this.pickEntityFor("assignee", explorable, options);
-  }
-  pickAssignedProhibition(explorable, options) {
-    return this.pickEntityFor("assignee", explorable, options);
-  }
-  pickAssignedAgreement(explorable, options) {
     return this.pickEntityFor("assignee", explorable, options);
   }
   pickPermission(explorable, options) {
@@ -1348,8 +1466,13 @@ var PolicyEvaluator = class _PolicyEvaluator {
     console.log("pickProhibition");
     return true;
   }
-  pickAllDuties(explorable, options) {
-    return explorable instanceof RuleDuty;
+  pickDuties(explorable, options) {
+    const isRuleDuty = explorable instanceof RuleDuty;
+    if (isRuleDuty) {
+      const pickable = (options == null ? void 0 : options.all) === true || explorable._type !== "consequence" && explorable._type !== "remedy";
+      return pickable;
+    }
+    return false;
   }
   cleanPolicies() {
     this.policies = [];
@@ -1377,7 +1500,9 @@ var PolicyEvaluator = class _PolicyEvaluator {
         );
       }
       this.policies.forEach((policy) => {
-        const fetcher = EntityRegistry.getFetcherFromPolicy(policy._objectUID);
+        const fetcher = EntityRegistry.getDataFetcherFromPolicy(
+          policy._objectUID
+        );
         if (!fetcher) {
           throw new Error(
             "[PolicyDataFetcher/setFetcherOptions]: Fetcher not found."
@@ -1404,6 +1529,22 @@ var PolicyEvaluator = class _PolicyEvaluator {
       }
       return [];
     });
+  }
+  static getAssigneePayload(assignee) {
+    const payload = {
+      propertyName: "assignee",
+      uidPath: "assignee.uid",
+      uidValue: assignee
+    };
+    return payload;
+  }
+  static getAssignerPayload(assigner) {
+    const payload = {
+      propertyName: "assigner",
+      uidPath: "assigner.uid",
+      uidValue: assigner
+    };
+    return payload;
   }
   /**
    * Retrieves a list of performable actions on the specified target.
@@ -1497,15 +1638,17 @@ var PolicyEvaluator = class _PolicyEvaluator {
   }
   getAssignedDuties(assignee) {
     return __async(this, null, function* () {
+      const payload = _PolicyEvaluator.getAssigneePayload(assignee);
       return yield this.explore({
-        assignee
+        assignee: payload
       });
     });
   }
   getEmittedDuties(assigner) {
     return __async(this, null, function* () {
+      const payload = _PolicyEvaluator.getAssigneePayload(assigner);
       return yield this.explore({
-        assigner
+        assigner: payload
       });
     });
   }
@@ -1518,11 +1661,12 @@ var PolicyEvaluator = class _PolicyEvaluator {
   fulfillDuties(assignee, defaultResult = false) {
     return __async(this, null, function* () {
       this.setFetcherOptions({ assignee });
+      const payload = _PolicyEvaluator.getAssigneePayload(assignee);
       const entities = yield this.explore({
-        assignee,
-        agreementAssignee: assignee,
-        permissionAssignee: assignee,
-        prohibitionAssignee: assignee
+        assignee: payload
+        // agreementAssignee: payload,
+        // permissionAssignee: payload,
+        // prohibitionAssignee: payload,
       });
       return this.evalDuties(entities, defaultResult);
     });
@@ -1535,9 +1679,15 @@ var PolicyEvaluator = class _PolicyEvaluator {
   evalAgreementForAssignee(assignee, defaultResult = false) {
     return __async(this, null, function* () {
       this.setFetcherOptions({ assignee });
-      const entities = (yield this.explore({
-        pickAllDuties: true
-      })).filter((entity) => !entity.assignee);
+      const entities = yield this.explore({
+        pickDuties: {
+          parentEntityClass: [Policy]
+        }
+      });
+      entities.filter((entity) => {
+        const party = entity.assignee;
+        return !(party == null ? void 0 : party.uid);
+      });
       return this.evalDuties(entities, defaultResult);
     });
   }

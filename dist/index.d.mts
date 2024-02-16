@@ -1,3 +1,15 @@
+interface ContextFunctions {
+    [key: string]: Function;
+}
+declare abstract class PolicyFetcher {
+    protected _context: ContextFunctions;
+    _objectUID: string;
+    protected options: any;
+    constructor();
+    setRequestOptions(options: any): void;
+    abstract get context(): ContextFunctions;
+}
+
 declare const Custom: () => MethodDecorator;
 interface LeftOperandFunctions {
     absolutePosition: () => Promise<number>;
@@ -36,12 +48,11 @@ interface LeftOperandFunctions {
     virtualLocation: () => Promise<string>;
     [key: string]: Function;
 }
-declare abstract class PolicyDataFetcher {
-    context: LeftOperandFunctions;
-    _objectUID: string;
-    protected options: any;
+declare abstract class PolicyDataFetcher extends PolicyFetcher {
+    private types;
     constructor();
-    setRequestOptions(options: any): void;
+    getTypes(leftOperand: string): string[];
+    get context(): LeftOperandFunctions;
     protected getAbsolutePosition(): Promise<number>;
     protected getAbsoluteSize(): Promise<number>;
     protected getAbsoluteSpatialPosition(): Promise<[number, number]>;
@@ -82,6 +93,7 @@ declare abstract class ModelBasic {
     _rootUID?: string;
     _objectUID: string;
     _fetcherUID?: string;
+    _stateFetcherUID?: string;
     constructor();
     protected handleFailure(): void;
     setParent(parent: ModelBasic): void;
@@ -101,6 +113,9 @@ declare class ConflictTerm extends ModelBasic {
 }
 
 declare class Party extends ModelBasic {
+    uid: string;
+    private partOf?;
+    constructor(uid: string);
     verify(): Promise<boolean>;
 }
 
@@ -108,7 +123,7 @@ declare class LeftOperand extends ModelBasic {
     private value;
     constructor(value: string);
     getValue(): string;
-    evaluate(): Promise<string | number | null>;
+    evaluate(): Promise<[string | number, string[]] | null>;
     verify(): Promise<boolean>;
 }
 
@@ -165,6 +180,7 @@ declare class Action extends ModelBasic {
     addConstraint(constraint: Constraint): void;
     includes(value: string): Promise<boolean>;
     static getIncluded(values: ActionType[]): Promise<ActionType[]>;
+    evaluate(): Promise<boolean>;
     refine(): Promise<boolean>;
     verify(): Promise<boolean>;
 }
@@ -220,9 +236,11 @@ declare abstract class Rule extends Explorable {
 }
 
 declare class RuleDuty extends Rule {
+    _type?: 'consequence' | 'remedy' | 'obligation' | 'duty';
     private consequence?;
     compensatedParty?: string;
     compensatingParty?: string;
+    private status?;
     constructor(assigner?: Party, assignee?: Party);
     evaluate(): Promise<boolean>;
     verify(): Promise<boolean>;
@@ -280,12 +298,9 @@ declare class PolicyEvaluator {
     private pickEntityFor;
     private pickEmittedDuty;
     private pickAssignedDuty;
-    private pickAssignedPermission;
-    private pickAssignedProhibition;
-    private pickAssignedAgreement;
     private pickPermission;
     private pickProhibition;
-    private pickAllDuties;
+    private pickDuties;
     cleanPolicies(): void;
     addPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void;
     setPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void;
@@ -293,6 +308,8 @@ declare class PolicyEvaluator {
     private setFetcherOptions;
     private pick;
     private explore;
+    private static getAssigneePayload;
+    private static getAssignerPayload;
     /**
      * Retrieves a list of performable actions on the specified target.
      * @param {string} target - A string representing the target.
@@ -353,6 +370,7 @@ declare class PolicyInstanciator {
     private static setTarget;
     private static setConstraint;
     private static setRefinement;
+    private static setRemedy;
     private static setConsequence;
     private selectPolicyType;
     genPolicyFrom(json: any): Policy | null;

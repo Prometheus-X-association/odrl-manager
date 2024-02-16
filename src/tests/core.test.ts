@@ -385,4 +385,47 @@ describe('Testing Core units', async () => {
       expect(actions).to.deep.equal(['read']);
     }
   });
+
+  it(`Should confirm resource readability
+    if the request occurs 1 seconds post-creation.`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const creationDate = new Date();
+    creationDate.setSeconds(creationDate.getSeconds() + 1);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'read',
+          target: 'http://resource-target',
+          constraint: [
+            {
+              leftOperand: 'dateTime',
+              operator: 'gteq',
+              rightOperand: creationDate.toISOString(),
+            },
+          ],
+        },
+      ],
+    };
+    const policy = instanciator.genPolicyFrom(json);
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    if (policy) {
+      class Fetcher extends PolicyDataFetcher {
+        constructor() {
+          super();
+        }
+      }
+      const fetcher = new Fetcher();
+      evaluator.setPolicy(policy, fetcher);
+      const isPerformable = await evaluator.isActionPerformable(
+        'read',
+        'http://resource-target',
+      );
+      expect(isPerformable).to.equal(true);
+    }
+  });
 });

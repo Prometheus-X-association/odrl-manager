@@ -52,6 +52,16 @@ interface LeftOperandFunctions {
 }
 
 export abstract class PolicyDataFetcher extends PolicyFetcher {
+  private types: { [key: string]: string[] } = {
+    date: [
+      'dateTime',
+      'absoluteTemporalPosition',
+      'relativeTemporalPosition',
+      'timeInterval',
+    ],
+    // boolean: [''],
+  };
+
   constructor() {
     super();
     this._context = {
@@ -91,6 +101,12 @@ export abstract class PolicyDataFetcher extends PolicyFetcher {
       virtualLocation: this.getVirtualLocation.bind(this),
       ...this._context,
     };
+  }
+
+  public getTypes(leftOperand: string): string[] {
+    return Object.entries(this.types)
+      .flatMap(([key, values]) => (values.includes(leftOperand) ? key : []))
+      .filter(Boolean);
   }
 
   public get context(): LeftOperandFunctions {

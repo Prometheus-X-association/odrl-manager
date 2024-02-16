@@ -2,6 +2,7 @@ import { Operator } from './Operator';
 import { RightOperand } from './RightOperand';
 import { LeftOperand } from './LeftOperand';
 import { Constraint } from './Constraint';
+import { EntityRegistry } from 'EntityRegistry';
 
 export class AtomicConstraint extends Constraint {
   constructor(
@@ -14,20 +15,32 @@ export class AtomicConstraint extends Constraint {
 
   async evaluate(): Promise<boolean> {
     if (this.leftOperand && this.rightOperand) {
-      const leftValue: unknown = await this.leftOperand.evaluate();
-      switch (this.operator?.value) {
-        case Operator.EQ:
-          return leftValue === this.rightOperand.value;
-        case Operator.NEQ:
-          return leftValue !== this.rightOperand.value;
-        case Operator.GT:
-          return (leftValue as number) > (this.rightOperand.value as number);
-        case Operator.GEQ:
-          return (leftValue as number) >= (this.rightOperand.value as number);
-        case Operator.LT:
-          return (leftValue as number) < (this.rightOperand.value as number);
-        case Operator.LEQ:
-          return (leftValue as number) <= (this.rightOperand.value as number);
+      const evaluation: unknown = await this.leftOperand.evaluate();
+      if (evaluation) {
+        const [leftValue, types] = evaluation as [string | number, string[]];
+        let rightValue = this.rightOperand.value;
+        if (types && types.includes('date')) {
+          rightValue = new Date(rightValue).getTime();
+          if (isNaN(rightValue)) {
+            console.warn(
+              `\x1b[93m/!\\"${rightValue}" is not a supported Date\x1b[37m`,
+            );
+          }
+        }
+        switch (this.operator?.value) {
+          case Operator.EQ:
+            return leftValue === rightValue;
+          case Operator.NEQ:
+            return leftValue !== rightValue;
+          case Operator.GT:
+            return (leftValue as number) > (rightValue as number);
+          case Operator.GEQ:
+            return (leftValue as number) >= (rightValue as number);
+          case Operator.LT:
+            return (leftValue as number) < (rightValue as number);
+          case Operator.LEQ:
+            return (leftValue as number) <= (rightValue as number);
+        }
       }
     }
     return false;
