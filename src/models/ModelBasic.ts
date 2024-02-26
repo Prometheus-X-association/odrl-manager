@@ -129,7 +129,7 @@ export abstract class ModelBasic {
               )}\x1b[37m`,
             );
           } else {
-            if (prop !== '_objectUID') {
+            if (prop !== '_objectUID' && prop !== '_rootUID') {
               console.log(
                 `${indentation}  \x1b[32m-\x1b[37m${prop}: \x1b[90m${value}\x1b[37m`,
               );

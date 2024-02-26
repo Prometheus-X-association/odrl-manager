@@ -160,6 +160,21 @@ describe('Testing Core units', async () => {
               operator: 'gteq',
               rightOperand: 18,
             },
+            {
+              leftOperand: 'age',
+              operator: 'gte',
+              rightOperand: 18,
+            },
+            {
+              leftOperand: 'age',
+              operator: 'lteq',
+              rightOperand: 18,
+            },
+            {
+              leftOperand: 'age',
+              operator: 'lte',
+              rightOperand: 18,
+            },
           ],
         },
         {

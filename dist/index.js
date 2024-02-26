@@ -441,7 +441,7 @@ var ModelBasic = class _ModelBasic {
               )}\x1B[37m`
             );
           } else {
-            if (prop !== "_objectUID") {
+            if (prop !== "_objectUID" && prop !== "_rootUID") {
               console.log(
                 `${indentation}  \x1B[32m-\x1B[37m${prop}: \x1B[90m${value}\x1B[37m`
               );
@@ -854,15 +854,18 @@ var _Operator = class _Operator extends ModelBasic {
 _Operator.EQ = "eq";
 _Operator.NEQ = "neq";
 _Operator.GT = "gt";
-_Operator.GEQ = "gteq";
+_Operator.GTEQ = "gteq";
 _Operator.LT = "lt";
-_Operator.LEQ = "lteq";
-_Operator.IN = "isPartOf";
+_Operator.LTEQ = "lteq";
+_Operator.IS_PART_OF = "isPartOf";
 _Operator.HAS_PART = "hasPart";
 _Operator.IS_A = "isA";
 _Operator.IS_ALL_OF = "isAllOf";
 _Operator.IS_ANY_OF = "isAnyOf";
 _Operator.IS_NONE_OF = "isNoneOf";
+_Operator.NE = "ne";
+_Operator.GTE = "gte";
+_Operator.LTE = "lte";
 var Operator = _Operator;
 
 // src/models/odrl/RightOperand.ts
@@ -974,15 +977,18 @@ var AtomicConstraint = class _AtomicConstraint extends Constraint {
           switch ((_a = this.operator) == null ? void 0 : _a.value) {
             case Operator.EQ:
               return leftValue === rightValue;
+            case Operator.NE:
             case Operator.NEQ:
               return leftValue !== rightValue;
             case Operator.GT:
               return leftValue > rightValue;
-            case Operator.GEQ:
+            case Operator.GTE:
+            case Operator.GTEQ:
               return leftValue >= rightValue;
             case Operator.LT:
               return leftValue < rightValue;
-            case Operator.LEQ:
+            case Operator.LTE:
+            case Operator.LTEQ:
               return leftValue <= rightValue;
           }
         }

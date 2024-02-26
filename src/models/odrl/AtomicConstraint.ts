@@ -30,15 +30,23 @@ export class AtomicConstraint extends Constraint {
         switch (this.operator?.value) {
           case Operator.EQ:
             return leftValue === rightValue;
+
+          case Operator.NE:
           case Operator.NEQ:
             return leftValue !== rightValue;
+
           case Operator.GT:
             return (leftValue as number) > (rightValue as number);
-          case Operator.GEQ:
+
+          case Operator.GTE:
+          case Operator.GTEQ:
             return (leftValue as number) >= (rightValue as number);
+
           case Operator.LT:
             return (leftValue as number) < (rightValue as number);
-          case Operator.LEQ:
+
+          case Operator.LTE:
+          case Operator.LTEQ:
             return (leftValue as number) <= (rightValue as number);
         }
       }
