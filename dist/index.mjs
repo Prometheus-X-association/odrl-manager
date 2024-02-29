@@ -1584,6 +1584,31 @@ var PolicyEvaluator = class _PolicyEvaluator {
     });
   }
   /**
+   * Retrieves the list of leftOperands associated with the specified target.
+   * @param {string} target - A string representing the target.
+   * @returns {Promise<string[]>} A promise resolved with an array of leftOperands.
+   */
+  listLeftOperandsFor(target) {
+    return __async(this, null, function* () {
+      const targets = yield this.explore({
+        target
+      });
+      const leftOperands = /* @__PURE__ */ new Set();
+      targets.forEach((target2) => {
+        const parent = target2.getParent();
+        const constraints = parent.getConstraints() || [];
+        constraints.forEach((constraint) => {
+          const leftOperand = constraint.leftOperand;
+          if (leftOperand) {
+            const value = leftOperand.getValue();
+            leftOperands.add(value);
+          }
+        });
+      });
+      return Array.from(leftOperands);
+    });
+  }
+  /**
    * Verifies whether a specific action can be performed on a given target.
    * @param {ActionType} actionType - A string representing the type of action.
    * @param {string} target - A string representing the target.

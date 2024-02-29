@@ -11,6 +11,7 @@ import { PolicyAgreement } from 'models/odrl/PolicyAgreement';
 import { EntityRegistry } from 'EntityRegistry';
 import { getNode } from 'utils';
 import { Party } from 'models/odrl/Party';
+import { Constraint } from 'models/odrl/Constraint';
 
 interface Picker {
   pick: (explorable: Explorable, options?: any) => boolean;
@@ -253,6 +254,31 @@ export class PolicyEvaluator {
       }
     }
     return Action.getIncluded(actions);
+  }
+
+  /**
+   * Retrieves the list of leftOperands associated with the specified target.
+   * @param {string} target - A string representing the target.
+   * @returns {Promise<string[]>} A promise resolved with an array of leftOperands.
+   */
+  public async listLeftOperandsFor(target: string): Promise<string[]> {
+    const targets: Asset[] = (await this.explore({
+      target,
+    })) as Asset[];
+
+    const leftOperands: Set<string> = new Set<string>();
+    targets.forEach((target: Asset) => {
+      const parent: ParentRule = target.getParent() as ParentRule;
+      const constraints: Constraint[] = parent.getConstraints() || [];
+      constraints.forEach((constraint: Constraint) => {
+        const leftOperand = constraint.leftOperand;
+        if (leftOperand) {
+          const value = leftOperand.getValue();
+          leftOperands.add(value);
+        }
+      });
+    });
+    return Array.from(leftOperands);
   }
 
   /**

@@ -320,6 +320,12 @@ declare class PolicyEvaluator {
      */
     getPerformableActions(target: string): Promise<string[]>;
     /**
+     * Retrieves the list of leftOperands associated with the specified target.
+     * @param {string} target - A string representing the target.
+     * @returns {Promise<string[]>} A promise resolved with an array of leftOperands.
+     */
+    listLeftOperandsFor(target: string): Promise<string[]>;
+    /**
      * Verifies whether a specific action can be performed on a given target.
      * @param {ActionType} actionType - A string representing the type of action.
      * @param {string} target - A string representing the target.

@@ -292,6 +292,83 @@ describe('Testing Core units', async () => {
     }
   });
 
+  it(`Should retrieve leftOperands associated with a specific target`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'use',
+          target: 'http://other-contract-target',
+          constraint: [
+            {
+              leftOperand: 'media',
+              operator: 'eq',
+              rightOperand: 'print',
+            },
+            {
+              leftOperand: 'count',
+              operator: 'eq',
+              rightOperand: 0,
+            },
+          ],
+        },
+        {
+          action: 'use',
+          target: 'http://contract-target',
+          constraint: [
+            {
+              leftOperand: 'age',
+              operator: 'gt',
+              rightOperand: 21,
+            },
+            {
+              leftOperand: 'count',
+              operator: 'eq',
+              rightOperand: 0,
+            },
+          ],
+        },
+      ],
+      prohibition: [
+        {
+          action: 'use',
+          target: 'http://contract-target',
+          constraint: [
+            {
+              leftOperand: 'age',
+              operator: 'gt',
+              rightOperand: 22,
+            },
+            {
+              leftOperand: 'dateTime',
+              operator: 'eq',
+              rightOperand: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const policy = instanciator.genPolicyFrom(json);
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    if (policy) {
+      evaluator.setPolicy(policy);
+      const leftOperands = await evaluator.listLeftOperandsFor(
+        'http://contract-target',
+      );
+      _logYellow('\nAssociated leftOperands:');
+      _logObject(leftOperands);
+      const expectedValues = ['age', 'count', 'dateTime'];
+      expect(leftOperands).to.have.members(expectedValues);
+      expect(leftOperands)
+        .to.have.members(expectedValues)
+        .and.to.have.lengthOf(expectedValues.length);
+    }
+  });
+
   it(`Should confirm the exploitability of resources listed in a policy set.`, async function () {
     _logCyan('\n> ' + this.test?.title);
     const json = {
