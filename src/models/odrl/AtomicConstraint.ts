@@ -28,7 +28,7 @@ export class AtomicConstraint extends Constraint {
       if (evaluation) {
         const [leftValue, types] = evaluation as [string | number, string[]];
         let rightValue = this.rightOperand.value;
-        if (types && types.includes('date')) {
+        if (types && types.includes('date') && !Array.isArray(rightValue)) {
           rightValue = new Date(rightValue).getTime();
           if (isNaN(rightValue)) {
             console.warn(
@@ -57,6 +57,11 @@ export class AtomicConstraint extends Constraint {
           case Operator.LTE:
           case Operator.LTEQ:
             return (leftValue as number) <= (rightValue as number);
+          case Operator.IS_NONE_OF:
+            return (
+              Array.isArray(rightValue) &&
+              !(rightValue as Array<any>).includes(leftValue)
+            );
         }
       }
     }
