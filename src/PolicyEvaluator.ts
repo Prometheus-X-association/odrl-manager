@@ -350,6 +350,47 @@ export class PolicyEvaluator {
     })) as RuleDuty[];
   }
 
+  public async getDutiesForTarget(target: string): Promise<RuleDuty[]> {
+    const targets: Asset[] = (await this.explore({ target })) as Asset[];
+    const duties: RuleDuty[] = [];
+
+    const dutyPromises = targets.map(async (target: Asset) => {
+      const parent: ParentRule = target.getParent() as ParentRule;
+      const duty: RuleDuty | undefined = (parent as any).duty as RuleDuty;
+
+      if (duty) {
+        const isValidDuty = await duty.evaluate();
+        if (isValidDuty) {
+          duties.push(duty);
+        }
+      }
+    });
+
+    await Promise.all(dutyPromises);
+    return duties;
+  }
+
+  public async getDutiesFor(
+    action: string,
+    target: string,
+  ): Promise<RuleDuty[]> {
+    const duties: RuleDuty[] = await this.getDutiesForTarget(target);
+    const filteredDuties: RuleDuty[] = [];
+
+    const dutyFilterPromises = duties.map(async (duty: RuleDuty) => {
+      const dutyAction = duty.action as Action;
+      if (dutyAction.value === action) {
+        const isValidDuty = await duty.evaluate();
+        if (isValidDuty) {
+          filteredDuties.push(duty);
+        }
+      }
+    });
+
+    await Promise.all(dutyFilterPromises);
+    return filteredDuties;
+  }
+
   public async getAssignedDuties(assignee: string): Promise<RuleDuty[]> {
     const payload = PolicyEvaluator.getAssigneePayload(assignee);
     return (await this.explore({

@@ -26,7 +26,7 @@ export abstract class Rule extends Explorable {
     }
   }
 
-  protected get constraints(): Constraint[] {
+  public get constraints(): Constraint[] {
     if (this.constraint === undefined) {
       this.constraint = [];
     }

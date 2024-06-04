@@ -1,10 +1,9 @@
 import instanciator from 'PolicyInstanciator';
 import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
-import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
-import { PolicyDataFetcher, Custom } from 'PolicyDataFetcher';
+import { _logCyan, _logGreen, _logObject, _logYellow } from '../utils';
+import { PolicyDataFetcher } from 'PolicyDataFetcher';
 import { EntityRegistry } from 'EntityRegistry';
-import { Action, ActionType } from 'models/odrl/Action';
 
 describe('Testing ODRL Policies', async () => {
   let evaluator: PolicyEvaluator;
