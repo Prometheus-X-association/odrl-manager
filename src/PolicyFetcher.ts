@@ -19,6 +19,7 @@ interface ContextFunctions {
 }
 
 export abstract class PolicyFetcher {
+  private bypass: string[] = [];
   protected _context: ContextFunctions = {};
   public _objectUID: string;
   protected options: any = {};
@@ -40,6 +41,14 @@ export abstract class PolicyFetcher {
 
   public setRequestOptions(options: any) {
     this.options = options;
+  }
+
+  public hasBypassFor(name: string) {
+    return this.bypass.includes(name);
+  }
+
+  public setBypassFor(name: string) {
+    return this.bypass.push(name);
   }
 
   abstract get context(): ContextFunctions;

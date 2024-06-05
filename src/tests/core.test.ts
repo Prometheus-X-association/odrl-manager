@@ -520,4 +520,69 @@ describe('Testing Core units', async () => {
       expect(isPerformable).to.equal(true);
     }
   });
+
+  it(`Should allow access to a resource by bypassing a non-existent leftOperand
+  and also test combined bypass with another constraint`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'read',
+          target: 'http://resource-target',
+          constraint: [
+            {
+              leftOperand: 'nonExistentAttribute',
+              operator: 'eq',
+              rightOperand: 'someValue',
+            },
+            {
+              leftOperand: 'location',
+              operator: 'eq',
+              rightOperand: 'US',
+            },
+          ],
+        },
+      ],
+    };
+    const policy = instanciator.genPolicyFrom(json);
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    if (policy) {
+      class Fetcher extends PolicyDataFetcher {
+        constructor() {
+          super();
+          this.setBypassFor('nonExistentAttribute');
+        }
+
+        @Custom()
+        protected async getLocation(): Promise<string> {
+          return 'FR';
+        }
+      }
+      const fetcher = new Fetcher();
+      evaluator.setPolicy(policy, fetcher);
+
+      let isPerformable = await evaluator.isActionPerformable(
+        'read',
+        'http://resource-target',
+      );
+      expect(isPerformable).to.equal(
+        false,
+        'Should be false as location is not bypassed',
+      );
+
+      fetcher.setBypassFor('location');
+      isPerformable = await evaluator.isActionPerformable(
+        'read',
+        'http://resource-target',
+      );
+      expect(isPerformable).to.equal(
+        true,
+        'Should be true as both constraints are bypassed',
+      );
+    }
+  });
 });

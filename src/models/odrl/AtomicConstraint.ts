@@ -15,6 +15,15 @@ export class AtomicConstraint extends Constraint {
 
   async evaluate(): Promise<boolean> {
     if (this.leftOperand && this.rightOperand) {
+      const fetcher = this.leftOperand._rootUID
+        ? EntityRegistry.getDataFetcherFromPolicy(this.leftOperand._rootUID)
+        : undefined;
+      if (fetcher) {
+        const bypass = fetcher.hasBypassFor(this.leftOperand.getValue());
+        if (bypass) {
+          return true;
+        }
+      }
       const evaluation: unknown = await this.leftOperand.evaluate();
       if (evaluation) {
         const [leftValue, types] = evaluation as [string | number, string[]];
