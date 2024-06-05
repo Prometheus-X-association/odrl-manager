@@ -2,11 +2,14 @@ interface ContextFunctions {
     [key: string]: Function;
 }
 declare abstract class PolicyFetcher {
+    private bypass;
     protected _context: ContextFunctions;
     _objectUID: string;
     protected options: any;
     constructor();
     setRequestOptions(options: any): void;
+    hasBypassFor(name: string): boolean;
+    setBypassFor(name: string): number;
     abstract get context(): ContextFunctions;
 }
 

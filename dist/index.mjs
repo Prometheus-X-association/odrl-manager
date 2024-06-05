@@ -74,6 +74,7 @@ var EntityRegistry = _EntityRegistry;
 import { randomUUID } from "crypto";
 var PolicyFetcher = class {
   constructor() {
+    this.bypass = [];
     this._context = {};
     this.options = {};
     this._objectUID = randomUUID();
@@ -88,6 +89,12 @@ var PolicyFetcher = class {
   }
   setRequestOptions(options) {
     this.options = options;
+  }
+  hasBypassFor(name) {
+    return this.bypass.includes(name);
+  }
+  setBypassFor(name) {
+    return this.bypass.push(name);
   }
 };
 
@@ -934,6 +941,13 @@ var AtomicConstraint = class _AtomicConstraint extends Constraint {
     return __async(this, null, function* () {
       var _a;
       if (this.leftOperand && this.rightOperand) {
+        const fetcher = this.leftOperand._rootUID ? EntityRegistry.getDataFetcherFromPolicy(this.leftOperand._rootUID) : void 0;
+        if (fetcher) {
+          const bypass = fetcher.hasBypassFor(this.leftOperand.getValue());
+          if (bypass) {
+            return true;
+          }
+        }
         const evaluation = yield this.leftOperand.evaluate();
         if (evaluation) {
           const [leftValue, types] = evaluation;
