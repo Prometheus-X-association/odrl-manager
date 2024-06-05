@@ -58,6 +58,7 @@ export abstract class PolicyDataFetcher extends PolicyFetcher {
       'absoluteTemporalPosition',
       'relativeTemporalPosition',
       'timeInterval',
+      'elapsedTime',
     ],
     // boolean: [''],
   };

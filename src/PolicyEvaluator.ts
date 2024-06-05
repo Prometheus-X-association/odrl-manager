@@ -232,7 +232,10 @@ export class PolicyEvaluator {
    * @returns {Promise<string[]>} A promise resolved with an array of performable actions.
    */
   // Todo, include duties processes
-  public async getPerformableActions(target: string): Promise<string[]> {
+  public async getPerformableActions(
+    target: string,
+    included: boolean = true,
+  ): Promise<string[]> {
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
@@ -253,7 +256,7 @@ export class PolicyEvaluator {
         actions.push(action as ActionType);
       }
     }
-    return Action.getIncluded(actions);
+    return included ? Action.getIncluded(actions) : actions;
   }
 
   /**

@@ -8,26 +8,21 @@ import { EntityRegistry } from 'EntityRegistry';
 describe('Testing Time-Based Data Access Policy', async () => {
   let evaluator: PolicyEvaluator;
   const datasetTarget = 'http://example.org/data/dataset1234';
-
+  const now = new Date();
   before(() => {
     EntityRegistry.cleanReferences();
     evaluator = new PolicyEvaluator();
   });
 
   class Fetcher extends PolicyDataFetcher {
-    private lastAccessDate: Date;
-
-    constructor(private accessGrantedDate: Date) {
+    constructor(private lastAccessDate: Date) {
       super();
-      this.lastAccessDate = accessGrantedDate;
     }
 
-    @Custom()
     protected async getElapsedTime(): Promise<number> {
-      const now = new Date();
+      // const now = new Date();
       const diffMilliseconds = now.getTime() - this.lastAccessDate.getTime();
-      const diffMicroseconds = diffMilliseconds * 1000;
-      return diffMicroseconds;
+      return diffMilliseconds;
     }
   }
 
@@ -61,7 +56,7 @@ describe('Testing Time-Based Data Access Policy', async () => {
 
     if (policy) {
       let fetcher = new Fetcher(
-        new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
+        new Date(now.getTime() - 30.44 * 6 * 24 * 60 * 60 * 1000),
       );
       evaluator.setPolicy(policy, fetcher);
 
@@ -80,7 +75,9 @@ describe('Testing Time-Based Data Access Policy', async () => {
         'Only "elapsedTime" should be listed as a leftOperand',
       );
 
-      fetcher = new Fetcher(new Date(Date.now() - 365 * 24 * 60 * 60 * 1000));
+      fetcher = new Fetcher(
+        new Date(now.getTime() - 365.25 * 24 * 60 * 60 * 1000),
+      );
       evaluator.setPolicy(policy, fetcher);
 
       isPerformable = await evaluator.isActionPerformable('use', datasetTarget);
@@ -89,7 +86,9 @@ describe('Testing Time-Based Data Access Policy', async () => {
         'Should not be allowed to use the dataset when access was granted exactly one year ago',
       );
 
-      fetcher = new Fetcher(new Date(Date.now() - 540 * 24 * 60 * 60 * 1000));
+      fetcher = new Fetcher(
+        new Date(Date.now() - 30.44 * 18 * 24 * 60 * 60 * 1000),
+      );
       evaluator.setPolicy(policy, fetcher);
 
       isPerformable = await evaluator.isActionPerformable('use', datasetTarget);
@@ -125,7 +124,10 @@ describe('Testing Time-Based Data Access Policy', async () => {
         'Should be allowed to use the dataset when access grant date is in the future',
       );
 
-      const actions = await evaluator.getPerformableActions(datasetTarget);
+      const actions = await evaluator.getPerformableActions(
+        datasetTarget,
+        false,
+      );
       expect(actions).to.deep.equal(
         ['use'],
         'Only "use" action should be permitted on the dataset',
@@ -268,8 +270,7 @@ describe('Testing Time-Based Data Access Policy', async () => {
         super();
       }
 
-      @Custom()
-      protected async getDatetime(): Promise<Date> {
+      protected async getDateTime(): Promise<Date> {
         return this.datetime;
       }
     }

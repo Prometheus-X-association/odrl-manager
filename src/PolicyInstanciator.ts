@@ -15,7 +15,13 @@ import { Rule } from './models/odrl/Rule';
 import { RuleDuty } from './models/odrl/RuleDuty';
 import { RulePermission } from './models/odrl/RulePermission';
 import { RuleProhibition } from './models/odrl/RuleProhibition';
-import { CopyMode, copy, getLastTerm } from './utils';
+import {
+  CopyMode,
+  copy,
+  getDurationMatching,
+  getLastTerm,
+  parseISODuration,
+} from './utils';
 import { Party } from 'models/odrl/Party';
 
 type InstanciatorFunction = (
@@ -205,11 +211,18 @@ export class PolicyInstanciator {
       rightOperand,
       constraint: constraints,
     } = element;
+
+    let _rightOperand = rightOperand;
+    const match = getDurationMatching(rightOperand);
+    if (match) {
+      // && todo
+      _rightOperand = parseISODuration(rightOperand);
+    }
     const operator = _operator && getLastTerm(_operator);
     const constraint: Constraint =
       (leftOperand &&
         operator &&
-        rightOperand !== undefined &&
+        _rightOperand !== undefined &&
         new AtomicConstraint(
           (() => {
             const _leftOperand = new LeftOperand(leftOperand);
@@ -217,7 +230,7 @@ export class PolicyInstanciator {
             return _leftOperand;
           })(),
           new Operator(operator),
-          new RightOperand(rightOperand),
+          new RightOperand(_rightOperand),
         )) ||
       (operator &&
         Array.isArray(constraints) &&

@@ -20,8 +20,9 @@ export class LeftOperand extends ModelBasic {
         ? EntityRegistry.getDataFetcherFromPolicy(this._rootUID)
         : undefined;
       if (fetcher) {
-        const types = fetcher.getTypes(this.value);
-        const value = await fetcher.context[this.value]();
+        const _value = this.value.charAt(0).toLowerCase() + this.value.slice(1);
+        const types = fetcher.getTypes(_value);
+        const value = await fetcher.context[_value]();
         if (types.length && types.includes('date')) {
           const dateTime = new Date(value).getTime();
           if (isNaN(dateTime)) {
