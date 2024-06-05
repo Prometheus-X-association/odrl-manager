@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject } from '../utils';
 import { EntityRegistry } from 'EntityRegistry';
 
-describe('Testing Time-Based Data Access Policy', async () => {
+describe('Testing Technical Measure Policies', async () => {
   let evaluator: PolicyEvaluator;
   const datasetTarget = 'http://example.org/data/dataset1234';
 

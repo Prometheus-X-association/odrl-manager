@@ -5,7 +5,7 @@ import { _logCyan, _logGreen, _logObject, _logYellow } from '../utils';
 import { PolicyDataFetcher } from 'PolicyDataFetcher';
 import { EntityRegistry } from 'EntityRegistry';
 
-describe('Testing ODRL Policies', async () => {
+describe('Testing ODRL Policies for Purpose and Location', async () => {
   let evaluator: PolicyEvaluator;
 
   before(() => {

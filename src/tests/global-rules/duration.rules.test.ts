@@ -1,7 +1,7 @@
 import instanciator from 'PolicyInstanciator';
 import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
-import { _logCyan, _logGreen, _logObject } from '../utils';
+import { _logCyan, _logGreen, _logObject, _logYellow } from '../utils';
 import { PolicyDataFetcher, Custom } from 'PolicyDataFetcher';
 import { EntityRegistry } from 'EntityRegistry';
 
@@ -34,7 +34,7 @@ describe('Testing Time-Based Data Access Policy', async () => {
       uid: 'http://example.org/policy/5678',
       permission: [
         {
-          target: 'http://example.org/data/dataset1234',
+          target: datasetTarget,
           action: 'use',
           constraint: [
             {
@@ -130,7 +130,7 @@ describe('Testing Time-Based Data Access Policy', async () => {
       );
       expect(actions).to.deep.equal(
         ['use'],
-        'Only "use" action should be permitted on the dataset',
+        'The "use" action should be found as performable action on the dataset',
       );
 
       fetcher = new Fetcher(new Date('Invalid Date'));
@@ -152,7 +152,7 @@ describe('Testing Time-Based Data Access Policy', async () => {
       uid: 'http://example.org/policy/5678',
       permission: [
         {
-          target: 'http://example.org/data/dataset1234',
+          target: datasetTarget,
           action: 'use',
           constraint: [
             {
@@ -202,6 +202,17 @@ describe('Testing Time-Based Data Access Policy', async () => {
         'Only "Event" should be listed as a leftOperand',
       );
 
+      const actions = await evaluator.getPerformableActions(
+        datasetTarget,
+        false,
+      );
+      _logYellow('\nPerformable actions:');
+      _logObject(actions);
+      expect(actions).to.deep.equal(
+        ['use'],
+        'The "use" action should be found as performable action on the dataset',
+      );
+
       fetcher = new EventFetcher('Gaia-X Tech-X 2023');
       evaluator.setPolicy(policy, fetcher);
 
@@ -228,12 +239,6 @@ describe('Testing Time-Based Data Access Policy', async () => {
         false,
         'Should not be allowed to distribute the dataset, as it is not explicitly permitted',
       );
-
-      const actions = await evaluator.getPerformableActions(datasetTarget);
-      expect(actions).to.deep.equal(
-        ['use'],
-        'Only "use" action should be permitted on the dataset',
-      );
     }
   });
 
@@ -245,11 +250,11 @@ describe('Testing Time-Based Data Access Policy', async () => {
       uid: 'http://example.org/policy/5678',
       permission: [
         {
-          target: 'http://example.org/data/dataset1234',
+          target: datasetTarget,
           action: 'use',
           constraint: [
             {
-              leftOperand: 'Datetime',
+              leftOperand: 'dateTime',
               operator: 'gteq',
               rightOperand: '2025-12-31T23:59Z',
             },
@@ -290,8 +295,17 @@ describe('Testing Time-Based Data Access Policy', async () => {
 
       let leftOperands = await evaluator.listLeftOperandsFor(datasetTarget);
       expect(leftOperands).to.deep.equal(
-        ['Datetime'],
-        'Only "Datetime" should be listed as a leftOperand',
+        ['dateTime'],
+        'Only "dateTime" should be listed as a leftOperand',
+      );
+
+      const actions = await evaluator.getPerformableActions(
+        datasetTarget,
+        false,
+      );
+      expect(actions).to.deep.equal(
+        ['use'],
+        'The "use" action should be found as performable action on the dataset',
       );
 
       fetcher = new DatetimeFetcher(new Date('2025-12-31T23:58Z'));
@@ -310,12 +324,6 @@ describe('Testing Time-Based Data Access Policy', async () => {
       expect(isPerformable).to.equal(
         false,
         'Should not be allowed to distribute the dataset, as it is not explicitly permitted',
-      );
-
-      const actions = await evaluator.getPerformableActions(datasetTarget);
-      expect(actions).to.deep.equal(
-        ['use'],
-        'Only "use" action should be permitted on the dataset',
       );
     }
   });
