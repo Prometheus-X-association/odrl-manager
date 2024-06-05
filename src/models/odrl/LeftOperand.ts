@@ -10,6 +10,7 @@ export class LeftOperand extends ModelBasic {
   }
 
   public getValue(): string {
+    //
     return this.value;
   }
 
