@@ -27,6 +27,7 @@ export abstract class ModelBasic {
   public _fetcherUID?: string;
   public _stateFetcherUID?: string;
   public _instanceOf?: string;
+  public _namespace?: string | string[];
   constructor() {
     this._objectUID = randomUUID();
     EntityRegistry.addReference(this);
@@ -63,11 +64,12 @@ export abstract class ModelBasic {
                   ) {
                     item.validate(depth + 2, promises);
                   } else if (
-                    (typeof item === 'string' ||
+                    ((typeof item === 'string' ||
                       typeof item === 'boolean' ||
                       item instanceof Date ||
                       typeof item === 'number') &&
-                    this._instanceOf === 'RightOperand'
+                      this._instanceOf === 'RightOperand') ||
+                    prop === '@context'
                   ) {
                     //
                   } else {
@@ -92,7 +94,7 @@ export abstract class ModelBasic {
           }
           return true;
         } catch (error: any) {
-          console.error(`[PolicyValidator] - \x1b[31m${error.message}\x1b[37m`);
+          console.error(`[ModelBasic] - \x1b[31m${error.message}\x1b[37m`);
           return false;
         }
       })(),
@@ -118,13 +120,20 @@ export abstract class ModelBasic {
             ) {
               item.debug(depth + 2);
             } else if (
-              (typeof item === 'string' ||
+              ((typeof item === 'string' ||
                 typeof item === 'boolean' ||
                 item instanceof Date ||
                 typeof item === 'number') &&
-              this._instanceOf === 'RightOperand'
+                this._instanceOf === 'RightOperand') ||
+              prop === '@context'
             ) {
-              console.log(`${indentation}    \x1b[90m${item}\x1b[37m`);
+              console.log(
+                `${indentation}    \x1b[90m${JSON.stringify(
+                  item,
+                  null,
+                  2,
+                ).replace(/\n/gm, `\n${indentation}    `)}\x1b[37m`,
+              );
             } else {
               console.log(
                 `\x1b[31m${indentation}    ${JSON.stringify(item)}\x1b[37m`,

@@ -351,7 +351,7 @@ export class PolicyInstanciator {
           if (typeof element === 'object') {
             if (child) {
               this.traverse(element, child);
-            } else {
+            } else if (property !== '@context') {
               console.warn(
                 `\x1b[93m/!\\Traversal stopped for "${property}".\x1b[37m`,
               );
@@ -372,6 +372,32 @@ export class PolicyInstanciator {
         instanciate(property, element);
       }
     }
+  }
+
+  public static construct<T>(
+    Type: new (...args: any[]) => T,
+    ...args: any[]
+  ): T {
+    const context = this.instance?.policy?.['@context'];
+    const isContextArray = Array.isArray(context);
+    if (!isContextArray) {
+      return Reflect.construct(Type, args);
+    }
+    const _namespace: string[] = [];
+    args = args.map((arg) => {
+      if (typeof arg === 'string' && /^[\w-]+:[\w-]+$/.test(arg)) {
+        const [prefix, value] = arg.split(':');
+        const ctx = context.find((c) => c[prefix]);
+        if (ctx) {
+          _namespace.push(prefix);
+          return value;
+        }
+      }
+      return arg;
+    });
+    const instance = Reflect.construct(Type, args);
+    (instance as { _namespace: string | string[] })._namespace = _namespace;
+    return instance;
   }
 }
 
