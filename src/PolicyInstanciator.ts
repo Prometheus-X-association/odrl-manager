@@ -178,6 +178,7 @@ export class PolicyInstanciator {
         throw new Error('Invalid action');
       }
       const action = new Action(value, null);
+      action._rootUID = root?._objectUID;
       action.setParent(parent);
       if (!fromArray) {
         parent.setAction(action);
@@ -230,7 +231,7 @@ export class PolicyInstanciator {
             return _leftOperand;
           })(),
           new Operator(operator),
-          new RightOperand(_rightOperand),
+          PolicyInstanciator.construct(RightOperand, _rightOperand),
         )) ||
       (operator &&
         Array.isArray(constraints) &&

@@ -5,6 +5,7 @@ import { _logCyan, _logGreen, _logObject, _logYellow } from '../utils';
 import { PolicyDataFetcher, Custom } from 'PolicyDataFetcher';
 import { EntityRegistry } from 'EntityRegistry';
 import { Action, ActionType } from 'models/odrl/Action';
+import { PolicyStateFetcher } from 'PolicyStateFetcher';
 
 //
 describe('Testing Academic Research Data Usage Policy', async () => {
@@ -16,7 +17,14 @@ describe('Testing Academic Research Data Usage Policy', async () => {
     evaluator = new PolicyEvaluator();
   });
 
-  class Fetcher extends PolicyDataFetcher {
+  class StateFetcher extends PolicyStateFetcher {
+    @Custom()
+    public getAttribution(): boolean {
+      return true;
+    }
+  }
+
+  class DataFetcher extends PolicyDataFetcher {
     constructor(
       private userPurpose: string,
       private location: string,
@@ -75,7 +83,7 @@ describe('Testing Academic Research Data Usage Policy', async () => {
               operator: 'lt',
               rightOperand: 'P1Y',
             },
-          ] /*
+          ],
           duty: [
             {
               action: 'attribution',
@@ -88,7 +96,6 @@ describe('Testing Academic Research Data Usage Policy', async () => {
               },
             },
           ],
-          */,
         },
       ],
       prohibition: [
@@ -111,13 +118,14 @@ describe('Testing Academic Research Data Usage Policy', async () => {
     expect(valid).to.equal(true);
 
     if (policy) {
-      let fetcher = new Fetcher(
+      let dataFetcher = new DataFetcher(
         'academic-research',
         'http://example.org/geo/restricted-area',
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         'required',
       );
-      evaluator.setPolicy(policy, fetcher);
+      let stateFetcher = new StateFetcher();
+      evaluator.setPolicy(policy, dataFetcher, stateFetcher);
 
       let isPerformable = await evaluator.isActionPerformable(
         'use',

@@ -12,6 +12,7 @@ import { EntityRegistry } from 'EntityRegistry';
 import { getNode } from 'utils';
 import { Party } from 'models/odrl/Party';
 import { Constraint } from 'models/odrl/Constraint';
+import { PolicyStateFetcher } from 'PolicyStateFetcher';
 
 interface Picker {
   pick: (explorable: Explorable, options?: any) => boolean;
@@ -133,16 +134,27 @@ export class PolicyEvaluator {
     this.policies = [];
   }
 
-  public addPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void {
-    if (fetcher) {
-      policy._fetcherUID = fetcher._objectUID;
+  public addPolicy(
+    policy: Policy,
+    dataFetcher?: PolicyDataFetcher,
+    stateFetcher?: PolicyStateFetcher,
+  ): void {
+    if (dataFetcher) {
+      policy._fetcherUID = dataFetcher._objectUID;
+    }
+    if (stateFetcher) {
+      policy._stateFetcherUID = stateFetcher._objectUID;
     }
     this.policies.push(policy);
   }
 
-  public setPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void {
+  public setPolicy(
+    policy: Policy,
+    dataFetcher?: PolicyDataFetcher,
+    stateFetcher?: PolicyStateFetcher,
+  ): void {
     this.cleanPolicies();
-    this.addPolicy(policy, fetcher);
+    this.addPolicy(policy, dataFetcher, stateFetcher);
   }
 
   public logPolicies(): void {
