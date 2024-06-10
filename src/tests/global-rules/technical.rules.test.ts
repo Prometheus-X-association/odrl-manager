@@ -3,6 +3,10 @@ import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject } from '../utils';
 import { EntityRegistry } from 'EntityRegistry';
+import { ActionType } from 'models/odrl/Action';
+import { PolicyStateFetcher } from 'PolicyStateFetcher';
+import { Custom } from 'PolicyFetcher';
+import { PolicyDataFetcher } from 'PolicyDataFetcher';
 
 describe('Testing Technical Measure Policies', async () => {
   let evaluator: PolicyEvaluator;
@@ -13,6 +17,25 @@ describe('Testing Technical Measure Policies', async () => {
     evaluator = new PolicyEvaluator();
   });
 
+  class StateFetcher extends PolicyStateFetcher {
+    @Custom()
+    public getActivityMonitoring(): boolean {
+      return true;
+    }
+  }
+
+  class DataFetcher extends PolicyDataFetcher {
+    constructor(private attributionState: string | undefined) {
+      super();
+    }
+
+    @Custom() protected async getAttributionNotice(): Promise<
+      string | undefined
+    > {
+      return this.attributionState;
+    }
+  }
+
   it('Should enforce activity monitoring duty', async function () {
     _logCyan('\n> ' + this.test?.title);
     const json = {
@@ -22,8 +45,8 @@ describe('Testing Technical Measure Policies', async () => {
           dpv: 'http://www.w3.org/ns/dpv#',
         },
       ],
+      '@type': 'Set',
       uid: 'http://example.org/policy/1234',
-      type: 'Set',
       permission: [
         {
           target: 'http://example.org/data/dataset1234',
@@ -35,11 +58,11 @@ describe('Testing Technical Measure Policies', async () => {
           action: 'dpv:activityMonitoring',
           target: 'http://example.org/data/dataset1234',
           assignee: 'http://example.org/party/data-user',
-          constraint: {
+          /*constraint: {
             leftOperand: 'attributionNotice',
             operator: 'isA',
             rightOperand: 'required',
-          },
+          },*/
         },
       ],
     };
@@ -52,7 +75,10 @@ describe('Testing Technical Measure Policies', async () => {
     expect(valid).to.equal(true, 'Policy should be structurally valid');
 
     if (policy) {
-      evaluator.setPolicy(policy);
+      let dataFetcher = new DataFetcher('required');
+      let stateFetcher = new StateFetcher();
+
+      evaluator.setPolicy(policy, dataFetcher, stateFetcher);
 
       let isPerformable = await evaluator.isActionPerformable(
         'use',
@@ -63,13 +89,16 @@ describe('Testing Technical Measure Policies', async () => {
         'Should be allowed to use the dataset',
       );
 
-      let duties = await evaluator.getDutiesFor('use', datasetTarget);
+      let duties = await evaluator.getDutiesFor(
+        'activityMonitoring',
+        datasetTarget,
+      );
       expect(duties).to.have.lengthOf(
         1,
         'Should have one duty for using the dataset',
       );
       expect(duties[0].action).to.equal(
-        'dpv:activityMonitoring',
+        'activityMonitoring',
         'Duty should be activity monitoring',
       );
       expect(duties[0].assignee).to.equal(

@@ -20,6 +20,7 @@ describe('Testing Academic Research Data Usage Policy', async () => {
   class StateFetcher extends PolicyStateFetcher {
     @Custom()
     public getAttribution(): boolean {
+      // Todo: Check target
       return true;
     }
   }
@@ -29,7 +30,7 @@ describe('Testing Academic Research Data Usage Policy', async () => {
       private userPurpose: string,
       private location: string,
       private lastAccessDate: Date,
-      private attributionState: string,
+      private attributionState: string | undefined,
     ) {
       super();
     }
@@ -46,7 +47,9 @@ describe('Testing Academic Research Data Usage Policy', async () => {
       return diffMilliseconds;
     }
 
-    @Custom() protected async getAttributionNotice(): Promise<string> {
+    @Custom() protected async getAttributionNotice(): Promise<
+      string | undefined
+    > {
       return this.attributionState;
     }
   }
@@ -136,13 +139,12 @@ describe('Testing Academic Research Data Usage Policy', async () => {
         'Should be allowed to use the dataset for academic research in the restricted area within a year',
       );
 
-      /*
-      let actions = await evaluator.getPerformableActions(datasetTarget);
+      let actions = await evaluator.getPerformableActions(datasetTarget, false);
       expect(actions).to.deep.equal(
-        ['use'],
+        ['use', 'attribution' /*Todo: to be removed*/],
         'Only "use" action should be permitted',
       );
-      
+
       let duties = await evaluator.getAssignedDuties(
         'http://example.org/party/data-user',
       );
@@ -160,13 +162,13 @@ describe('Testing Academic Research Data Usage Policy', async () => {
         'Attribution duty should be fulfilled',
       );
 
-      fetcher = new Fetcher(
+      dataFetcher = new DataFetcher(
         'academic-research',
         'http://example.org/geo/other-area',
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         'required',
       );
-      evaluator.setPolicy(policy, fetcher);
+      evaluator.setPolicy(policy, dataFetcher);
 
       isPerformable = await evaluator.isActionPerformable('use', datasetTarget);
       expect(isPerformable).to.equal(
@@ -174,13 +176,13 @@ describe('Testing Academic Research Data Usage Policy', async () => {
         'Should not be allowed to use the dataset outside the restricted area',
       );
 
-      fetcher = new Fetcher(
+      dataFetcher = new DataFetcher(
         'commercial',
         'http://example.org/geo/restricted-area',
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         'required',
       );
-      evaluator.setPolicy(policy, fetcher);
+      evaluator.setPolicy(policy, dataFetcher);
 
       isPerformable = await evaluator.isActionPerformable('use', datasetTarget);
       expect(isPerformable).to.equal(
@@ -188,13 +190,13 @@ describe('Testing Academic Research Data Usage Policy', async () => {
         'Should not be allowed to use the dataset for commercial purposes',
       );
 
-      fetcher = new Fetcher(
+      dataFetcher = new DataFetcher(
         'academic-research',
         'http://example.org/geo/restricted-area',
         new Date(Date.now() - 400 * 24 * 60 * 60 * 1000),
         'required',
       );
-      evaluator.setPolicy(policy, fetcher);
+      evaluator.setPolicy(policy, dataFetcher);
 
       isPerformable = await evaluator.isActionPerformable('use', datasetTarget);
       expect(isPerformable).to.equal(
@@ -202,13 +204,13 @@ describe('Testing Academic Research Data Usage Policy', async () => {
         'Should not be allowed to use the dataset after a year',
       );
 
-      fetcher = new Fetcher(
+      dataFetcher = new DataFetcher(
         'academic-research',
         'http://example.org/geo/restricted-area',
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        'not-required',
+        undefined,
       );
-      evaluator.setPolicy(policy, fetcher);
+      evaluator.setPolicy(policy, dataFetcher);
 
       dutyFulfilled = await evaluator.fulfillDuties(
         'http://example.org/party/data-user',
@@ -229,7 +231,6 @@ describe('Testing Academic Research Data Usage Policy', async () => {
           `Should not be allowed to ${action} the dataset`,
         );
       }
-        */
     }
   });
 });

@@ -69,7 +69,8 @@ export abstract class ModelBasic {
                       item instanceof Date ||
                       typeof item === 'number') &&
                       this._instanceOf === 'RightOperand') ||
-                    prop === '@context'
+                    prop === '@context' ||
+                    prop === '_namespace'
                   ) {
                     //
                   } else {
@@ -125,7 +126,8 @@ export abstract class ModelBasic {
                 item instanceof Date ||
                 typeof item === 'number') &&
                 this._instanceOf === 'RightOperand') ||
-              prop === '@context'
+              prop === '@context' ||
+              prop === '_namespace'
             ) {
               console.log(
                 `${indentation}    \x1b[90m${JSON.stringify(

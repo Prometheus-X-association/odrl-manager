@@ -177,7 +177,8 @@ export class PolicyInstanciator {
       if (!value) {
         throw new Error('Invalid action');
       }
-      const action = new Action(value, null);
+      // const action = new Action(value, null);
+      const action = PolicyInstanciator.construct(Action, value, null);
       action._rootUID = root?._objectUID;
       action.setParent(parent);
       if (!fromArray) {
