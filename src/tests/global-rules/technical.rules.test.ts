@@ -3,7 +3,7 @@ import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject } from '../utils';
 import { EntityRegistry } from 'EntityRegistry';
-import { ActionType } from 'models/odrl/Action';
+import { Action, ActionType } from 'models/odrl/Action';
 import { PolicyStateFetcher } from 'PolicyStateFetcher';
 import { Custom } from 'PolicyFetcher';
 import { PolicyDataFetcher } from 'PolicyDataFetcher';
@@ -58,11 +58,11 @@ describe('Testing Technical Measure Policies', async () => {
           action: 'dpv:activityMonitoring',
           target: 'http://example.org/data/dataset1234',
           assignee: 'http://example.org/party/data-user',
-          /*constraint: {
+          constraint: {
             leftOperand: 'attributionNotice',
             operator: 'isA',
             rightOperand: 'required',
-          },*/
+          },
         },
       ],
     };
@@ -97,29 +97,29 @@ describe('Testing Technical Measure Policies', async () => {
         1,
         'Should have one duty for using the dataset',
       );
-      expect(duties[0].action).to.equal(
+      expect((duties[0].action as Action)?.value).to.equal(
         'activityMonitoring',
         'Duty should be activity monitoring',
       );
-      expect(duties[0].assignee).to.equal(
+      expect(duties[0].assignee?.uid).to.equal(
         'http://example.org/party/data-user',
         'Duty should be assigned to the data user',
       );
 
-      let constraints = duties[0].constraints;
+      let constraints = duties[0].getConstraints();
       expect(constraints).to.have.lengthOf(
         1,
         'Duty should have one constraint',
       );
-      expect(constraints[0].leftOperand).to.equal(
+      expect(constraints[0].leftOperand?.value).to.equal(
         'attributionNotice',
         'Constraint left operand should be attributionNotice',
       );
-      expect(constraints[0].operator).to.equal(
+      expect(constraints[0].operator?.value).to.equal(
         'isA',
         'Constraint operator should be isA',
       );
-      expect(constraints[0].rightOperand).to.equal(
+      expect(constraints[0].rightOperand?.value).to.equal(
         'required',
         'Constraint right operand should be required',
       );

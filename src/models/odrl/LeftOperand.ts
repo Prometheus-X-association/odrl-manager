@@ -2,7 +2,7 @@ import { ModelBasic } from '../ModelBasic';
 import { EntityRegistry } from 'EntityRegistry';
 
 export class LeftOperand extends ModelBasic {
-  private value: string;
+  public value: string;
 
   constructor(value: string) {
     super();
