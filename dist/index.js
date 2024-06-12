@@ -143,7 +143,8 @@ var PolicyDataFetcher = class extends PolicyFetcher {
         "dateTime",
         "absoluteTemporalPosition",
         "relativeTemporalPosition",
-        "timeInterval"
+        "timeInterval",
+        "elapsedTime"
       ]
       // boolean: [''],
     };
@@ -392,6 +393,7 @@ var ModelBasic = class _ModelBasic {
                 for (const item of value) {
                   if (item instanceof _ModelBasic && typeof item.validate === "function") {
                     item.validate(depth + 2, promises);
+                  } else if ((typeof item === "string" || typeof item === "boolean" || item instanceof Date || typeof item === "number") && this._instanceOf === "RightOperand" || prop === "@context" || prop === "_namespace") {
                   } else {
                     throw new Error(
                       `Invalid entry: ${JSON.stringify(item, null, 2)}`
@@ -411,7 +413,7 @@ var ModelBasic = class _ModelBasic {
           }
           return true;
         } catch (error) {
-          console.error(`[PolicyValidator] - \x1B[31m${error.message}\x1B[37m`);
+          console.error(`[ModelBasic] - \x1B[31m${error.message}\x1B[37m`);
           return false;
         }
       }))()
@@ -431,6 +433,15 @@ var ModelBasic = class _ModelBasic {
           for (const item of value) {
             if (item instanceof _ModelBasic && typeof item.debug === "function") {
               item.debug(depth + 2);
+            } else if ((typeof item === "string" || typeof item === "boolean" || item instanceof Date || typeof item === "number") && this._instanceOf === "RightOperand" || prop === "@context" || prop === "_namespace") {
+              console.log(
+                `${indentation}    \x1B[90m${JSON.stringify(
+                  item,
+                  null,
+                  2
+                ).replace(/\n/gm, `
+${indentation}    `)}\x1B[37m`
+              );
             } else {
               console.log(
                 `\x1B[31m${indentation}    ${JSON.stringify(item)}\x1B[37m`
@@ -448,7 +459,7 @@ var ModelBasic = class _ModelBasic {
               )}\x1B[37m`
             );
           } else {
-            if (prop !== "_objectUID" && prop !== "_rootUID") {
+            if (prop !== "_objectUID" && prop !== "_rootUID" && prop !== "_instanceOf") {
               console.log(
                 `${indentation}  \x1B[32m-\x1B[37m${prop}: \x1B[90m${value}\x1B[37m`
               );
@@ -488,9 +499,9 @@ var Policy = class _Policy extends Explorable {
   constructor(uid, context, type) {
     super();
     this["@context"] = "";
-    this["@type"] = type;
-    this["@context"] = context;
     this.uid = uid;
+    this["@context"] = context;
+    this["@type"] = type;
     this.permission = [];
     this.prohibition = [];
     this.obligation = [];
@@ -726,6 +737,15 @@ var RuleDuty = class extends Rule {
   }
   evaluate() {
     return __async(this, null, function* () {
+      const result = yield Promise.all([
+        this.evaluateConstraints(),
+        this.evaluateActions()
+      ]);
+      return result.every(Boolean);
+    });
+  }
+  evaluateActions() {
+    return __async(this, null, function* () {
       if (Array.isArray(this.action)) {
         const processes = yield Promise.all(
           this.action.map((action) => action.refine())
@@ -733,6 +753,21 @@ var RuleDuty = class extends Rule {
         return processes.every(Boolean);
       } else if (this.action instanceof Action) {
         return this.action.evaluate();
+      }
+      return false;
+    });
+  }
+  evaluateConstraints() {
+    return __async(this, null, function* () {
+      try {
+        if (this.constraints) {
+          const all = yield Promise.all(
+            this.constraints.map((constraint) => constraint.evaluate())
+          );
+          return all.every(Boolean);
+        }
+      } catch (error) {
+        console.error("Error while evaluating rule:", error);
       }
       return false;
     });
@@ -879,6 +914,7 @@ var Operator = _Operator;
 var RightOperand = class extends ModelBasic {
   constructor(value) {
     super();
+    this._instanceOf = "RightOperand";
     this.value = value;
   }
   verify() {
@@ -902,8 +938,9 @@ var LeftOperand = class extends ModelBasic {
       try {
         const fetcher = this._rootUID ? EntityRegistry.getDataFetcherFromPolicy(this._rootUID) : void 0;
         if (fetcher) {
-          const types = fetcher.getTypes(this.value);
-          const value = yield fetcher.context[this.value]();
+          const _value = this.value.charAt(0).toLowerCase() + this.value.slice(1);
+          const types = fetcher.getTypes(_value);
+          const value = yield fetcher.context[_value]();
           if (types.length && types.includes("date")) {
             const dateTime = new Date(value).getTime();
             if (isNaN(dateTime)) {
@@ -980,7 +1017,7 @@ var AtomicConstraint = class _AtomicConstraint extends Constraint {
         if (evaluation) {
           const [leftValue, types] = evaluation;
           let rightValue = this.rightOperand.value;
-          if (types && types.includes("date")) {
+          if (types && types.includes("date") && !Array.isArray(rightValue)) {
             rightValue = new Date(rightValue).getTime();
             if (isNaN(rightValue)) {
               console.warn(
@@ -1004,11 +1041,37 @@ var AtomicConstraint = class _AtomicConstraint extends Constraint {
             case Operator.LTE:
             case Operator.LTEQ:
               return leftValue <= rightValue;
+            case Operator.IS_NONE_OF:
+              return Array.isArray(rightValue) && !rightValue.includes(leftValue);
+            case Operator.IS_A:
+              return _AtomicConstraint.isA(leftValue, rightValue);
           }
         }
       }
       return false;
     });
+  }
+  static isA(leftValue, rightValue) {
+    const type = typeof leftValue;
+    const value = typeof rightValue === "string" ? rightValue.toLowerCase() : "";
+    switch (value) {
+      case "string":
+        return type === "string";
+      case "number":
+        return type === "number";
+      case "boolean":
+        return type === "boolean";
+      case "object":
+        return leftValue !== null && type === "object";
+      case "array":
+        return Array.isArray(leftValue);
+      case "date":
+        return leftValue instanceof Date;
+      case "required":
+        return leftValue !== null && leftValue !== void 0 && leftValue !== "" && leftValue !== 0 && leftValue !== false;
+      default:
+        return false;
+    }
   }
   verify() {
     return __async(this, null, function* () {
@@ -1152,6 +1215,49 @@ var getNode = (obj, path) => {
     obj
   );
 };
+var getDurationMatching = (isoDurationString) => {
+  const durationRegex = /^P(?!$)(?:(\d+(?:\.\d+)?)Y)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?=\d)(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/;
+  return durationRegex.exec(isoDurationString);
+};
+var parseISODuration = (isoDurationString, match) => {
+  if (!match) {
+    match = getDurationMatching(isoDurationString);
+  }
+  if (!match) {
+    throw new Error(`Invalid ISO 8601 duration format: ${isoDurationString}`);
+  }
+  const [, years, months, weeks, days, hours, minutes, seconds] = match.map(
+    (v) => v ? parseFloat(v) : 0
+  );
+  let totalMilliseconds = 0;
+  if (years) {
+    totalMilliseconds += years * 365.25 * 24 * 60 * 60 * 1e3;
+  }
+  if (months) {
+    totalMilliseconds += months * 30.44 * 24 * 60 * 60 * 1e3;
+  }
+  if (weeks) {
+    totalMilliseconds += weeks * 7 * 24 * 60 * 60 * 1e3;
+  }
+  if (days) {
+    totalMilliseconds += days * 24 * 60 * 60 * 1e3;
+  }
+  if (hours) {
+    totalMilliseconds += hours * 60 * 60 * 1e3;
+  }
+  if (minutes) {
+    totalMilliseconds += minutes * 60 * 1e3;
+  }
+  if (seconds) {
+    totalMilliseconds += seconds * 1e3;
+  }
+  if (totalMilliseconds === 0) {
+    throw new Error(
+      `No valid duration components found in: ${isoDurationString}`
+    );
+  }
+  return totalMilliseconds;
+};
 
 // src/models/odrl/Party.ts
 var Party = class extends ModelBasic {
@@ -1269,7 +1375,8 @@ var _PolicyInstanciator = class _PolicyInstanciator {
       if (!value) {
         throw new Error("Invalid action");
       }
-      const action = new Action(value, null);
+      const action = _PolicyInstanciator.construct(Action, value, null);
+      action._rootUID = root == null ? void 0 : root._objectUID;
       action.setParent(parent);
       if (!fromArray) {
         parent.setAction(action);
@@ -1293,15 +1400,20 @@ var _PolicyInstanciator = class _PolicyInstanciator {
       rightOperand,
       constraint: constraints
     } = element;
+    let _rightOperand = rightOperand;
+    const match = getDurationMatching(rightOperand);
+    if (match) {
+      _rightOperand = parseISODuration(rightOperand);
+    }
     const operator = _operator && getLastTerm(_operator);
-    const constraint = leftOperand && operator && rightOperand !== void 0 && new AtomicConstraint(
+    const constraint = leftOperand && operator && _rightOperand !== void 0 && new AtomicConstraint(
       (() => {
         const _leftOperand = new LeftOperand(leftOperand);
         _leftOperand._rootUID = root == null ? void 0 : root._objectUID;
         return _leftOperand;
       })(),
       new Operator(operator),
-      new RightOperand(rightOperand)
+      _PolicyInstanciator.construct(RightOperand, _rightOperand)
     ) || operator && Array.isArray(constraints) && constraints.length > 0 && new LogicalConstraint(operator);
     copy(
       constraint,
@@ -1392,7 +1504,7 @@ var _PolicyInstanciator = class _PolicyInstanciator {
           if (typeof element === "object") {
             if (child) {
               this.traverse(element, child);
-            } else {
+            } else if (property !== "@context") {
               console.warn(
                 `\x1B[93m/!\\Traversal stopped for "${property}".\x1B[37m`
               );
@@ -1413,6 +1525,29 @@ var _PolicyInstanciator = class _PolicyInstanciator {
         instanciate(property, element);
       }
     }
+  }
+  static construct(Type, ...args) {
+    var _a, _b;
+    const context = (_b = (_a = this.instance) == null ? void 0 : _a.policy) == null ? void 0 : _b["@context"];
+    const isContextArray = Array.isArray(context);
+    if (!isContextArray) {
+      return Reflect.construct(Type, args);
+    }
+    const _namespace = [];
+    args = args.map((arg) => {
+      if (typeof arg === "string" && /^[\w-]+:[\w-]+$/.test(arg)) {
+        const [prefix, value] = arg.split(":");
+        const ctx = context.find((c) => c[prefix]);
+        if (ctx) {
+          _namespace.push(prefix);
+          return value;
+        }
+      }
+      return arg;
+    });
+    const instance = Reflect.construct(Type, args);
+    instance._namespace = _namespace;
+    return instance;
   }
 };
 _PolicyInstanciator.instanciators = {
@@ -1525,15 +1660,18 @@ var PolicyEvaluator = class _PolicyEvaluator {
   cleanPolicies() {
     this.policies = [];
   }
-  addPolicy(policy, fetcher) {
-    if (fetcher) {
-      policy._fetcherUID = fetcher._objectUID;
+  addPolicy(policy, dataFetcher, stateFetcher) {
+    if (dataFetcher) {
+      policy._fetcherUID = dataFetcher._objectUID;
+    }
+    if (stateFetcher) {
+      policy._stateFetcherUID = stateFetcher._objectUID;
     }
     this.policies.push(policy);
   }
-  setPolicy(policy, fetcher) {
+  setPolicy(policy, dataFetcher, stateFetcher) {
     this.cleanPolicies();
-    this.addPolicy(policy, fetcher);
+    this.addPolicy(policy, dataFetcher, stateFetcher);
   }
   logPolicies() {
     this.policies.forEach((policy) => {
@@ -1600,7 +1738,7 @@ var PolicyEvaluator = class _PolicyEvaluator {
    * @returns {Promise<string[]>} A promise resolved with an array of performable actions.
    */
   // Todo, include duties processes
-  getPerformableActions(target) {
+  getPerformableActions(target, included = true) {
     return __async(this, null, function* () {
       const targets = yield this.explore({
         target
@@ -1622,7 +1760,7 @@ var PolicyEvaluator = class _PolicyEvaluator {
           actions2.push(action);
         }
       }
-      return Action.getIncluded(actions2);
+      return included ? Action.getIncluded(actions2) : actions2;
     });
   }
   /**
@@ -1707,6 +1845,43 @@ var PolicyEvaluator = class _PolicyEvaluator {
       return yield this.explore({
         pickAllDuties: true
       });
+    });
+  }
+  getDutiesForTarget(target, fulfilled = false) {
+    return __async(this, null, function* () {
+      const targets = yield this.explore({ target });
+      const duties = yield targets.reduce(
+        (accPromise, target2) => accPromise.then((acc) => __async(this, null, function* () {
+          const parent = target2.getParent();
+          if (parent && parent instanceof RuleDuty) {
+            const duty = parent;
+            const isValidDuty = !fulfilled || (yield duty.evaluate());
+            if (isValidDuty) {
+              return [...acc, duty];
+            }
+          }
+          return acc;
+        })),
+        Promise.resolve([])
+      );
+      return duties;
+    });
+  }
+  getDutiesFor(action, target, fulfilled = false) {
+    return __async(this, null, function* () {
+      const duties = yield this.getDutiesForTarget(target, fulfilled);
+      const filteredDuties = [];
+      const dutyFilterPromises = duties.map((duty) => __async(this, null, function* () {
+        const dutyAction = duty.action;
+        if (dutyAction.value === action) {
+          const isValidDuty = yield duty.evaluate();
+          if (isValidDuty) {
+            filteredDuties.push(duty);
+          }
+        }
+      }));
+      yield Promise.all(dutyFilterPromises);
+      return filteredDuties;
     });
   }
   getAssignedDuties(assignee) {
