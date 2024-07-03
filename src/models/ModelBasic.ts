@@ -26,7 +26,8 @@ export abstract class ModelBasic {
   public _objectUID: string;
   public _fetcherUID?: string;
   public _stateFetcherUID?: string;
-
+  public _instanceOf?: string;
+  public _namespace?: string | string[];
   constructor() {
     this._objectUID = randomUUID();
     EntityRegistry.addReference(this);
@@ -62,6 +63,16 @@ export abstract class ModelBasic {
                     typeof item.validate === 'function'
                   ) {
                     item.validate(depth + 2, promises);
+                  } else if (
+                    ((typeof item === 'string' ||
+                      typeof item === 'boolean' ||
+                      item instanceof Date ||
+                      typeof item === 'number') &&
+                      this._instanceOf === 'RightOperand') ||
+                    prop === '@context' ||
+                    prop === '_namespace'
+                  ) {
+                    //
                   } else {
                     throw new Error(
                       `Invalid entry: ${JSON.stringify(item, null, 2)}`,
@@ -84,7 +95,7 @@ export abstract class ModelBasic {
           }
           return true;
         } catch (error: any) {
-          console.error(`[PolicyValidator] - \x1b[31m${error.message}\x1b[37m`);
+          console.error(`[ModelBasic] - \x1b[31m${error.message}\x1b[37m`);
           return false;
         }
       })(),
@@ -109,6 +120,22 @@ export abstract class ModelBasic {
               typeof item.debug === 'function'
             ) {
               item.debug(depth + 2);
+            } else if (
+              ((typeof item === 'string' ||
+                typeof item === 'boolean' ||
+                item instanceof Date ||
+                typeof item === 'number') &&
+                this._instanceOf === 'RightOperand') ||
+              prop === '@context' ||
+              prop === '_namespace'
+            ) {
+              console.log(
+                `${indentation}    \x1b[90m${JSON.stringify(
+                  item,
+                  null,
+                  2,
+                ).replace(/\n/gm, `\n${indentation}    `)}\x1b[37m`,
+              );
             } else {
               console.log(
                 `\x1b[31m${indentation}    ${JSON.stringify(item)}\x1b[37m`,
@@ -129,7 +156,11 @@ export abstract class ModelBasic {
               )}\x1b[37m`,
             );
           } else {
-            if (prop !== '_objectUID' && prop !== '_rootUID') {
+            if (
+              prop !== '_objectUID' &&
+              prop !== '_rootUID' &&
+              prop !== '_instanceOf'
+            ) {
               console.log(
                 `${indentation}  \x1b[32m-\x1b[37m${prop}: \x1b[90m${value}\x1b[37m`,
               );

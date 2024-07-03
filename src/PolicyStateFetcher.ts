@@ -12,4 +12,6 @@ export abstract class PolicyStateFetcher extends PolicyFetcher {
   public get context(): StateFunctions {
     return this._context as StateFunctions;
   }
+
+  /*Todo: Write default*/
 }

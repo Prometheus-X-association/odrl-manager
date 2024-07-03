@@ -81,3 +81,54 @@ export const Custom = (): MethodDecorator => {
     }
   };
 };
+
+export const getDurationMatching = (
+  isoDurationString: string,
+): RegExpExecArray | null => {
+  const durationRegex =
+    /^P(?!$)(?:(\d+(?:\.\d+)?)Y)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?=\d)(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/;
+  return durationRegex.exec(isoDurationString);
+};
+
+export const parseISODuration = (
+  isoDurationString: string,
+  match?: RegExpExecArray | null,
+): number => {
+  if (!match) {
+    match = getDurationMatching(isoDurationString);
+  }
+  if (!match) {
+    throw new Error(`Invalid ISO 8601 duration format: ${isoDurationString}`);
+  }
+  const [, years, months, weeks, days, hours, minutes, seconds] = match.map(
+    (v) => (v ? parseFloat(v) : 0),
+  );
+  let totalMilliseconds = 0;
+  if (years) {
+    totalMilliseconds += years * 365.25 * 24 * 60 * 60 * 1000;
+  }
+  if (months) {
+    totalMilliseconds += months * 30.44 * 24 * 60 * 60 * 1000;
+  }
+  if (weeks) {
+    totalMilliseconds += weeks * 7 * 24 * 60 * 60 * 1000;
+  }
+  if (days) {
+    totalMilliseconds += days * 24 * 60 * 60 * 1000;
+  }
+  if (hours) {
+    totalMilliseconds += hours * 60 * 60 * 1000;
+  }
+  if (minutes) {
+    totalMilliseconds += minutes * 60 * 1000;
+  }
+  if (seconds) {
+    totalMilliseconds += seconds * 1000;
+  }
+  if (totalMilliseconds === 0) {
+    throw new Error(
+      `No valid duration components found in: ${isoDurationString}`,
+    );
+  }
+  return totalMilliseconds;
+};

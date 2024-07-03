@@ -4,8 +4,9 @@ import { RuleDuty } from './RuleDuty';
 import { RulePermission } from './RulePermission';
 import { RuleProhibition } from './RuleProhibition';
 
+export type PolicyContext = string | { [key: string]: string }[];
 export abstract class Policy extends Explorable {
-  protected '@context': string = '';
+  protected '@context': PolicyContext = '';
   protected '@type': string;
   protected uid: string;
   protected permission: RulePermission[];
@@ -15,11 +16,11 @@ export abstract class Policy extends Explorable {
   protected inheritFrom?: string[];
   protected conflict?: ConflictTerm[];
 
-  constructor(uid: string, context: string, type: string) {
+  constructor(uid: string, context: PolicyContext, type: string) {
     super();
-    this['@type'] = type;
-    this['@context'] = context;
     this.uid = uid;
+    this['@context'] = context;
+    this['@type'] = type;
     this.permission = [];
     this.prohibition = [];
     this.obligation = [];

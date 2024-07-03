@@ -12,6 +12,7 @@ import { EntityRegistry } from 'EntityRegistry';
 import { getNode } from 'utils';
 import { Party } from 'models/odrl/Party';
 import { Constraint } from 'models/odrl/Constraint';
+import { PolicyStateFetcher } from 'PolicyStateFetcher';
 
 interface Picker {
   pick: (explorable: Explorable, options?: any) => boolean;
@@ -133,16 +134,27 @@ export class PolicyEvaluator {
     this.policies = [];
   }
 
-  public addPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void {
-    if (fetcher) {
-      policy._fetcherUID = fetcher._objectUID;
+  public addPolicy(
+    policy: Policy,
+    dataFetcher?: PolicyDataFetcher,
+    stateFetcher?: PolicyStateFetcher,
+  ): void {
+    if (dataFetcher) {
+      policy._fetcherUID = dataFetcher._objectUID;
+    }
+    if (stateFetcher) {
+      policy._stateFetcherUID = stateFetcher._objectUID;
     }
     this.policies.push(policy);
   }
 
-  public setPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void {
+  public setPolicy(
+    policy: Policy,
+    dataFetcher?: PolicyDataFetcher,
+    stateFetcher?: PolicyStateFetcher,
+  ): void {
     this.cleanPolicies();
-    this.addPolicy(policy, fetcher);
+    this.addPolicy(policy, dataFetcher, stateFetcher);
   }
 
   public logPolicies(): void {
@@ -232,7 +244,10 @@ export class PolicyEvaluator {
    * @returns {Promise<string[]>} A promise resolved with an array of performable actions.
    */
   // Todo, include duties processes
-  public async getPerformableActions(target: string): Promise<string[]> {
+  public async getPerformableActions(
+    target: string,
+    included: boolean = true,
+  ): Promise<string[]> {
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
@@ -253,7 +268,7 @@ export class PolicyEvaluator {
         actions.push(action as ActionType);
       }
     }
-    return Action.getIncluded(actions);
+    return included ? Action.getIncluded(actions) : actions;
   }
 
   /**
@@ -348,6 +363,50 @@ export class PolicyEvaluator {
     return (await this.explore({
       pickAllDuties: true,
     })) as RuleDuty[];
+  }
+
+  public async getDutiesForTarget(
+    target: string,
+    fulfilled: boolean = false,
+  ): Promise<RuleDuty[]> {
+    const targets: Asset[] = (await this.explore({ target })) as Asset[];
+    const duties = await targets.reduce(
+      (accPromise: Promise<RuleDuty[]>, target: Asset) =>
+        accPromise.then(async (acc: RuleDuty[]) => {
+          const parent: ParentRule = target.getParent() as ParentRule;
+          if (parent && parent instanceof RuleDuty) {
+            const duty: RuleDuty = parent as RuleDuty;
+            const isValidDuty = !fulfilled || (await duty.evaluate());
+            if (isValidDuty) {
+              return [...acc, duty];
+            }
+          }
+          return acc;
+        }),
+      Promise.resolve([]),
+    );
+    return duties;
+  }
+
+  public async getDutiesFor(
+    action: string,
+    target: string,
+    fulfilled: boolean = false,
+  ): Promise<RuleDuty[]> {
+    const duties: RuleDuty[] = await this.getDutiesForTarget(target, fulfilled);
+    const filteredDuties: RuleDuty[] = [];
+
+    const dutyFilterPromises = duties.map(async (duty: RuleDuty) => {
+      const dutyAction = duty.action as Action;
+      if (dutyAction.value === action) {
+        const isValidDuty = await duty.evaluate();
+        if (isValidDuty) {
+          filteredDuties.push(duty);
+        }
+      }
+    });
+    await Promise.all(dutyFilterPromises);
+    return filteredDuties;
   }
 
   public async getAssignedDuties(assignee: string): Promise<RuleDuty[]> {

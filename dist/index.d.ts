@@ -97,6 +97,8 @@ declare abstract class ModelBasic {
     _objectUID: string;
     _fetcherUID?: string;
     _stateFetcherUID?: string;
+    _instanceOf?: string;
+    _namespace?: string | string[];
     constructor();
     protected handleFailure(): void;
     setParent(parent: ModelBasic): void;
@@ -123,7 +125,7 @@ declare class Party extends ModelBasic {
 }
 
 declare class LeftOperand extends ModelBasic {
-    private value;
+    value: string;
     constructor(value: string);
     getValue(): string;
     evaluate(): Promise<[string | number, string[]] | null>;
@@ -153,7 +155,7 @@ declare class Operator extends ModelBasic {
 
 declare class RightOperand extends ModelBasic {
     '@id'?: string;
-    value: string | number;
+    value: string | number | [];
     constructor(value: string | number);
     verify(): Promise<boolean>;
 }
@@ -231,7 +233,7 @@ declare abstract class Rule extends Explorable {
     uid?: string;
     relation?: Relation;
     constructor(uid?: string);
-    protected get constraints(): Constraint[];
+    get constraints(): Constraint[];
     setTarget(asset: Asset): void;
     setAction(action: Action): void;
     addAction(action: Action): void;
@@ -249,6 +251,8 @@ declare class RuleDuty extends Rule {
     private status?;
     constructor(assigner?: Party, assignee?: Party);
     evaluate(): Promise<boolean>;
+    private evaluateActions;
+    private evaluateConstraints;
     verify(): Promise<boolean>;
     addConsequence(consequence: RuleDuty): void;
 }
@@ -273,8 +277,11 @@ declare class RuleProhibition extends Rule {
     verify(): Promise<boolean>;
 }
 
+type PolicyContext = string | {
+    [key: string]: string;
+}[];
 declare abstract class Policy extends Explorable {
-    protected '@context': string;
+    protected '@context': PolicyContext;
     protected '@type': string;
     protected uid: string;
     protected permission: RulePermission[];
@@ -283,7 +290,7 @@ declare abstract class Policy extends Explorable {
     protected profile?: string[];
     protected inheritFrom?: string[];
     protected conflict?: ConflictTerm[];
-    constructor(uid: string, context: string, type: string);
+    constructor(uid: string, context: PolicyContext, type: string);
     get permissions(): RulePermission[];
     get prohibitions(): RuleProhibition[];
     get obligations(): RulePermission[];
@@ -292,6 +299,14 @@ declare abstract class Policy extends Explorable {
     addDuty(prohibition: RuleDuty): void;
     validate(): Promise<boolean>;
     explore(picker: Function, options?: any): Promise<Explorable[]>;
+}
+
+interface StateFunctions {
+    [key: string]: Function;
+}
+declare abstract class PolicyStateFetcher extends PolicyFetcher {
+    constructor();
+    get context(): StateFunctions;
 }
 
 declare class PolicyEvaluator {
@@ -308,8 +323,8 @@ declare class PolicyEvaluator {
     private pickProhibition;
     private pickDuties;
     cleanPolicies(): void;
-    addPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void;
-    setPolicy(policy: Policy, fetcher?: PolicyDataFetcher): void;
+    addPolicy(policy: Policy, dataFetcher?: PolicyDataFetcher, stateFetcher?: PolicyStateFetcher): void;
+    setPolicy(policy: Policy, dataFetcher?: PolicyDataFetcher, stateFetcher?: PolicyStateFetcher): void;
     logPolicies(): void;
     private setFetcherOptions;
     private pick;
@@ -321,7 +336,7 @@ declare class PolicyEvaluator {
      * @param {string} target - A string representing the target.
      * @returns {Promise<string[]>} A promise resolved with an array of performable actions.
      */
-    getPerformableActions(target: string): Promise<string[]>;
+    getPerformableActions(target: string, included?: boolean): Promise<string[]>;
     /**
      * Retrieves the list of leftOperands associated with the specified target.
      * @param {string} target - A string representing the target.
@@ -344,6 +359,8 @@ declare class PolicyEvaluator {
      */
     evalResourcePerformabilities(json: any, defaultResult?: boolean): Promise<boolean>;
     getDuties(): Promise<RuleDuty[]>;
+    getDutiesForTarget(target: string, fulfilled?: boolean): Promise<RuleDuty[]>;
+    getDutiesFor(action: string, target: string, fulfilled?: boolean): Promise<RuleDuty[]>;
     getAssignedDuties(assignee: string): Promise<RuleDuty[]>;
     getEmittedDuties(assigner: string): Promise<any[]>;
     /**
@@ -387,6 +404,7 @@ declare class PolicyInstanciator {
     private selectPolicyType;
     genPolicyFrom(json: any): Policy | null;
     traverse(node: any, parent: any): void;
+    static construct<T>(Type: new (...args: any[]) => T, ...args: any[]): T;
 }
 
 declare const evaluator: PolicyEvaluator;

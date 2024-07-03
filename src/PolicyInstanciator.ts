@@ -15,7 +15,13 @@ import { Rule } from './models/odrl/Rule';
 import { RuleDuty } from './models/odrl/RuleDuty';
 import { RulePermission } from './models/odrl/RulePermission';
 import { RuleProhibition } from './models/odrl/RuleProhibition';
-import { CopyMode, copy, getLastTerm } from './utils';
+import {
+  CopyMode,
+  copy,
+  getDurationMatching,
+  getLastTerm,
+  parseISODuration,
+} from './utils';
 import { Party } from 'models/odrl/Party';
 
 type InstanciatorFunction = (
@@ -171,7 +177,9 @@ export class PolicyInstanciator {
       if (!value) {
         throw new Error('Invalid action');
       }
-      const action = new Action(value, null);
+      // const action = new Action(value, null);
+      const action = PolicyInstanciator.construct(Action, value, null);
+      action._rootUID = root?._objectUID;
       action.setParent(parent);
       if (!fromArray) {
         parent.setAction(action);
@@ -205,11 +213,18 @@ export class PolicyInstanciator {
       rightOperand,
       constraint: constraints,
     } = element;
+
+    let _rightOperand = rightOperand;
+    const match = getDurationMatching(rightOperand);
+    if (match) {
+      // && todo
+      _rightOperand = parseISODuration(rightOperand);
+    }
     const operator = _operator && getLastTerm(_operator);
     const constraint: Constraint =
       (leftOperand &&
         operator &&
-        rightOperand !== undefined &&
+        _rightOperand !== undefined &&
         new AtomicConstraint(
           (() => {
             const _leftOperand = new LeftOperand(leftOperand);
@@ -217,7 +232,7 @@ export class PolicyInstanciator {
             return _leftOperand;
           })(),
           new Operator(operator),
-          new RightOperand(rightOperand),
+          PolicyInstanciator.construct(RightOperand, _rightOperand),
         )) ||
       (operator &&
         Array.isArray(constraints) &&
@@ -338,7 +353,7 @@ export class PolicyInstanciator {
           if (typeof element === 'object') {
             if (child) {
               this.traverse(element, child);
-            } else {
+            } else if (property !== '@context') {
               console.warn(
                 `\x1b[93m/!\\Traversal stopped for "${property}".\x1b[37m`,
               );
@@ -359,6 +374,32 @@ export class PolicyInstanciator {
         instanciate(property, element);
       }
     }
+  }
+
+  public static construct<T>(
+    Type: new (...args: any[]) => T,
+    ...args: any[]
+  ): T {
+    const context = this.instance?.policy?.['@context'];
+    const isContextArray = Array.isArray(context);
+    if (!isContextArray) {
+      return Reflect.construct(Type, args);
+    }
+    const _namespace: string[] = [];
+    args = args.map((arg) => {
+      if (typeof arg === 'string' && /^[\w-]+:[\w-]+$/.test(arg)) {
+        const [prefix, value] = arg.split(':');
+        const ctx = context.find((c) => c[prefix]);
+        if (ctx) {
+          _namespace.push(prefix);
+          return value;
+        }
+      }
+      return arg;
+    });
+    const instance = Reflect.construct(Type, args);
+    (instance as { _namespace: string | string[] })._namespace = _namespace;
+    return instance;
   }
 }
 
