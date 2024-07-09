@@ -3,6 +3,7 @@ import { RightOperand } from './RightOperand';
 import { LeftOperand } from './LeftOperand';
 import { Constraint } from './Constraint';
 import { EntityRegistry } from 'EntityRegistry';
+import { HandleFailure } from 'models/ModelBasic';
 
 type BasicTypes =
   | number
@@ -21,8 +22,10 @@ export class AtomicConstraint extends Constraint {
     rightOperand: RightOperand,
   ) {
     super(leftOperand, operator, rightOperand);
+    this._instanceOf = 'AtomicConstraint';
   }
 
+  @HandleFailure()
   public async evaluate(): Promise<boolean> {
     if (this.leftOperand && this.rightOperand) {
       const fetcher = this.leftOperand._rootUID
@@ -46,35 +49,40 @@ export class AtomicConstraint extends Constraint {
             );
           }
         }
-        switch (this.operator?.value) {
-          case Operator.EQ:
-            return leftValue === rightValue;
+        const evalOperator = (): boolean => {
+          switch (this.operator?.value) {
+            case Operator.EQ:
+              return leftValue === rightValue;
 
-          case Operator.NE:
-          case Operator.NEQ:
-            return leftValue !== rightValue;
+            case Operator.NE:
+            case Operator.NEQ:
+              return leftValue !== rightValue;
 
-          case Operator.GT:
-            return (leftValue as number) > (rightValue as number);
+            case Operator.GT:
+              return (leftValue as number) > (rightValue as number);
 
-          case Operator.GTE:
-          case Operator.GTEQ:
-            return (leftValue as number) >= (rightValue as number);
+            case Operator.GTE:
+            case Operator.GTEQ:
+              return (leftValue as number) >= (rightValue as number);
 
-          case Operator.LT:
-            return (leftValue as number) < (rightValue as number);
+            case Operator.LT:
+              return (leftValue as number) < (rightValue as number);
 
-          case Operator.LTE:
-          case Operator.LTEQ:
-            return (leftValue as number) <= (rightValue as number);
-          case Operator.IS_NONE_OF:
-            return (
-              Array.isArray(rightValue) &&
-              !(rightValue as Array<any>).includes(leftValue)
-            );
-          case Operator.IS_A:
-            return AtomicConstraint.isA(leftValue, rightValue);
-        }
+            case Operator.LTE:
+            case Operator.LTEQ:
+              return (leftValue as number) <= (rightValue as number);
+            case Operator.IS_NONE_OF:
+              return (
+                Array.isArray(rightValue) &&
+                !(rightValue as Array<any>).includes(leftValue)
+              );
+            case Operator.IS_A:
+              return AtomicConstraint.isA(leftValue, rightValue);
+            default:
+              return false;
+          }
+        };
+        return evalOperator();
       }
     }
     return false;

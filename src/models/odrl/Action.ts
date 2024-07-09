@@ -92,6 +92,7 @@ export class Action extends ModelBasic {
 
   constructor(value: string, includedIn: Action | null) {
     super();
+    this._instanceOf = 'Action';
     this.value = value;
     this.includedIn = includedIn;
 

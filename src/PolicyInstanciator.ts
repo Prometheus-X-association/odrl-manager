@@ -115,7 +115,10 @@ export class PolicyInstanciator {
     parent: Policy,
     root: Policy | null,
   ): RulePermission {
+    const { assigner, assignee } = element;
     const rule = new RulePermission();
+    if (assigner) rule.assigner = new Party(assigner);
+    if (assignee) rule.assignee = new Party(assignee);
     rule.setParent(parent);
     parent.addPermission(rule);
     return rule;
@@ -126,7 +129,10 @@ export class PolicyInstanciator {
     parent: Policy,
     root: Policy | null,
   ): RuleProhibition {
+    const { assigner, assignee } = element;
     const rule = new RuleProhibition();
+    if (assigner) rule.assigner = new Party(assigner);
+    if (assignee) rule.assignee = new Party(assignee);
     rule.setParent(parent);
     parent.addProhibition(rule);
     return rule;
@@ -221,19 +227,22 @@ export class PolicyInstanciator {
       _rightOperand = parseISODuration(rightOperand);
     }
     const operator = _operator && getLastTerm(_operator);
+
     const constraint: Constraint =
       (leftOperand &&
         operator &&
         _rightOperand !== undefined &&
-        new AtomicConstraint(
-          (() => {
-            const _leftOperand = new LeftOperand(leftOperand);
-            _leftOperand._rootUID = root?._objectUID;
-            return _leftOperand;
-          })(),
-          new Operator(operator),
-          PolicyInstanciator.construct(RightOperand, _rightOperand),
-        )) ||
+        (() => {
+          const _leftOperand = new LeftOperand(leftOperand);
+          _leftOperand._rootUID = root?._objectUID;
+          const constraint = new AtomicConstraint(
+            _leftOperand,
+            new Operator(operator),
+            PolicyInstanciator.construct(RightOperand, _rightOperand),
+          );
+          _leftOperand.setParent(constraint);
+          return constraint;
+        })()) ??
       (operator &&
         Array.isArray(constraints) &&
         constraints.length > 0 &&
@@ -251,6 +260,62 @@ export class PolicyInstanciator {
     return constraint;
   }
 
+  /*
+  private static setConstraint(
+    element: any,
+    parent: LogicalConstraint | Rule | Action,
+    root: Policy | null,
+  ): Constraint {
+    const {
+      leftOperand,
+      operator: _operator,
+      rightOperand,
+      constraint: constraints,
+    } = element;
+
+    let _rightOperand = rightOperand;
+    const match = getDurationMatching(rightOperand);
+    if (match) {
+      // && todo
+      _rightOperand = parseISODuration(rightOperand);
+    }
+    const operator = _operator && getLastTerm(_operator);
+
+    let constraint: Constraint | null = null;
+    let _leftOperand: LeftOperand | null = null;
+
+    if (leftOperand && operator && _rightOperand !== undefined) {
+      _leftOperand = new LeftOperand(leftOperand);
+      _leftOperand._rootUID = root?._objectUID;
+
+      constraint = new AtomicConstraint(
+        _leftOperand,
+        new Operator(operator),
+        PolicyInstanciator.construct(RightOperand, _rightOperand),
+      );
+
+      _leftOperand.setParent(constraint);
+    } else if (
+      operator &&
+      Array.isArray(constraints) &&
+      constraints.length > 0
+    ) {
+      constraint = new LogicalConstraint(operator);
+    }
+
+    if (constraint) {
+      copy(
+        constraint,
+        element,
+        ['constraint', 'leftOperand', 'operator', 'rightOperand'],
+        CopyMode.exclude,
+      );
+      constraint.setParent(parent);
+    }
+    parent.addConstraint(constraint || element);
+    return constraint || element;
+  }
+*/
   private static setRefinement(
     element: any,
     parent: Action,

@@ -12,6 +12,7 @@ interface ParentRelations {
 export class EntityRegistry {
   private static parentRelations: ParentRelations = {};
   private static entityReferences: EntityReferences = {};
+  private static failures: ModelBasic[];
 
   public static getDataFetcherFromPolicy(
     rootUID: string,
@@ -51,5 +52,20 @@ export class EntityRegistry {
   public static getParent(child: ModelBasic): ModelBasic {
     const uid = EntityRegistry.parentRelations[child._objectUID];
     return EntityRegistry.entityReferences[uid];
+  }
+
+  public static addFailure(model: ModelBasic): void {
+    EntityRegistry.failures.push(model);
+  }
+
+  public static hasFailed(uid: string): boolean {
+    return EntityRegistry.failures.some((failure) => {
+      const failureWithUid = failure as { uid?: string };
+      return failureWithUid.uid === uid;
+    });
+  }
+
+  public static resetFailures(): void {
+    EntityRegistry.failures = [];
   }
 }

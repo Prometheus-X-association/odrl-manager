@@ -6,6 +6,7 @@ export class RuleProhibition extends Rule {
   remedy?: RuleDuty[];
   constructor() {
     super();
+    this._instanceOf = 'RuleProhibition';
   }
 
   public addRemedy(duty: RuleDuty) {

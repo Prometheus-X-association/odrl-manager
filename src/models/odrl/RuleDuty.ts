@@ -16,6 +16,7 @@ export class RuleDuty extends Rule {
     if (assignee) {
       this.assignee = assignee;
     }
+    this._instanceOf = 'RuleDuty';
   }
 
   public async evaluate(): Promise<boolean> {
@@ -23,7 +24,23 @@ export class RuleDuty extends Rule {
       this.evaluateConstraints(),
       this.evaluateActions(),
     ]);
-    return result.every(Boolean);
+    if (result.every(Boolean)) {
+      return true;
+    }
+    return this.evaluateConsequences();
+  }
+
+  private async evaluateConsequences(): Promise<boolean> {
+    if (!this.consequence || this.consequence.length === 0) {
+      return false;
+    }
+    for (const consequence of this.consequence) {
+      const fulfilled = await consequence.evaluate();
+      if (fulfilled) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private async evaluateActions(): Promise<boolean> {

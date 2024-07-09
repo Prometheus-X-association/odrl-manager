@@ -1,5 +1,6 @@
 import { EntityRegistry } from 'EntityRegistry';
 import { randomUUID } from 'node:crypto';
+import { RuleProhibition } from './odrl/RuleProhibition';
 
 export const HandleFailure = (): MethodDecorator => {
   return (
@@ -11,8 +12,8 @@ export const HandleFailure = (): MethodDecorator => {
       const originalMethod = descriptor.value;
       descriptor.value = async function (...args: any[]) {
         const result = await originalMethod.apply(this, args);
-        if ((this as any).handleFailure && !result) {
-          (this as any).handleFailure();
+        if ((this as any).handleFailure /*&& !result*/) {
+          await (this as any).handleFailure(result);
         }
         return result;
       };
@@ -33,9 +34,13 @@ export abstract class ModelBasic {
     EntityRegistry.addReference(this);
   }
 
-  protected handleFailure() {
-    // Todo: Handle Failure
-    console.log('handleFailure');
+  protected async handleFailure(result: boolean) {
+    if (this._instanceOf === 'AtomicConstraint') {
+      const parent = this.getParent();
+      if ((parent._instanceOf === 'RuleProhibition' && result) || !result) {
+        EntityRegistry.addFailure(this);
+      }
+    }
   }
 
   public setParent(parent: ModelBasic): void {

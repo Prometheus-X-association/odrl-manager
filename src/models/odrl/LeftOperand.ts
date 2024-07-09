@@ -22,6 +22,7 @@ export class LeftOperand extends ModelBasic {
       if (fetcher) {
         const _value = this.value.charAt(0).toLowerCase() + this.value.slice(1);
         const types = fetcher.getTypes(_value);
+        fetcher.setCurrentNode(this.getParent());
         const value = await fetcher.context[_value]();
         if (types.length && types.includes('date')) {
           const dateTime = new Date(value).getTime();
