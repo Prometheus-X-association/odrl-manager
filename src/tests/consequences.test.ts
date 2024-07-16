@@ -1,4 +1,4 @@
-import instanciator from 'PolicyInstanciator';
+import instanciator, { PolicyInstanciator } from 'PolicyInstanciator';
 import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
@@ -8,6 +8,8 @@ import { EntityRegistry } from 'EntityRegistry';
 import { PolicyStateFetcher } from 'PolicyStateFetcher';
 import { Custom } from 'PolicyFetcher';
 import { RuleDuty } from 'models/odrl/RuleDuty';
+import { ModelBasic } from 'models/ModelBasic';
+import { Namespace } from 'Namespace';
 
 class StateFetcher extends PolicyStateFetcher {
   constructor() {
@@ -46,6 +48,9 @@ class DataFetcher extends PolicyDataFetcher {
     return creationDate;
   }
 }
+
+const grNamespace: Namespace = new Namespace('http://purl.org/goodrelations/');
+PolicyInstanciator.addNamespaceInstanciator(grNamespace);
 
 describe('Testing Consequences in ODRL Policy', async () => {
   let policy: Policy | null;
@@ -157,6 +162,18 @@ describe('Testing Consequences in ODRL Policy', async () => {
 
   before(() => {
     EntityRegistry.cleanReferences();
+    grNamespace.addInstanciator(
+      'priceType',
+      function (
+        element: any,
+        parent: any,
+        root: Policy | null,
+        fromArray: boolean = false,
+      ): ModelBasic | null {
+        console.log('Element: ', element);
+        return null;
+      },
+    );
     policy = instanciator.genPolicyFrom(policyJson);
     policyRefinement = instanciator.genPolicyFrom(policyJsonRefinement);
     policy?.debug();
