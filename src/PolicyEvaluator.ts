@@ -130,6 +130,17 @@ export class PolicyEvaluator {
     return false;
   }
 
+  public static findAssigner(node: any): string | undefined {
+    let currentNode = node;
+    while (currentNode) {
+      if (currentNode.assigner?.uid) {
+        return currentNode.assigner.uid;
+      }
+      currentNode = currentNode.getParent();
+    }
+    return undefined;
+  }
+
   public cleanPolicies(): void {
     this.policies = [];
   }
@@ -161,6 +172,10 @@ export class PolicyEvaluator {
     this.policies.forEach((policy: Policy) => {
       policy.debug();
     });
+  }
+
+  public hasFailed(uid: string) {
+    return EntityRegistry.hasFailed(uid);
   }
 
   private setFetcherOptions(options: any): void {
@@ -308,7 +323,11 @@ export class PolicyEvaluator {
     actionType: ActionType,
     target: string,
     defaultResult: boolean = false,
+    resetFailures: boolean = true,
   ): Promise<boolean> {
+    if (resetFailures) {
+      EntityRegistry.resetFailures();
+    }
     const targets: Asset[] = (await this.explore({
       target,
     })) as Asset[];
@@ -337,6 +356,7 @@ export class PolicyEvaluator {
     json: any,
     defaultResult: boolean = false,
   ): Promise<boolean> {
+    EntityRegistry.resetFailures();
     const instanciator = new PolicyInstanciator();
     instanciator.genPolicyFrom(json);
     const evaluator = new PolicyEvaluator();
@@ -351,7 +371,7 @@ export class PolicyEvaluator {
         const parent: ParentRule = target.getParent() as ParentRule;
         const actionType = (parent.action as Action).value as ActionType;
         return target.uid
-          ? this.isActionPerformable(actionType, target.uid)
+          ? this.isActionPerformable(actionType, target.uid, false, false)
           : false;
       },
     );

@@ -5,6 +5,7 @@ export class RulePermission extends Rule {
   duty?: RuleDuty[];
   constructor() {
     super();
+    this._instanceOf = 'RulePermission';
   }
 
   public addDuty(duty: RuleDuty) {

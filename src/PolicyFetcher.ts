@@ -1,4 +1,6 @@
 import { EntityRegistry } from 'EntityRegistry';
+import { ModelBasic } from 'models/ModelBasic';
+import { AtomicConstraint } from 'models/odrl/AtomicConstraint';
 import { randomUUID } from 'node:crypto';
 
 export const Custom = (): MethodDecorator => {
@@ -23,7 +25,7 @@ export abstract class PolicyFetcher {
   protected _context: ContextFunctions = {};
   public _objectUID: string;
   protected options: any = {};
-
+  protected currentNode?: AtomicConstraint;
   constructor() {
     this._objectUID = randomUUID();
     EntityRegistry.addReference(this);
@@ -41,6 +43,10 @@ export abstract class PolicyFetcher {
 
   public setRequestOptions(options: any) {
     this.options = options;
+  }
+
+  public setCurrentNode(node: ModelBasic) {
+    this.currentNode = node as AtomicConstraint;
   }
 
   public hasBypassFor(name: string) {

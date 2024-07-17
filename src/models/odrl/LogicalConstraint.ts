@@ -7,6 +7,7 @@ export class LogicalConstraint extends Constraint {
   private operand?: string;
   constructor(operand: string) {
     super(null, null, null);
+    this._instanceOf = 'LogicalConstraint';
     this.operand = operand;
     this.constraint = [];
   }

@@ -23,8 +23,9 @@ import {
   parseISODuration,
 } from './utils';
 import { Party } from 'models/odrl/Party';
+import { Namespace } from 'Namespace';
 
-type InstanciatorFunction = (
+export type InstanciatorFunction = (
   node: any,
   parent: any,
   root: Policy | null,
@@ -34,6 +35,7 @@ type InstanciatorFunction = (
 export class PolicyInstanciator {
   public policy: Policy | null;
   public static instance: PolicyInstanciator;
+  public static namespaces: Record<string, Namespace> = {};
 
   constructor() {
     this.policy = null;
@@ -115,7 +117,10 @@ export class PolicyInstanciator {
     parent: Policy,
     root: Policy | null,
   ): RulePermission {
+    const { assigner, assignee } = element;
     const rule = new RulePermission();
+    if (assigner) rule.assigner = new Party(assigner);
+    if (assignee) rule.assignee = new Party(assignee);
     rule.setParent(parent);
     parent.addPermission(rule);
     return rule;
@@ -126,7 +131,10 @@ export class PolicyInstanciator {
     parent: Policy,
     root: Policy | null,
   ): RuleProhibition {
+    const { assigner, assignee } = element;
     const rule = new RuleProhibition();
+    if (assigner) rule.assigner = new Party(assigner);
+    if (assignee) rule.assignee = new Party(assignee);
     rule.setParent(parent);
     parent.addProhibition(rule);
     return rule;
@@ -221,19 +229,22 @@ export class PolicyInstanciator {
       _rightOperand = parseISODuration(rightOperand);
     }
     const operator = _operator && getLastTerm(_operator);
+
     const constraint: Constraint =
       (leftOperand &&
         operator &&
         _rightOperand !== undefined &&
-        new AtomicConstraint(
-          (() => {
-            const _leftOperand = new LeftOperand(leftOperand);
-            _leftOperand._rootUID = root?._objectUID;
-            return _leftOperand;
-          })(),
-          new Operator(operator),
-          PolicyInstanciator.construct(RightOperand, _rightOperand),
-        )) ||
+        (() => {
+          const _leftOperand = new LeftOperand(leftOperand);
+          _leftOperand._rootUID = root?._objectUID;
+          const constraint = new AtomicConstraint(
+            _leftOperand,
+            new Operator(operator),
+            PolicyInstanciator.construct(RightOperand, _rightOperand),
+          );
+          _leftOperand.setParent(constraint);
+          return constraint;
+        })()) ??
       (operator &&
         Array.isArray(constraints) &&
         constraints.length > 0 &&
@@ -328,6 +339,46 @@ export class PolicyInstanciator {
     return null;
   }
 
+  public static addNamespaceInstanciator(namespace: Namespace): void {
+    this.namespaces[namespace.uri] = namespace;
+  }
+
+  private static handleNamespaceAttribute(
+    attribute: string,
+    element: any,
+    parent: any,
+    root: Policy | null,
+    fromArray: boolean = false,
+  ): ModelBasic | null {
+    const context = this.instance?.policy?.['@context'];
+    const isContextArray = Array.isArray(context);
+
+    if (
+      isContextArray &&
+      typeof attribute === 'string' &&
+      /^[\w-]+:[\w-]+$/.test(attribute)
+    ) {
+      const [prefix, attr] = attribute.split(':');
+      const ctx = context.find((c) => c[prefix]);
+
+      if (ctx) {
+        const namespaceUri = ctx[prefix];
+        const namespace = this.namespaces[namespaceUri];
+        if (namespace) {
+          return namespace.instanciateProperty(
+            attr,
+            element,
+            parent,
+            root,
+            fromArray,
+          );
+        }
+      }
+    }
+
+    return null;
+  }
+
   public traverse(node: any, parent: any): void {
     const instanciate = (
       property: string,
@@ -337,19 +388,26 @@ export class PolicyInstanciator {
       try {
         if (element) {
           const child: ModelBasic =
-            PolicyInstanciator.instanciators[property] &&
-            ((PolicyInstanciator.instanciators[property].length == 4 &&
-              PolicyInstanciator.instanciators[property](
-                element,
-                parent,
-                this.policy,
-                fromArray,
-              )) ||
-              PolicyInstanciator.instanciators[property](
-                element,
-                parent,
-                this.policy,
-              ));
+            PolicyInstanciator.handleNamespaceAttribute(
+              property,
+              element,
+              parent,
+              this.policy,
+              fromArray,
+            ) ||
+            (PolicyInstanciator.instanciators[property] &&
+              ((PolicyInstanciator.instanciators[property].length == 4 &&
+                PolicyInstanciator.instanciators[property](
+                  element,
+                  parent,
+                  this.policy,
+                  fromArray,
+                )) ||
+                PolicyInstanciator.instanciators[property](
+                  element,
+                  parent,
+                  this.policy,
+                )));
           if (typeof element === 'object') {
             if (child) {
               this.traverse(element, child);
