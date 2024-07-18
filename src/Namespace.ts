@@ -1,4 +1,4 @@
-import { ModelBasic } from 'models/ModelBasic';
+import { Extension, ModelBasic } from 'models/ModelBasic';
 import { Policy } from 'models/odrl/Policy';
 import { InstanciatorFunction } from 'PolicyInstanciator';
 
@@ -24,7 +24,7 @@ export class Namespace {
     parent: any,
     root: Policy | null,
     fromArray: boolean = false,
-  ): ModelBasic | null {
+  ): Extension | null {
     if (this.instanciators[property]) {
       return this.instanciators[property](element, parent, root, fromArray);
     }

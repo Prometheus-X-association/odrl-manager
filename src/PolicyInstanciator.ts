@@ -252,7 +252,13 @@ export class PolicyInstanciator {
     copy(
       constraint,
       element,
-      ['constraint', 'leftOperand', 'operator', 'rightOperand'],
+      [
+        'constraint',
+        'leftOperand',
+        'operator',
+        'rightOperand',
+        '/^[^:]+:[^:]+$/',
+      ],
       CopyMode.exclude,
     );
     if (constraint) {
@@ -349,7 +355,7 @@ export class PolicyInstanciator {
     parent: any,
     root: Policy | null,
     fromArray: boolean = false,
-  ): ModelBasic | null {
+  ): ModelBasic | null | unknown {
     const context = this.instance?.policy?.['@context'];
     const isContextArray = Array.isArray(context);
 
@@ -365,17 +371,20 @@ export class PolicyInstanciator {
         const namespaceUri = ctx[prefix];
         const namespace = this.namespaces[namespaceUri];
         if (namespace) {
-          return namespace.instanciateProperty(
+          const ext = namespace.instanciateProperty(
             attr,
             element,
             parent,
             root,
             fromArray,
           );
+          if (ext) {
+            parent.addExtension(ext);
+          }
+          return ext;
         }
       }
     }
-
     return null;
   }
 

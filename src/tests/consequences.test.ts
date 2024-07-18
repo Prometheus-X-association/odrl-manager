@@ -7,8 +7,7 @@ import { PolicyDataFetcher } from 'PolicyDataFetcher';
 import { EntityRegistry } from 'EntityRegistry';
 import { PolicyStateFetcher } from 'PolicyStateFetcher';
 import { Custom } from 'PolicyFetcher';
-import { RuleDuty } from 'models/odrl/RuleDuty';
-import { ModelBasic } from 'models/ModelBasic';
+import { Extension, ModelBasic } from 'models/ModelBasic';
 import { Namespace } from 'Namespace';
 
 class StateFetcher extends PolicyStateFetcher {
@@ -49,8 +48,50 @@ class DataFetcher extends PolicyDataFetcher {
   }
 }
 
+class UnitPriceSpecification extends ModelBasic {
+  constructor(
+    public hasCurrency: string,
+    public hasCurrencyValue: number,
+    public priceType: string,
+  ) {
+    super();
+  }
+  protected async verify(): Promise<boolean> {
+    return true;
+  }
+}
+class GoodRelations {
+  public static UnitPriceSpecification(
+    element: any,
+    parent: any,
+    root: Policy | null,
+    fromArray: boolean = false,
+  ): Extension | null {
+    return {
+      name: 'gr:UnitPriceSpecification',
+      value: new UnitPriceSpecification(
+        element['gr:hasCurrency'],
+        element['gr:hasCurrencyValue'],
+        element['gr:priceType'],
+      ),
+    };
+  }
+  public static PaymentMethod(
+    element: any,
+    parent: any,
+    root: Policy | null,
+    fromArray: boolean = false,
+  ): Extension | null {
+    return { name: 'gr:PaymentMethod', value: element.split(':').pop() };
+  }
+}
 const grNamespace: Namespace = new Namespace('http://purl.org/goodrelations/');
 PolicyInstanciator.addNamespaceInstanciator(grNamespace);
+grNamespace.addInstanciator(
+  'UnitPriceSpecification',
+  GoodRelations.UnitPriceSpecification,
+);
+grNamespace.addInstanciator('PaymentMethod', GoodRelations.PaymentMethod);
 
 describe('Testing Consequences in ODRL Policy', async () => {
   let policy: Policy | null;
@@ -141,7 +182,11 @@ describe('Testing Consequences in ODRL Policy', async () => {
                     operator: 'eq',
                     rightOperand: 5,
                     unit: 'http://dbpedia.org/resource/Euro',
-                    'gr:priceType': 'PerUnit',
+                    'gr:UnitPriceSpecification': {
+                      'gr:hasCurrency': 'EUR',
+                      'gr:hasCurrencyValue': 5,
+                      'gr:priceType': 'Purchase',
+                    },
                     'gr:PaymentMethod': 'gr:DirectDebit',
                   },
                 ],
@@ -162,18 +207,6 @@ describe('Testing Consequences in ODRL Policy', async () => {
 
   before(() => {
     EntityRegistry.cleanReferences();
-    grNamespace.addInstanciator(
-      'priceType',
-      function (
-        element: any,
-        parent: any,
-        root: Policy | null,
-        fromArray: boolean = false,
-      ): ModelBasic | null {
-        console.log('Element: ', element);
-        return null;
-      },
-    );
     policy = instanciator.genPolicyFrom(policyJson);
     policyRefinement = instanciator.genPolicyFrom(policyJsonRefinement);
     policy?.debug();

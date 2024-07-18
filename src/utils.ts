@@ -17,25 +17,31 @@ export const copy = (
   mode: CopyMode = 0,
 ): void => {
   if (instance) {
-    // Get keys of 'element'
     let keys = Object.keys(element);
     // Filter keys based on mode and attributes
     if (mode !== CopyMode.all) {
       keys = keys.filter((key) => {
-        const included = attributes.includes(key);
+        const included = attributes.some((attr) => {
+          // Check if the attribute is a regex pattern
+          if (attr.startsWith('/') && attr.endsWith('/')) {
+            const regex = new RegExp(attr.slice(1, -1));
+            return regex.test(key);
+          } else {
+            return attr === key;
+          }
+        });
         return mode === CopyMode.exclude ? !included : included;
       });
     }
     // Copy attributes from 'element' to 'instance'
+    // while excluding functions from the process
     keys.forEach((key: string) => {
-      // Exclude functions from copying
-      if (typeof instance[key] !== 'function') {
+      if (typeof element[key] !== 'function') {
         instance[key] = element[key];
       }
     });
   }
 };
-
 export const getLastTerm = (input: string): string | undefined => {
   const a = input.split('/');
   const b = a.pop();

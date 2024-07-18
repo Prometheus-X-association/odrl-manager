@@ -22,6 +22,16 @@ export const HandleFailure = (): MethodDecorator => {
   };
 };
 
+type ExtensionValue = ModelBasic | unknown | null;
+interface ExtensionList {
+  [key: string]: ExtensionValue;
+}
+
+export interface Extension {
+  name: string;
+  value: ExtensionValue;
+}
+
 export abstract class ModelBasic {
   public _rootUID?: string;
   public _objectUID: string;
@@ -41,6 +51,11 @@ export abstract class ModelBasic {
         EntityRegistry.addFailure(this);
       }
     }
+  }
+
+  public addExtension(ext: Extension): void {
+    const { name, value } = ext;
+    (this as unknown as ExtensionList)[name] = value;
   }
 
   public setParent(parent: ModelBasic): void {
