@@ -28,6 +28,6 @@ export abstract class PolicyStateFetcher extends PolicyFetcher {
 
   /*Todo: Write default*/
   protected async getCompensate(): Promise<boolean> {
-    return true;
+    return false;
   }
 }
