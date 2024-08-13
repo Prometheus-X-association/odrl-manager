@@ -1,3 +1,83 @@
+type ExtensionValue = ModelBasic | unknown | null;
+interface Extension {
+    name: string;
+    value: ExtensionValue;
+}
+declare abstract class ModelBasic {
+    _rootUID?: string;
+    _objectUID: string;
+    _fetcherUID?: string;
+    _stateFetcherUID?: string;
+    _instanceOf?: string;
+    _namespace?: string | string[];
+    constructor();
+    protected handleFailure(result: boolean): Promise<void>;
+    addExtension(ext: Extension): void;
+    setParent(parent: ModelBasic): void;
+    getParent(): ModelBasic;
+    protected abstract verify(): Promise<boolean>;
+    protected validate(depth: number | undefined, promises: Promise<boolean>[]): void;
+    debug(depth?: number): void;
+}
+
+declare class Operator extends ModelBasic {
+    static readonly EQ: string;
+    static readonly NEQ: string;
+    static readonly GT: string;
+    static readonly GTEQ: string;
+    static readonly LT: string;
+    static readonly LTEQ: string;
+    static readonly IS_PART_OF: string;
+    static readonly HAS_PART: string;
+    static readonly IS_A: string;
+    static readonly IS_ALL_OF: string;
+    static readonly IS_ANY_OF: string;
+    static readonly IS_NONE_OF: string;
+    static readonly NE: string;
+    static readonly GTE: string;
+    static readonly LTE: string;
+    value: string;
+    constructor(value: string);
+    verify(): Promise<boolean>;
+}
+
+declare class RightOperand extends ModelBasic {
+    '@id'?: string;
+    value: string | number | [];
+    constructor(value: string | number);
+    verify(): Promise<boolean>;
+}
+
+declare class LeftOperand extends ModelBasic {
+    value: string;
+    constructor(value: string);
+    getValue(): string;
+    evaluate(): Promise<[string | number, string[]] | null>;
+    verify(): Promise<boolean>;
+}
+
+declare abstract class Constraint extends ModelBasic {
+    uid?: string;
+    dataType?: string;
+    unit?: string;
+    status?: number;
+    operator: Operator | null;
+    leftOperand: LeftOperand | null;
+    rightOperand: RightOperand | null;
+    private rightOperandReference?;
+    private logicalConstraints?;
+    constructor(leftOperand: LeftOperand | null, operator: Operator | null, rightOperand: RightOperand | null);
+    evaluate(): Promise<boolean>;
+    protected verify(): Promise<boolean>;
+}
+
+declare class AtomicConstraint extends Constraint {
+    constructor(leftOperand: LeftOperand, operator: Operator, rightOperand: RightOperand);
+    evaluate(): Promise<boolean>;
+    private static isA;
+    verify(): Promise<boolean>;
+}
+
 interface ContextFunctions {
     [key: string]: Function;
 }
@@ -6,8 +86,10 @@ declare abstract class PolicyFetcher {
     protected _context: ContextFunctions;
     _objectUID: string;
     protected options: any;
+    protected currentNode?: AtomicConstraint;
     constructor();
     setRequestOptions(options: any): void;
+    setCurrentNode(node: ModelBasic): void;
     hasBypassFor(name: string): boolean;
     setBypassFor(name: string): number;
     abstract get context(): ContextFunctions;
@@ -92,22 +174,6 @@ declare abstract class PolicyDataFetcher extends PolicyFetcher {
     protected getVirtualLocation(): Promise<string>;
 }
 
-declare abstract class ModelBasic {
-    _rootUID?: string;
-    _objectUID: string;
-    _fetcherUID?: string;
-    _stateFetcherUID?: string;
-    _instanceOf?: string;
-    _namespace?: string | string[];
-    constructor();
-    protected handleFailure(): void;
-    setParent(parent: ModelBasic): void;
-    getParent(): ModelBasic;
-    protected abstract verify(): Promise<boolean>;
-    protected validate(depth: number | undefined, promises: Promise<boolean>[]): void;
-    debug(depth?: number): void;
-}
-
 declare abstract class Explorable extends ModelBasic {
     protected abstract evaluate(): Promise<boolean>;
     protected explore(pick: Function, depth: number | undefined, entities: Explorable[], options?: any): void;
@@ -122,57 +188,6 @@ declare class Party extends ModelBasic {
     private partOf?;
     constructor(uid: string);
     verify(): Promise<boolean>;
-}
-
-declare class LeftOperand extends ModelBasic {
-    value: string;
-    constructor(value: string);
-    getValue(): string;
-    evaluate(): Promise<[string | number, string[]] | null>;
-    verify(): Promise<boolean>;
-}
-
-declare class Operator extends ModelBasic {
-    static readonly EQ: string;
-    static readonly NEQ: string;
-    static readonly GT: string;
-    static readonly GTEQ: string;
-    static readonly LT: string;
-    static readonly LTEQ: string;
-    static readonly IS_PART_OF: string;
-    static readonly HAS_PART: string;
-    static readonly IS_A: string;
-    static readonly IS_ALL_OF: string;
-    static readonly IS_ANY_OF: string;
-    static readonly IS_NONE_OF: string;
-    static readonly NE: string;
-    static readonly GTE: string;
-    static readonly LTE: string;
-    value: string;
-    constructor(value: string);
-    verify(): Promise<boolean>;
-}
-
-declare class RightOperand extends ModelBasic {
-    '@id'?: string;
-    value: string | number | [];
-    constructor(value: string | number);
-    verify(): Promise<boolean>;
-}
-
-declare abstract class Constraint extends ModelBasic {
-    uid?: string;
-    dataType?: string;
-    unit?: string;
-    status?: number;
-    operator: Operator | null;
-    leftOperand: LeftOperand | null;
-    rightOperand: RightOperand | null;
-    private rightOperandReference?;
-    private logicalConstraints?;
-    constructor(leftOperand: LeftOperand | null, operator: Operator | null, rightOperand: RightOperand | null);
-    evaluate(): Promise<boolean>;
-    protected verify(): Promise<boolean>;
 }
 
 declare const actions: readonly ["Attribution", "CommericalUse", "DerivativeWorks", "Distribution", "Notice", "Reproduction", "ShareAlike", "Sharing", "SourceCode", "acceptTracking", "adHocShare", "aggregate", "annotate", "anonymize", "append", "appendTo", "archive", "attachPolicy", "attachSource", "attribute", "commercialize", "compensate", "concurrentUse", "copy", "delete", "derive", "digitize", "display", "distribute", "ensureExclusivity", "execute", "export", "extract", "extractChar", "extractPage", "extractWord", "give", "grantUse", "include", "index", "inform", "install", "lease", "lend", "license", "modify", "move", "nextPolicy", "obtainConsent", "pay", "play", "present", "preview", "print", "read", "reproduce", "reviewPolicy", "secondaryUse", "sell", "share", "shareAlike", "stream", "synchronize", "textToSpeech", "transfer", "transform", "translate", "uninstall", "use", "watermark", "write", "writeTo"];
@@ -251,6 +266,7 @@ declare class RuleDuty extends Rule {
     private status?;
     constructor(assigner?: Party, assignee?: Party);
     evaluate(): Promise<boolean>;
+    private evaluateConsequences;
     private evaluateActions;
     private evaluateConstraints;
     verify(): Promise<boolean>;
@@ -307,6 +323,7 @@ interface StateFunctions {
 declare abstract class PolicyStateFetcher extends PolicyFetcher {
     constructor();
     get context(): StateFunctions;
+    protected getCompensate(): Promise<boolean>;
 }
 
 declare class PolicyEvaluator {
@@ -322,15 +339,18 @@ declare class PolicyEvaluator {
     private pickPermission;
     private pickProhibition;
     private pickDuties;
+    static findAssigner(node: any): string | undefined;
     cleanPolicies(): void;
     addPolicy(policy: Policy, dataFetcher?: PolicyDataFetcher, stateFetcher?: PolicyStateFetcher): void;
     setPolicy(policy: Policy, dataFetcher?: PolicyDataFetcher, stateFetcher?: PolicyStateFetcher): void;
     logPolicies(): void;
+    hasFailed(uid: string): boolean;
     private setFetcherOptions;
     private pick;
     private explore;
     private static getAssigneePayload;
     private static getAssignerPayload;
+    listTargets(): Promise<string[]>;
     /**
      * Retrieves a list of performable actions on the specified target.
      * @param {string} target - A string representing the target.
@@ -350,7 +370,7 @@ declare class PolicyEvaluator {
      * @param {boolean} defaultResult - A boolean defining the value to return if no corresponding target is found.
      * @returns {Promise<boolean>} Resolves with a boolean indicating the feasibility of the action.
      */
-    isActionPerformable(actionType: ActionType, target: string, defaultResult?: boolean): Promise<boolean>;
+    isActionPerformable(actionType: ActionType, target: string, defaultResult?: boolean, resetFailures?: boolean): Promise<boolean>;
     /**
      * Evaluates the exploitability of listed resources within a set of policies.
      * @param {any} json - JSON representation of policies to be evaluated.
@@ -385,9 +405,19 @@ declare class PolicyEvaluator {
     private evalDuties;
 }
 
+declare class Namespace {
+    uri: string;
+    private instanciators;
+    constructor(uri: string);
+    addInstanciator(property: string, instanciator: InstanciatorFunction): void;
+    instanciateProperty(property: string, element: any, parent: any, root: Policy | null, fromArray?: boolean): Extension | null;
+}
+
+type InstanciatorFunction = (node: any, parent: any, root: Policy | null, fromArray?: boolean) => any;
 declare class PolicyInstanciator {
     policy: Policy | null;
     static instance: PolicyInstanciator;
+    static namespaces: Record<string, Namespace>;
     constructor();
     static getInstance(): PolicyInstanciator;
     private static readonly instanciators;
@@ -403,6 +433,8 @@ declare class PolicyInstanciator {
     private static setConsequence;
     private selectPolicyType;
     genPolicyFrom(json: any): Policy | null;
+    static addNamespaceInstanciator(namespace: Namespace): void;
+    private static handleNamespaceAttribute;
     traverse(node: any, parent: any): void;
     static construct<T>(Type: new (...args: any[]) => T, ...args: any[]): T;
 }

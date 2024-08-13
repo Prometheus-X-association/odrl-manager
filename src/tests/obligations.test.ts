@@ -3,8 +3,9 @@ import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
 import { Policy } from 'models/odrl/Policy';
-import { PolicyDataFetcher } from 'PolicyDataFetcher';
+import { Custom, PolicyDataFetcher } from 'PolicyDataFetcher';
 import { EntityRegistry } from 'EntityRegistry';
+import { PolicyStateFetcher } from 'PolicyStateFetcher';
 
 const assignee = 'http://example.com/person:44';
 const json = {
@@ -151,7 +152,6 @@ describe(`Testing 'Obligations' related units`, async () => {
       assignee: 'http://example.com/person:45',
       obligation: [
         {
-          // Todo:
           action: 'delete',
           target: 'http://example.com/document:XZY',
           consequence: [
@@ -180,11 +180,21 @@ describe(`Testing 'Obligations' related units`, async () => {
     const valid = await policy?.validate();
     expect(valid).to.equal(true);
     if (policy) {
-      evaluator.setPolicy(policy, fetcher);
+      class StateFetcher extends PolicyStateFetcher {
+        constructor() {
+          super();
+        }
+        @Custom()
+        protected async getDelete(): Promise<boolean> {
+          // Should trigging consequencies
+          return false;
+        }
+      }
+      evaluator.setPolicy(policy, fetcher, new StateFetcher());
       const agreed = await evaluator.evalAgreementForAssignee(
         'http://example.com/person:45',
       );
-      expect(agreed).to.equal(false);
+      expect(agreed).to.equal(true);
     }
   });
 });

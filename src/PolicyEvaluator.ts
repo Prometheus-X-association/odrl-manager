@@ -253,6 +253,23 @@ export class PolicyEvaluator {
     return payload;
   }
 
+  public async listTargets(): Promise<string[]> {
+    try {
+      const targets = (await this.explore({
+        target: { all: true },
+      })) as Asset[];
+      return targets.reduce((acc: string[], target: Asset) => {
+        if (target.uid !== undefined) {
+          acc.push(target.uid);
+        }
+        return acc;
+      }, []);
+    } catch (error) {
+      console.error('Error in "listTargets":', error);
+      return [];
+    }
+  }
+
   /**
    * Retrieves a list of performable actions on the specified target.
    * @param {string} target - A string representing the target.
@@ -263,27 +280,32 @@ export class PolicyEvaluator {
     target: string,
     included: boolean = true,
   ): Promise<string[]> {
-    const targets: Asset[] = (await this.explore({
-      target,
-    })) as Asset[];
-    const actionPromises: Record<string, Promise<boolean>[]> = {};
-    targets.forEach((target: Asset) => {
-      const parent: ParentRule = target.getParent() as ParentRule;
-      const action: Action = parent.action as Action;
-      if (!actionPromises[action.value]) {
-        actionPromises[action.value] = [];
+    try {
+      const targets: Asset[] = (await this.explore({
+        target,
+      })) as Asset[];
+      const actionPromises: Record<string, Promise<boolean>[]> = {};
+      targets.forEach((target: Asset) => {
+        const parent: ParentRule = target.getParent() as ParentRule;
+        const action: Action = parent.action as Action;
+        if (!actionPromises[action.value]) {
+          actionPromises[action.value] = [];
+        }
+        actionPromises[action.value].push(parent.evaluate());
+      });
+      const actions: ActionType[] = [];
+      for (const [action, promises] of Object.entries(actionPromises)) {
+        const results = await Promise.all(promises);
+        const isPerformable = results.every((result) => result);
+        if (isPerformable) {
+          actions.push(action as ActionType);
+        }
       }
-      actionPromises[action.value].push(parent.evaluate());
-    });
-    const actions: ActionType[] = [];
-    for (const [action, promises] of Object.entries(actionPromises)) {
-      const results = await Promise.all(promises);
-      const isPerformable = results.every((result) => result);
-      if (isPerformable) {
-        actions.push(action as ActionType);
-      }
+      return included ? Action.getIncluded(actions) : actions;
+    } catch (error) {
+      console.error('Error in "getPerformableActions":', error);
+      return [];
     }
-    return included ? Action.getIncluded(actions) : actions;
   }
 
   /**
@@ -292,23 +314,28 @@ export class PolicyEvaluator {
    * @returns {Promise<string[]>} A promise resolved with an array of leftOperands.
    */
   public async listLeftOperandsFor(target: string): Promise<string[]> {
-    const targets: Asset[] = (await this.explore({
-      target,
-    })) as Asset[];
+    try {
+      const targets: Asset[] = (await this.explore({
+        target,
+      })) as Asset[];
 
-    const leftOperands: Set<string> = new Set<string>();
-    targets.forEach((target: Asset) => {
-      const parent: ParentRule = target.getParent() as ParentRule;
-      const constraints: Constraint[] = parent.getConstraints() || [];
-      constraints.forEach((constraint: Constraint) => {
-        const leftOperand = constraint.leftOperand;
-        if (leftOperand) {
-          const value = leftOperand.getValue();
-          leftOperands.add(value);
-        }
+      const leftOperands: Set<string> = new Set<string>();
+      targets.forEach((target: Asset) => {
+        const parent: ParentRule = target.getParent() as ParentRule;
+        const constraints: Constraint[] = parent.getConstraints() || [];
+        constraints.forEach((constraint: Constraint) => {
+          const leftOperand = constraint.leftOperand;
+          if (leftOperand) {
+            const value = leftOperand.getValue();
+            leftOperands.add(value);
+          }
+        });
       });
-    });
-    return Array.from(leftOperands);
+      return Array.from(leftOperands);
+    } catch (error) {
+      console.error('Error in "listLeftOperandsFor":', error);
+      return [];
+    }
   }
 
   /**
@@ -325,25 +352,30 @@ export class PolicyEvaluator {
     defaultResult: boolean = false,
     resetFailures: boolean = true,
   ): Promise<boolean> {
-    if (resetFailures) {
-      EntityRegistry.resetFailures();
+    try {
+      if (resetFailures) {
+        EntityRegistry.resetFailures();
+      }
+      const targets: Asset[] = (await this.explore({
+        target,
+      })) as Asset[];
+      const results = await targets.reduce(
+        async (promise: Promise<boolean[]>, target: Asset) => {
+          const acc = await promise;
+          const parent: ParentRule = target.getParent() as ParentRule;
+          const action: Action = parent.action as Action;
+          // evaluate permission & prohibition
+          return (await action.includes(actionType))
+            ? acc.concat(await parent.evaluate())
+            : acc;
+        },
+        Promise.resolve([]),
+      );
+      return results.length ? results.every((result) => result) : defaultResult;
+    } catch (error) {
+      console.error('Error in "isActionPerformable":', error);
+      return false;
     }
-    const targets: Asset[] = (await this.explore({
-      target,
-    })) as Asset[];
-    const results = await targets.reduce(
-      async (promise: Promise<boolean[]>, target: Asset) => {
-        const acc = await promise;
-        const parent: ParentRule = target.getParent() as ParentRule;
-        const action: Action = parent.action as Action;
-        // evaluate permission & prohibition
-        return (await action.includes(actionType))
-          ? acc.concat(await parent.evaluate())
-          : acc;
-      },
-      Promise.resolve([]),
-    );
-    return results.length ? results.every((result) => result) : defaultResult;
   }
 
   /**
@@ -356,56 +388,71 @@ export class PolicyEvaluator {
     json: any,
     defaultResult: boolean = false,
   ): Promise<boolean> {
-    EntityRegistry.resetFailures();
-    const instanciator = new PolicyInstanciator();
-    instanciator.genPolicyFrom(json);
-    const evaluator = new PolicyEvaluator();
-    if (instanciator.policy) {
-      evaluator.setPolicy(instanciator.policy);
+    try {
+      EntityRegistry.resetFailures();
+      const instanciator = new PolicyInstanciator();
+      instanciator.genPolicyFrom(json);
+      const evaluator = new PolicyEvaluator();
+      if (instanciator.policy) {
+        evaluator.setPolicy(instanciator.policy);
+      }
+      const targets: Asset[] = (await evaluator.explore({
+        target: { uid: '', all: true },
+      })) as Asset[];
+      const actionPromises: Promise<boolean>[] = targets.map(
+        async (target: Asset) => {
+          const parent: ParentRule = target.getParent() as ParentRule;
+          const actionType = (parent.action as Action).value as ActionType;
+          return target.uid
+            ? this.isActionPerformable(actionType, target.uid, false, false)
+            : false;
+        },
+      );
+      const results = await Promise.all(actionPromises);
+      return results.length ? results.every((result) => result) : defaultResult;
+    } catch (error) {
+      console.error('Error in "evalResourcePerformabilities":', error);
+      return false;
     }
-    const targets: Asset[] = (await evaluator.explore({
-      target: { uid: '', all: true },
-    })) as Asset[];
-    const actionPromises: Promise<boolean>[] = targets.map(
-      async (target: Asset) => {
-        const parent: ParentRule = target.getParent() as ParentRule;
-        const actionType = (parent.action as Action).value as ActionType;
-        return target.uid
-          ? this.isActionPerformable(actionType, target.uid, false, false)
-          : false;
-      },
-    );
-    const results = await Promise.all(actionPromises);
-    return results.length ? results.every((result) => result) : defaultResult;
   }
 
   public async getDuties(): Promise<RuleDuty[]> {
-    return (await this.explore({
-      pickAllDuties: true,
-    })) as RuleDuty[];
+    try {
+      return (await this.explore({
+        pickAllDuties: true,
+      })) as RuleDuty[];
+    } catch (error) {
+      console.error('Error in "getDuties":', error);
+      return [];
+    }
   }
 
   public async getDutiesForTarget(
     target: string,
     fulfilled: boolean = false,
   ): Promise<RuleDuty[]> {
-    const targets: Asset[] = (await this.explore({ target })) as Asset[];
-    const duties = await targets.reduce(
-      (accPromise: Promise<RuleDuty[]>, target: Asset) =>
-        accPromise.then(async (acc: RuleDuty[]) => {
-          const parent: ParentRule = target.getParent() as ParentRule;
-          if (parent && parent instanceof RuleDuty) {
-            const duty: RuleDuty = parent as RuleDuty;
-            const isValidDuty = !fulfilled || (await duty.evaluate());
-            if (isValidDuty) {
-              return [...acc, duty];
+    try {
+      const targets: Asset[] = (await this.explore({ target })) as Asset[];
+      const duties = await targets.reduce(
+        (accPromise: Promise<RuleDuty[]>, target: Asset) =>
+          accPromise.then(async (acc: RuleDuty[]) => {
+            const parent: ParentRule = target.getParent() as ParentRule;
+            if (parent && parent instanceof RuleDuty) {
+              const duty: RuleDuty = parent as RuleDuty;
+              const isValidDuty = !fulfilled || (await duty.evaluate());
+              if (isValidDuty) {
+                return [...acc, duty];
+              }
             }
-          }
-          return acc;
-        }),
-      Promise.resolve([]),
-    );
-    return duties;
+            return acc;
+          }),
+        Promise.resolve([]),
+      );
+      return duties;
+    } catch (error) {
+      console.error('Error in "getDutiesForTarget":', error);
+      return [];
+    }
   }
 
   public async getDutiesFor(
@@ -413,34 +460,52 @@ export class PolicyEvaluator {
     target: string,
     fulfilled: boolean = false,
   ): Promise<RuleDuty[]> {
-    const duties: RuleDuty[] = await this.getDutiesForTarget(target, fulfilled);
-    const filteredDuties: RuleDuty[] = [];
+    try {
+      const duties: RuleDuty[] = await this.getDutiesForTarget(
+        target,
+        fulfilled,
+      );
+      const filteredDuties: RuleDuty[] = [];
 
-    const dutyFilterPromises = duties.map(async (duty: RuleDuty) => {
-      const dutyAction = duty.action as Action;
-      if (dutyAction.value === action) {
-        const isValidDuty = await duty.evaluate();
-        if (isValidDuty) {
-          filteredDuties.push(duty);
+      const dutyFilterPromises = duties.map(async (duty: RuleDuty) => {
+        const dutyAction = duty.action as Action;
+        if (dutyAction.value === action) {
+          const isValidDuty = await duty.evaluate();
+          if (isValidDuty) {
+            filteredDuties.push(duty);
+          }
         }
-      }
-    });
-    await Promise.all(dutyFilterPromises);
-    return filteredDuties;
+      });
+      await Promise.all(dutyFilterPromises);
+      return filteredDuties;
+    } catch (error) {
+      console.error('Error in "getDutiesFor":', error);
+      return [];
+    }
   }
 
   public async getAssignedDuties(assignee: string): Promise<RuleDuty[]> {
-    const payload = PolicyEvaluator.getAssigneePayload(assignee);
-    return (await this.explore({
-      assignee: payload,
-    })) as RuleDuty[];
+    try {
+      const payload = PolicyEvaluator.getAssigneePayload(assignee);
+      return (await this.explore({
+        assignee: payload,
+      })) as RuleDuty[];
+    } catch (error) {
+      console.error('Error in "getAssignedDuties":', error);
+      return [];
+    }
   }
 
   public async getEmittedDuties(assigner: string): Promise<any[]> {
-    const payload = PolicyEvaluator.getAssigneePayload(assigner);
-    return (await this.explore({
-      assigner: payload,
-    })) as RuleDuty[];
+    try {
+      const payload = PolicyEvaluator.getAssigneePayload(assigner);
+      return (await this.explore({
+        assigner: payload,
+      })) as RuleDuty[];
+    } catch (error) {
+      console.error('Error in "getEmittedDuties":', error);
+      return [];
+    }
   }
 
   /**
@@ -453,15 +518,20 @@ export class PolicyEvaluator {
     assignee: string,
     defaultResult: boolean = false,
   ): Promise<boolean> {
-    this.setFetcherOptions({ assignee });
-    const payload = PolicyEvaluator.getAssigneePayload(assignee);
-    const entities: Explorable[] = (await this.explore({
-      assignee: payload,
-      // agreementAssignee: payload,
-      // permissionAssignee: payload,
-      // prohibitionAssignee: payload,
-    })) as Explorable[];
-    return this.evalDuties(entities, defaultResult);
+    try {
+      this.setFetcherOptions({ assignee });
+      const payload = PolicyEvaluator.getAssigneePayload(assignee);
+      const entities: Explorable[] = (await this.explore({
+        assignee: payload,
+        // agreementAssignee: payload,
+        // permissionAssignee: payload,
+        // prohibitionAssignee: payload,
+      })) as Explorable[];
+      return this.evalDuties(entities, defaultResult);
+    } catch (error) {
+      console.error('Error in "fulfillDuties":', error);
+      return false;
+    }
   }
 
   /**
@@ -473,23 +543,22 @@ export class PolicyEvaluator {
     assignee?: string,
     defaultResult: boolean = false,
   ): Promise<boolean> {
-    // Todo:
-    /*
-    if (!assignee) {
-      assignee = (this.policies?.[0] as PolicyAgreement).assignee;
+    try {
+      this.setFetcherOptions({ assignee });
+      const entities: Explorable[] = await this.explore({
+        pickDuties: {
+          parentEntityClass: [Policy],
+        },
+      });
+      entities.filter((entity) => {
+        const party: Party | undefined = (entity as RuleDuty).assignee;
+        return !party?.uid;
+      }) as Explorable[];
+      return this.evalDuties(entities, defaultResult);
+    } catch (error) {
+      console.error('Error in "evalAgreementForAssignee":', error);
+      return false;
     }
-    */
-    this.setFetcherOptions({ assignee });
-    const entities: Explorable[] = await this.explore({
-      pickDuties: {
-        parentEntityClass: [Policy],
-      },
-    });
-    entities.filter((entity) => {
-      const party: Party | undefined = (entity as RuleDuty).assignee;
-      return !party?.uid;
-    }) as Explorable[];
-    return this.evalDuties(entities, defaultResult);
   }
 
   /**
@@ -502,19 +571,23 @@ export class PolicyEvaluator {
     entities: Explorable[],
     defaultResult: boolean = false,
   ): Promise<boolean> {
-    const results = await entities.reduce(
-      async (promise: Promise<boolean[]>, entity: Explorable) => {
-        const acc = await promise;
-        if (entity instanceof RuleDuty) {
-          return acc.concat(await (entity as RuleDuty).evaluate());
-        }
-        return acc;
-      },
-      Promise.resolve([]),
-    );
-    return results.length ? results.every((result) => result) : defaultResult;
+    try {
+      const results = await entities.reduce(
+        async (promise: Promise<boolean[]>, entity: Explorable) => {
+          const acc = await promise;
+          if (entity instanceof RuleDuty) {
+            return acc.concat(await (entity as RuleDuty).evaluate());
+          }
+          return acc;
+        },
+        Promise.resolve([]),
+      );
+      return results.length ? results.every((result) => result) : defaultResult;
+    } catch (error) {
+      console.error('Error in "evalDuties":', error);
+      return false;
+    }
   }
-
   // Todo: Retrieve the expected value for a specific duty action
 }
 
