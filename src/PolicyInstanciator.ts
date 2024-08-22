@@ -1,4 +1,5 @@
-import { Action } from './models/odrl/Action';
+import { ModelBasic } from 'models/ModelBasic';
+import { Action, actions } from './models/odrl/Action';
 import { Asset } from './models/odrl/Asset';
 import { AtomicConstraint } from './models/odrl/AtomicConstraint';
 import { Constraint } from './models/odrl/Constraint';
@@ -14,16 +15,80 @@ import { Rule } from './models/odrl/Rule';
 import { RuleDuty } from './models/odrl/RuleDuty';
 import { RulePermission } from './models/odrl/RulePermission';
 import { RuleProhibition } from './models/odrl/RuleProhibition';
-import { CopyMode, copy, getLastTerm } from './utils';
+import {
+  CopyMode,
+  copy,
+  getDurationMatching,
+  getLastTerm,
+  parseISODuration,
+} from './utils';
+import { Party } from 'models/odrl/Party';
+import { Namespace } from 'Namespace';
 
-type InstanciatorFunction = (node: any, parent: any) => any;
+export type InstanciatorFunction = (
+  node: any,
+  parent: any,
+  root: Policy | null,
+  fromArray?: boolean,
+) => any;
 
 export class PolicyInstanciator {
   public policy: Policy | null;
   public static instance: PolicyInstanciator;
+  public static namespaces: Record<string, Namespace> = {};
 
   constructor() {
     this.policy = null;
+    Action.includeIn('use', [
+      'Attribution',
+      'CommericalUse',
+      'DerivativeWorks',
+      'Distribution',
+      'Notice',
+      'Reproduction',
+      'ShareAlike',
+      'Sharing',
+      'SourceCode',
+      'acceptTracking',
+      'aggregate',
+      'annotate',
+      'anonymize',
+      'archive',
+      'attribute',
+      'compensate',
+      'concurrentUse',
+      'delete',
+      'derive',
+      'digitize',
+      'distribute',
+      'ensureExclusivity',
+      'execute',
+      'grantUse',
+      'include',
+      'index',
+      'inform',
+      'install',
+      'modify',
+      'move',
+      'nextPolicy',
+      'obtainConsent',
+      'play',
+      'present',
+      'print',
+      'read',
+      'reproduce',
+      'reviewPolicy',
+      'stream',
+      'synchronize',
+      'textToSpeech',
+      'transform',
+      'translate',
+      'uninstall',
+      'watermark',
+    ]);
+    Action.includeIn('play', ['display']);
+    Action.includeIn('extract', ['reproduce']);
+    Action.includeIn('transfer', ['give', 'sell']);
   }
 
   public static getInstance(): PolicyInstanciator {
@@ -44,39 +109,75 @@ export class PolicyInstanciator {
       constraint: PolicyInstanciator.setConstraint,
       refinement: PolicyInstanciator.setRefinement,
       consequence: PolicyInstanciator.setConsequence,
+      remedy: PolicyInstanciator.setRemedy,
     };
 
-  private static setPermission(element: any, parent: Policy): RulePermission {
+  private static setPermission(
+    element: any,
+    parent: Policy,
+    root: Policy | null,
+  ): RulePermission {
+    const { assigner, assignee } = element;
     const rule = new RulePermission();
+    if (assigner) rule.assigner = new Party(assigner);
+    if (assignee) rule.assignee = new Party(assignee);
     rule.setParent(parent);
     parent.addPermission(rule);
     return rule;
   }
 
-  private static setProhibition(element: any, parent: Policy): RuleProhibition {
+  private static setProhibition(
+    element: any,
+    parent: Policy,
+    root: Policy | null,
+  ): RuleProhibition {
+    const { assigner, assignee } = element;
     const rule = new RuleProhibition();
+    if (assigner) rule.assigner = new Party(assigner);
+    if (assignee) rule.assignee = new Party(assignee);
     rule.setParent(parent);
     parent.addProhibition(rule);
     return rule;
   }
 
-  private static setObligation(element: any, parent: Policy): RuleDuty {
+  private static setObligation(
+    element: any,
+    parent: Policy,
+    root: Policy | null,
+  ): RuleDuty {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee),
+    );
     rule.setParent(parent);
+    rule._type = 'obligation';
     parent.addDuty(rule);
     return rule;
   }
 
-  private static setDuty(element: any, parent: RulePermission) {
+  private static setDuty(
+    element: any,
+    parent: RulePermission,
+    root: Policy | null,
+  ) {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee),
+    );
     rule.setParent(parent);
+    rule._type = 'duty';
     parent.addDuty(rule);
     return rule;
   }
 
-  private static setAction(element: string | any, parent: Rule): Action {
+  private static setAction(
+    element: string | any,
+    parent: Rule,
+    root: Policy | null,
+    fromArray?: boolean,
+  ): Action {
     try {
       const value = getLastTerm(
         typeof element === 'object' ? element.value : element,
@@ -84,16 +185,26 @@ export class PolicyInstanciator {
       if (!value) {
         throw new Error('Invalid action');
       }
-      const action = new Action(value, null);
+      // const action = new Action(value, null);
+      const action = PolicyInstanciator.construct(Action, value, null);
+      action._rootUID = root?._objectUID;
       action.setParent(parent);
-      parent.setAction(action);
+      if (!fromArray) {
+        parent.setAction(action);
+      } else {
+        parent.addAction(action);
+      }
       return action;
     } catch (error: any) {
       throw new Error('Action is undefined');
     }
   }
 
-  private static setTarget(element: any, parent: Rule): void {
+  private static setTarget(
+    element: any,
+    parent: Rule,
+    root: Policy | null,
+  ): void {
     const asset = new Asset(element);
     asset.setParent(parent);
     parent.setTarget(asset);
@@ -102,6 +213,7 @@ export class PolicyInstanciator {
   private static setConstraint(
     element: any,
     parent: LogicalConstraint | Rule | Action,
+    root: Policy | null,
   ): Constraint {
     const {
       leftOperand,
@@ -109,16 +221,30 @@ export class PolicyInstanciator {
       rightOperand,
       constraint: constraints,
     } = element;
+
+    let _rightOperand = rightOperand;
+    const match = getDurationMatching(rightOperand);
+    if (match) {
+      // && todo
+      _rightOperand = parseISODuration(rightOperand);
+    }
     const operator = _operator && getLastTerm(_operator);
+
     const constraint: Constraint =
       (leftOperand &&
         operator &&
-        rightOperand !== undefined &&
-        new AtomicConstraint(
-          new LeftOperand(leftOperand),
-          new Operator(operator),
-          new RightOperand(rightOperand),
-        )) ||
+        _rightOperand !== undefined &&
+        (() => {
+          const _leftOperand = new LeftOperand(leftOperand);
+          _leftOperand._rootUID = root?._objectUID;
+          const constraint = new AtomicConstraint(
+            _leftOperand,
+            new Operator(operator),
+            PolicyInstanciator.construct(RightOperand, _rightOperand),
+          );
+          _leftOperand.setParent(constraint);
+          return constraint;
+        })()) ??
       (operator &&
         Array.isArray(constraints) &&
         constraints.length > 0 &&
@@ -126,7 +252,13 @@ export class PolicyInstanciator {
     copy(
       constraint,
       element,
-      ['constraint', 'leftOperand', 'operator', 'rightOperand'],
+      [
+        'constraint',
+        'leftOperand',
+        'operator',
+        'rightOperand',
+        '/^[^:]+:[^:]+$/',
+      ],
       CopyMode.exclude,
     );
     if (constraint) {
@@ -136,13 +268,40 @@ export class PolicyInstanciator {
     return constraint;
   }
 
-  private static setRefinement(element: any, parent: Action): Constraint {
-    return PolicyInstanciator.setConstraint(element, parent);
+  private static setRefinement(
+    element: any,
+    parent: Action,
+    root: Policy | null,
+  ): Constraint {
+    return PolicyInstanciator.setConstraint(element, parent, root);
   }
 
-  private static setConsequence(element: any, parent: RuleDuty): RuleDuty {
+  private static setRemedy(
+    element: any,
+    parent: RuleProhibition,
+    root: Policy | null,
+  ): RuleDuty {
     const { assigner, assignee } = element;
-    const rule = new RuleDuty(assigner, assignee);
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee),
+    );
+    rule.setParent(parent);
+    rule._type = 'remedy';
+    parent.addRemedy(rule);
+    return rule;
+  }
+
+  private static setConsequence(
+    element: any,
+    parent: RuleDuty,
+    root: Policy | null,
+  ): RuleDuty {
+    const { assigner, assignee } = element;
+    const rule = new RuleDuty(
+      assigner && new Party(assigner),
+      assignee && new Party(assignee),
+    );
     copy(
       rule,
       element,
@@ -150,6 +309,7 @@ export class PolicyInstanciator {
       CopyMode.include,
     );
     rule.setParent(parent);
+    rule._type = 'consequence';
     parent.addConsequence(rule);
     return rule;
   }
@@ -164,7 +324,10 @@ export class PolicyInstanciator {
         this.policy = new PolicySet(json.uid, context);
         break;
       case 'Agreement':
-        this.policy = new PolicyAgreement(json.uid, context);
+        const policy = new PolicyAgreement(json.uid, context);
+        policy.setAssignee(json.assignee && new Party(json.assignee));
+        policy.setAssigner(json.assigner && new Party(json.assigner));
+        this.policy = policy;
         break;
       default:
         throw new Error(`Unknown policy type: ${json['@type']}`);
@@ -182,18 +345,85 @@ export class PolicyInstanciator {
     return null;
   }
 
+  public static addNamespaceInstanciator(namespace: Namespace): void {
+    this.namespaces[namespace.uri] = namespace;
+  }
+
+  private static handleNamespaceAttribute(
+    attribute: string,
+    element: any,
+    parent: any,
+    root: Policy | null,
+    fromArray: boolean = false,
+  ): ModelBasic | null | unknown {
+    const context = this.instance?.policy?.['@context'];
+    const isContextArray = Array.isArray(context);
+
+    if (
+      isContextArray &&
+      typeof attribute === 'string' &&
+      /^[\w-]+:[\w-]+$/.test(attribute)
+    ) {
+      const [prefix, attr] = attribute.split(':');
+      const ctx = context.find((c) => c[prefix]);
+
+      if (ctx) {
+        const namespaceUri = ctx[prefix];
+        const namespace = this.namespaces[namespaceUri];
+        if (namespace) {
+          const ext = namespace.instanciateProperty(
+            attr,
+            element,
+            parent,
+            root,
+            fromArray,
+          );
+          if (ext) {
+            parent.addExtension(ext);
+          }
+          return ext;
+        }
+      }
+    }
+    return null;
+  }
+
   public traverse(node: any, parent: any): void {
-    const instanciate = (property: string, element: any) => {
+    const instanciate = (
+      property: string,
+      element: any,
+      fromArray: boolean = false,
+    ) => {
       try {
         if (element) {
-          const child: any =
-            PolicyInstanciator.instanciators[property] &&
-            PolicyInstanciator.instanciators[property](element, parent);
+          const child: ModelBasic =
+            PolicyInstanciator.handleNamespaceAttribute(
+              property,
+              element,
+              parent,
+              this.policy,
+              fromArray,
+            ) ||
+            (PolicyInstanciator.instanciators[property] &&
+              ((PolicyInstanciator.instanciators[property].length == 4 &&
+                PolicyInstanciator.instanciators[property](
+                  element,
+                  parent,
+                  this.policy,
+                  fromArray,
+                )) ||
+                PolicyInstanciator.instanciators[property](
+                  element,
+                  parent,
+                  this.policy,
+                )));
           if (typeof element === 'object') {
             if (child) {
               this.traverse(element, child);
-            } else {
-              console.warn(`Traversal stopped for "${property}".`);
+            } else if (property !== '@context') {
+              console.warn(
+                `\x1b[93m/!\\Traversal stopped for "${property}".\x1b[37m`,
+              );
             }
           }
         }
@@ -205,12 +435,38 @@ export class PolicyInstanciator {
       const element = node[property];
       if (Array.isArray(element)) {
         element.forEach((item: any) => {
-          instanciate(property, item);
+          instanciate(property, item, true);
         });
       } else {
         instanciate(property, element);
       }
     }
+  }
+
+  public static construct<T>(
+    Type: new (...args: any[]) => T,
+    ...args: any[]
+  ): T {
+    const context = this.instance?.policy?.['@context'];
+    const isContextArray = Array.isArray(context);
+    if (!isContextArray) {
+      return Reflect.construct(Type, args);
+    }
+    const _namespace: string[] = [];
+    args = args.map((arg) => {
+      if (typeof arg === 'string' && /^[\w-]+:[\w-]+$/.test(arg)) {
+        const [prefix, value] = arg.split(':');
+        const ctx = context.find((c) => c[prefix]);
+        if (ctx) {
+          _namespace.push(prefix);
+          return value;
+        }
+      }
+      return arg;
+    });
+    const instance = Reflect.construct(Type, args);
+    (instance as { _namespace: string | string[] })._namespace = _namespace;
+    return instance;
   }
 }
 

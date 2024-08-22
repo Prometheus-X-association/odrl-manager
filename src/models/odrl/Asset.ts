@@ -1,4 +1,4 @@
-import { Explorable } from 'Explorable';
+import { Explorable } from 'models/Explorable';
 import { AssetCollection } from './AssetCollection';
 
 export class Asset extends Explorable {
@@ -20,7 +20,7 @@ export class Asset extends Explorable {
       this.hasPolicy = target.hasPolicy;
     }
   }
-  protected async visit(): Promise<boolean> {
+  protected async evaluate(): Promise<boolean> {
     return true;
   }
   public async verify(): Promise<boolean> {

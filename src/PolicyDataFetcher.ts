@@ -1,3 +1,5 @@
+import { PolicyFetcher } from 'PolicyFetcher';
+
 export const Custom = (): MethodDecorator => {
   return (
     target: any,
@@ -49,55 +51,67 @@ interface LeftOperandFunctions {
   [key: string]: Function;
 }
 
-export abstract class ContextFetcher {
-  public context: LeftOperandFunctions = {
-    absolutePosition: this.getAbsolutePosition.bind(this),
-    absoluteSize: this.getAbsoluteSize.bind(this),
-    absoluteSpatialPosition: this.getAbsoluteSpatialPosition.bind(this),
-    absoluteTemporalPosition: this.getAbsoluteTemporalPosition.bind(this),
-    count: this.getCount.bind(this),
-    dateTime: this.getDateTime.bind(this),
-    delayPeriod: this.getDelayPeriod.bind(this),
-    deliveryChannel: this.getDeliveryChannel.bind(this),
-    device: this.getDevice.bind(this),
-    elapsedTime: this.getElapsedTime.bind(this),
-    event: this.getEvent.bind(this),
-    fileFormat: this.getFileFormat.bind(this),
-    industry: this.getIndustry.bind(this),
-    language: this.getLanguage.bind(this),
-    media: this.getMedia.bind(this),
-    meteredTime: this.getMeteredTime.bind(this),
-    payAmount: this.getPayAmount.bind(this),
-    percentage: this.getPercentage.bind(this),
-    product: this.getProduct.bind(this),
-    purpose: this.getPurpose.bind(this),
-    recipient: this.getRecipient.bind(this),
-    relativePosition: this.getRelativePosition.bind(this),
-    relativeSize: this.getRelativeSize.bind(this),
-    relativeSpatialPosition: this.getRelativeSpatialPosition.bind(this),
-    relativeTemporalPosition: this.getRelativeTemporalPosition.bind(this),
-    resolution: this.getResolution.bind(this),
-    spatial: this.getSpatial.bind(this),
-    spatialCoordinates: this.getSpatialCoordinates.bind(this),
-    system: this.getSystem.bind(this),
-    systemDevice: this.getSystemDevice.bind(this),
-    timeInterval: this.getTimeInterval.bind(this),
-    unitOfCount: this.getUnitOfCount.bind(this),
-    version: this.getVersion.bind(this),
-    virtualLocation: this.getVirtualLocation.bind(this),
+export abstract class PolicyDataFetcher extends PolicyFetcher {
+  private types: { [key: string]: string[] } = {
+    date: [
+      'dateTime',
+      'absoluteTemporalPosition',
+      'relativeTemporalPosition',
+      'timeInterval',
+      'elapsedTime',
+    ],
+    // boolean: [''],
   };
 
   constructor() {
-    const prototype = Object.getPrototypeOf(this);
-    const customs = prototype.customMethods || [];
-    //
-    customs.forEach((method: any) => {
-      const propertyName = method.replace(/^get/, '');
-      const lowercasePropertyName =
-        propertyName.charAt(0).toLowerCase() + propertyName.slice(1);
-      this.context[lowercasePropertyName as keyof ContextFetcher] =
-        this[method as keyof ContextFetcher].bind(this);
-    });
+    super();
+    this._context = {
+      absolutePosition: this.getAbsolutePosition.bind(this),
+      absoluteSize: this.getAbsoluteSize.bind(this),
+      absoluteSpatialPosition: this.getAbsoluteSpatialPosition.bind(this),
+      absoluteTemporalPosition: this.getAbsoluteTemporalPosition.bind(this),
+      count: this.getCount.bind(this),
+      dateTime: this.getDateTime.bind(this),
+      delayPeriod: this.getDelayPeriod.bind(this),
+      deliveryChannel: this.getDeliveryChannel.bind(this),
+      device: this.getDevice.bind(this),
+      elapsedTime: this.getElapsedTime.bind(this),
+      event: this.getEvent.bind(this),
+      fileFormat: this.getFileFormat.bind(this),
+      industry: this.getIndustry.bind(this),
+      language: this.getLanguage.bind(this),
+      media: this.getMedia.bind(this),
+      meteredTime: this.getMeteredTime.bind(this),
+      payAmount: this.getPayAmount.bind(this),
+      percentage: this.getPercentage.bind(this),
+      product: this.getProduct.bind(this),
+      purpose: this.getPurpose.bind(this),
+      recipient: this.getRecipient.bind(this),
+      relativePosition: this.getRelativePosition.bind(this),
+      relativeSize: this.getRelativeSize.bind(this),
+      relativeSpatialPosition: this.getRelativeSpatialPosition.bind(this),
+      relativeTemporalPosition: this.getRelativeTemporalPosition.bind(this),
+      resolution: this.getResolution.bind(this),
+      spatial: this.getSpatial.bind(this),
+      spatialCoordinates: this.getSpatialCoordinates.bind(this),
+      system: this.getSystem.bind(this),
+      systemDevice: this.getSystemDevice.bind(this),
+      timeInterval: this.getTimeInterval.bind(this),
+      unitOfCount: this.getUnitOfCount.bind(this),
+      version: this.getVersion.bind(this),
+      virtualLocation: this.getVirtualLocation.bind(this),
+      ...this._context,
+    };
+  }
+
+  public getTypes(leftOperand: string): string[] {
+    return Object.entries(this.types)
+      .flatMap(([key, values]) => (values.includes(leftOperand) ? key : []))
+      .filter(Boolean);
+  }
+
+  public get context(): LeftOperandFunctions {
+    return this._context as LeftOperandFunctions;
   }
 
   protected async getAbsolutePosition(): Promise<number> {

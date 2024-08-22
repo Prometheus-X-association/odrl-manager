@@ -1,11 +1,17 @@
 import instanciator from 'PolicyInstanciator';
-import evaluator from 'PolicyEvaluator';
+import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { _logCyan, _logGreen, _logObject, _logYellow } from './utils';
-import { ContextFetcher } from 'ContextFetcher';
-import { Custom } from 'ContextFetcher';
+import { PolicyDataFetcher, Custom } from 'PolicyDataFetcher';
+// import { Custom } from 'PolicyFetcher';
+import { EntityRegistry } from 'EntityRegistry';
+
 describe('Testing Core units', async () => {
-  before(() => {});
+  let evaluator: PolicyEvaluator;
+  before(() => {
+    EntityRegistry.cleanReferences();
+    evaluator = new PolicyEvaluator();
+  });
 
   it(`should validate a policy after parsing it.`, async function () {
     _logCyan('\n> ' + this.test?.title);
@@ -154,6 +160,21 @@ describe('Testing Core units', async () => {
               operator: 'gteq',
               rightOperand: 18,
             },
+            {
+              leftOperand: 'age',
+              operator: 'gte',
+              rightOperand: 18,
+            },
+            {
+              leftOperand: 'age',
+              operator: 'lteq',
+              rightOperand: 18,
+            },
+            {
+              leftOperand: 'age',
+              operator: 'lte',
+              rightOperand: 18,
+            },
           ],
         },
         {
@@ -189,7 +210,7 @@ describe('Testing Core units', async () => {
     const valid = await policy?.validate();
     expect(valid).to.equal(true);
     if (policy) {
-      class Fetcher extends ContextFetcher {
+      class Fetcher extends PolicyDataFetcher {
         private absolutePosition: number = 0;
         constructor() {
           super();
@@ -208,16 +229,18 @@ describe('Testing Core units', async () => {
         protected async getAge(): Promise<number> {
           return 18;
         }
+        protected async getPayAmount(): Promise<number> {
+          return 0;
+        }
       }
-      evaluator.setPolicy(policy);
       const fetcher = new Fetcher();
+      evaluator.setPolicy(policy, fetcher);
       const age = await fetcher.context['age']();
       expect(age).to.equal(18);
       const absolutePosition = await fetcher.context.absolutePosition();
       expect(absolutePosition).to.equal(9);
       const language = await fetcher.context.language();
       expect(language).to.equal('en');
-      evaluator.setFetcher(fetcher);
       const isPerformable = await evaluator.isActionPerformable(
         'read',
         'http://contract-target',
@@ -266,6 +289,83 @@ describe('Testing Core units', async () => {
       _logYellow('\nPerformable actions:');
       _logObject(actions);
       expect(actions).to.deep.equal(['write']);
+    }
+  });
+
+  it(`Should retrieve leftOperands associated with a specific target`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'use',
+          target: 'http://other-contract-target',
+          constraint: [
+            {
+              leftOperand: 'media',
+              operator: 'eq',
+              rightOperand: 'print',
+            },
+            {
+              leftOperand: 'count',
+              operator: 'eq',
+              rightOperand: 0,
+            },
+          ],
+        },
+        {
+          action: 'use',
+          target: 'http://contract-target',
+          constraint: [
+            {
+              leftOperand: 'age',
+              operator: 'gt',
+              rightOperand: 21,
+            },
+            {
+              leftOperand: 'count',
+              operator: 'eq',
+              rightOperand: 0,
+            },
+          ],
+        },
+      ],
+      prohibition: [
+        {
+          action: 'use',
+          target: 'http://contract-target',
+          constraint: [
+            {
+              leftOperand: 'age',
+              operator: 'gt',
+              rightOperand: 22,
+            },
+            {
+              leftOperand: 'dateTime',
+              operator: 'eq',
+              rightOperand: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const policy = instanciator.genPolicyFrom(json);
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    if (policy) {
+      evaluator.setPolicy(policy);
+      const leftOperands = await evaluator.listLeftOperandsFor(
+        'http://contract-target',
+      );
+      _logYellow('\nAssociated leftOperands:');
+      _logObject(leftOperands);
+      const expectedValues = ['age', 'count', 'dateTime'];
+      expect(leftOperands).to.have.members(expectedValues);
+      expect(leftOperands)
+        .to.have.members(expectedValues)
+        .and.to.have.lengthOf(expectedValues.length);
     }
   });
 
@@ -375,6 +475,114 @@ describe('Testing Core units', async () => {
       _logYellow('\nPerformable actions for "http://contract-target/note":');
       _logObject(actions);
       expect(actions).to.deep.equal(['read']);
+    }
+  });
+
+  it(`Should confirm resource readability
+    if the request occurs 1 seconds post-creation.`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const creationDate = new Date();
+    creationDate.setSeconds(creationDate.getSeconds() + 1);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'read',
+          target: 'http://resource-target',
+          constraint: [
+            {
+              leftOperand: 'dateTime',
+              operator: 'gteq',
+              rightOperand: creationDate.toISOString(),
+            },
+          ],
+        },
+      ],
+    };
+    const policy = instanciator.genPolicyFrom(json);
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    if (policy) {
+      class Fetcher extends PolicyDataFetcher {
+        constructor() {
+          super();
+        }
+      }
+      const fetcher = new Fetcher();
+      evaluator.setPolicy(policy, fetcher);
+      const isPerformable = await evaluator.isActionPerformable(
+        'read',
+        'http://resource-target',
+      );
+      expect(isPerformable).to.equal(true);
+    }
+  });
+
+  it(`Should allow access to a resource by bypassing a non-existent leftOperand
+  and also test combined bypass with another constraint`, async function () {
+    _logCyan('\n> ' + this.test?.title);
+    const json = {
+      '@context': 'http://www.w3.org/ns/odrl/2/',
+      '@type': 'Set',
+      permission: [
+        {
+          action: 'read',
+          target: 'http://resource-target',
+          constraint: [
+            {
+              leftOperand: 'nonExistentAttribute',
+              operator: 'eq',
+              rightOperand: 'someValue',
+            },
+            {
+              leftOperand: 'location',
+              operator: 'eq',
+              rightOperand: 'US',
+            },
+          ],
+        },
+      ],
+    };
+    const policy = instanciator.genPolicyFrom(json);
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
+    if (policy) {
+      class Fetcher extends PolicyDataFetcher {
+        constructor() {
+          super();
+          this.setBypassFor('nonExistentAttribute');
+        }
+
+        @Custom()
+        protected async getLocation(): Promise<string> {
+          return 'FR';
+        }
+      }
+      const fetcher = new Fetcher();
+      evaluator.setPolicy(policy, fetcher);
+
+      let isPerformable = await evaluator.isActionPerformable(
+        'read',
+        'http://resource-target',
+      );
+      expect(isPerformable).to.equal(
+        false,
+        'Should be false as location is not bypassed',
+      );
+
+      fetcher.setBypassFor('location');
+      isPerformable = await evaluator.isActionPerformable(
+        'read',
+        'http://resource-target',
+      );
+      expect(isPerformable).to.equal(
+        true,
+        'Should be true as both constraints are bypassed',
+      );
     }
   });
 });

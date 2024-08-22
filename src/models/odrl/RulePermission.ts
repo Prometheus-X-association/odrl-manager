@@ -5,6 +5,7 @@ export class RulePermission extends Rule {
   duty?: RuleDuty[];
   constructor() {
     super();
+    this._instanceOf = 'RulePermission';
   }
 
   public addDuty(duty: RuleDuty) {
@@ -14,11 +15,32 @@ export class RulePermission extends Rule {
     this.duty.push(duty);
   }
 
-  public async visit(): Promise<boolean> {
+  public async evaluate(): Promise<boolean> {
+    const result = await Promise.all([
+      this.evaluateConstraints(),
+      this.evaluateDuties(),
+    ]);
+    return result.every(Boolean);
+  }
+
+  private async evaluateDuties(): Promise<boolean> {
+    try {
+      if (this.duty) {
+        const all = await Promise.all(this.duty.map((duty) => duty.evaluate()));
+        return all.every(Boolean);
+      }
+      return true;
+    } catch (error) {
+      console.error('Error while evaluating rule:', error);
+    }
+    return false;
+  }
+
+  private async evaluateConstraints(): Promise<boolean> {
     try {
       if (this.constraints) {
         const all = await Promise.all(
-          this.constraints.map((constraint) => constraint.visit()),
+          this.constraints.map((constraint) => constraint.evaluate()),
         );
         return all.every(Boolean);
       }

@@ -1,10 +1,10 @@
-import { ModelEssential } from '../../ModelEssential';
+import { ModelBasic } from '../ModelBasic';
 import { LeftOperand } from './LeftOperand';
 import { LogicalConstraint } from './LogicalConstraint';
 import { Operator } from './Operator';
 import { RightOperand } from './RightOperand';
 
-export abstract class Constraint extends ModelEssential {
+export abstract class Constraint extends ModelBasic {
   public uid?: string;
   public dataType?: string;
   public unit?: string;
@@ -25,7 +25,7 @@ export abstract class Constraint extends ModelEssential {
     this.rightOperand = rightOperand;
   }
 
-  async visit(): Promise<boolean> {
+  async evaluate(): Promise<boolean> {
     return false;
   }
 

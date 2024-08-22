@@ -1,10 +1,12 @@
-import { ModelEssential } from '../../ModelEssential';
+import { ModelBasic } from '../ModelBasic';
 
-export class RightOperand extends ModelEssential {
-  public value: string | number;
+export class RightOperand extends ModelBasic {
+  public '@id'?: string;
+  public value: string | number | [];
 
   constructor(value: string | number) {
     super();
+    this._instanceOf = 'RightOperand';
     this.value = value;
   }
 
