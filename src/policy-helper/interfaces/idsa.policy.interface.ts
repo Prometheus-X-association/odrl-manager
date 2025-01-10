@@ -1,112 +1,142 @@
-namespace IDSAPolicy {
-  export enum Action {
-    'odrl:delete',
-    'odrl:execute',
-    'cc:SourceCode',
-    'odrl:anonymize',
-    'odrl:extract',
-    'odrl:read',
-    'odrl:index',
-    'odrl:compensate',
-    'odrl:sell',
-    'odrl:derive',
-    'odrl:ensureExclusivity',
-    'odrl:annotate',
-    'cc:Reproduction',
-    'odrl:translate',
-    'odrl:include',
-    'cc:DerivativeWorks',
-    'cc:Distribution',
-    'odrl:textToSpeech',
-    'odrl:inform',
-    'odrl:grantUse',
-    'odrl:archive',
-    'odrl:modify',
-    'odrl:aggregate',
-    'odrl:attribute',
-    'odrl:nextPolicy',
-    'odrl:digitize',
-    'cc:Attribution',
-    'odrl:install',
-    'odrl:concurrentUse',
-    'odrl:distribute',
-    'odrl:synchronize',
-    'odrl:move',
-    'odrl:obtainConsent',
-    'odrl:print',
-    'cc:Notice',
-    'odrl:give',
-    'odrl:uninstall',
-    'cc:Sharing',
-    'odrl:reviewPolicy',
-    'odrl:watermark',
-    'odrl:play',
-    'odrl:reproduce',
-    'odrl:transform',
-    'odrl:display',
-    'odrl:stream',
-    'cc:ShareAlike',
-    'odrl:acceptTracking',
-    'cc:CommericalUse',
-    'odrl:present',
-    'odrl:use',
+export namespace IDSAPolicy {
+  export const enum Action {
+    Delete = 'odrl:delete',
+    Execute = 'odrl:execute',
+    SourceCode = 'cc:SourceCode',
+    Anonymize = 'odrl:anonymize',
+    Extract = 'odrl:extract',
+    Read = 'odrl:read',
+    Index = 'odrl:index',
+    Compensate = 'odrl:compensate',
+    Sell = 'odrl:sell',
+    Derive = 'odrl:derive',
+    EnsureExclusivity = 'odrl:ensureExclusivity',
+    Annotate = 'odrl:annotate',
+    Reproduction = 'cc:Reproduction',
+    Translate = 'odrl:translate',
+    Include = 'odrl:include',
+    DerivativeWorks = 'cc:DerivativeWorks',
+    Distribution = 'cc:Distribution',
+    TextToSpeech = 'odrl:textToSpeech',
+    Inform = 'odrl:inform',
+    GrantUse = 'odrl:grantUse',
+    Archive = 'odrl:archive',
+    Modify = 'odrl:modify',
+    Aggregate = 'odrl:aggregate',
+    Attribute = 'odrl:attribute',
+    NextPolicy = 'odrl:nextPolicy',
+    Digitize = 'odrl:digitize',
+    Attribution = 'cc:Attribution',
+    Install = 'odrl:install',
+    ConcurrentUse = 'odrl:concurrentUse',
+    Distribute = 'odrl:distribute',
+    Synchronize = 'odrl:synchronize',
+    Move = 'odrl:move',
+    ObtainConsent = 'odrl:obtainConsent',
+    Print = 'odrl:print',
+    Notice = 'cc:Notice',
+    Give = 'odrl:give',
+    Uninstall = 'odrl:uninstall',
+    Sharing = 'cc:Sharing',
+    ReviewPolicy = 'odrl:reviewPolicy',
+    Watermark = 'odrl:watermark',
+    Play = 'odrl:play',
+    Reproduce = 'odrl:reproduce',
+    Transform = 'odrl:transform',
+    Display = 'odrl:display',
+    Stream = 'odrl:stream',
+    ShareAlike = 'cc:ShareAlike',
+    AcceptTracking = 'odrl:acceptTracking',
+    CommercialUse = 'cc:CommericalUse',
+    Present = 'odrl:present',
+    Use = 'odrl:use',
   }
 
-  export enum LeftOperand {
-    'odrl:absolutePosition',
-    'odrl:absoluteSize',
-    'odrl:absoluteSpatialPosition',
-    'odrl:absoluteTemporalPosition',
-    'odrl:count',
-    'odrl:dateTime',
-    'odrl:delayPeriod',
-    'odrl:deliveryChannel',
-    'odrl:device',
-    'odrl:elapsedTime',
-    'odrl:event',
-    'odrl:fileFormat',
-    'odrl:industry',
-    'odrl:language',
-    'odrl:media',
-    'odrl:meteredTime',
-    'odrl:payAmount',
-    'odrl:percentage',
-    'odrl:product',
-    'odrl:purpose',
-    'odrl:recipient',
-    'odrl:relativePosition',
-    'odrl:relativeSize',
-    'odrl:relativeSpatialPosition',
-    'odrl:relativeTemporalPosition',
-    'odrl:resolution',
-    'odrl:spatial',
-    'odrl:spatialCoordinates',
-    'odrl:system',
-    'odrl:systemDevice',
-    'odrl:timeInterval',
-    'odrl:unitOfCount',
-    'odrl:version',
-    'odrl:virtualLocation',
+  export const enum LeftOperand {
+    AbsolutePosition = 'odrl:absolutePosition',
+    AbsoluteSize = 'odrl:absoluteSize',
+    AbsoluteSpatialPosition = 'odrl:absoluteSpatialPosition',
+    AbsoluteTemporalPosition = 'odrl:absoluteTemporalPosition',
+    Count = 'odrl:count',
+    DateTime = 'odrl:dateTime',
+    DelayPeriod = 'odrl:delayPeriod',
+    DeliveryChannel = 'odrl:deliveryChannel',
+    Device = 'odrl:device',
+    ElapsedTime = 'odrl:elapsedTime',
+    Event = 'odrl:event',
+    FileFormat = 'odrl:fileFormat',
+    Industry = 'odrl:industry',
+    Language = 'odrl:language',
+    Media = 'odrl:media',
+    MeteredTime = 'odrl:meteredTime',
+    PayAmount = 'odrl:payAmount',
+    Percentage = 'odrl:percentage',
+    Product = 'odrl:product',
+    Purpose = 'odrl:purpose',
+    Recipient = 'odrl:recipient',
+    RelativePosition = 'odrl:relativePosition',
+    RelativeSize = 'odrl:relativeSize',
+    RelativeSpatialPosition = 'odrl:relativeSpatialPosition',
+    RelativeTemporalPosition = 'odrl:relativeTemporalPosition',
+    Resolution = 'odrl:resolution',
+    Spatial = 'odrl:spatial',
+    SpatialCoordinates = 'odrl:spatialCoordinates',
+    System = 'odrl:system',
+    SystemDevice = 'odrl:systemDevice',
+    TimeInterval = 'odrl:timeInterval',
+    UnitOfCount = 'odrl:unitOfCount',
+    Version = 'odrl:version',
+    VirtualLocation = 'odrl:virtualLocation',
   }
 
-  export enum Operator {
-    'odrl:eq',
-    'odrl:gt',
-    'odrl:gteq',
-    'odrl:hasPart',
-    'odrl:isA',
-    'odrl:isAllOf',
-    'odrl:isAnyOf',
-    'odrl:isNoneOf',
-    'odrl:isPartOf',
-    'odrl:lt',
-    'odrl:term-lteq',
-    'odrl:neq',
+  export const enum Operator {
+    Equals = 'odrl:eq',
+    GreaterThan = 'odrl:gt',
+    GreaterThanOrEquals = 'odrl:gteq',
+    HasPart = 'odrl:hasPart',
+    IsA = 'odrl:isA',
+    IsAllOf = 'odrl:isAllOf',
+    IsAnyOf = 'odrl:isAnyOf',
+    IsNoneOf = 'odrl:isNoneOf',
+    IsPartOf = 'odrl:isPartOf',
+    LessThan = 'odrl:lt',
+    LessThanOrEquals = 'odrl:term-lteq',
+    NotEquals = 'odrl:neq',
+  }
+
+  export type RightOperandValue = string | number | boolean;
+
+  export interface IReference {
+    '@id': string;
+  }
+
+  export interface IConstraint {
+    'odrl:leftOperand': LeftOperand;
+    'odrl:operator': Operator;
+    'odrl:rightOperand'?: RightOperandValue;
+    'odrl:rightOperandReference'?: IReference;
   }
 
   export interface IAbstractPolicyRule {
-    'odrl:assigner': string;
-    'odrl:assignee': string;
+    'odrl:assigner'?: string;
+    'odrl:assignee'?: string;
+  }
+
+  export interface IDuty extends IAbstractPolicyRule {
+    '@id'?: string;
+    'odrl:action': Action;
+    'odrl:constraint'?: IConstraint[];
+  }
+
+  export interface IPermission extends IAbstractPolicyRule {
+    'odrl:action': Action;
+    'odrl:constraint'?: IConstraint[];
+    'odrl:duty'?: IDuty;
+  }
+
+  export interface IProhibition extends IAbstractPolicyRule {
+    'odrl:action': Action;
+    'odrl:constraint'?: IConstraint[];
   }
 
   export interface IPolicyClass extends IAbstractPolicyRule {
@@ -118,35 +148,8 @@ namespace IDSAPolicy {
 
   export interface IMessageOffer extends IPolicyClass {
     '@type': 'odrl:Offer';
-    'odrl:permission': any;
-    'odrl:prohibition': any;
-  }
-
-  export interface IPermission extends IAbstractPolicyRule {
-    'odrl:action': Action;
-    'odrl:constraint'?: IConstraint[];
-    'odrl:duty'?: IDuty;
-  }
-
-  export interface IProhibition extends IAbstractPolicyRule {}
-
-  export interface IDuty extends IAbstractPolicyRule {
-    '@id'?: string;
-    'odrl:action': Action;
-    'odrl:constraint'?: IConstraint[];
-  }
-
-  export interface IRightOperand {}
-
-  export interface IReference {
-    '@id': string;
-  }
-
-  export interface IConstraint {
-    'odrl:rightOperand'?: IRightOperand;
-    'odrl:rightOperandReference'?: IReference;
-    'odrl:leftOperand'?: LeftOperand;
-    'odrl:operator'?: Operator;
+    'odrl:permission': IPermission[];
+    'odrl:prohibition': IProhibition[];
   }
 
   export interface IAgreement {
