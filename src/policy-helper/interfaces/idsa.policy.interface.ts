@@ -1,3 +1,5 @@
+import { parsePolicy } from '../parsers/idsa.parser.json';
+
 export namespace IDSAPolicy {
   export const enum Action {
     Delete = 'odrl:delete',
@@ -160,4 +162,6 @@ export namespace IDSAPolicy {
     'odrl:permission': IPermission;
     'odrl:prohibition': IProhibition;
   }
+
+  export const parse = parsePolicy;
 }

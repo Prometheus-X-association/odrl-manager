@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import { parsePolicy } from 'policy-helper/parsers/idsaToJson';
+import instanciator from 'PolicyInstanciator';
+import { IDSAPolicy } from 'policy-helper/interfaces/idsa.policy.interface';
 import { PolicyEvaluator } from 'PolicyEvaluator';
 import { PolicyDataFetcher, Custom } from 'PolicyDataFetcher';
 import { EntityRegistry } from 'EntityRegistry';
@@ -15,6 +16,7 @@ describe('Testing IDSA Policy Parser', () => {
   it('Should validate that the "read" action is performable on a resource after parsing', async () => {
     const inputPolicy = {
       '@id': 'policy-id-a0',
+      '@type': 'Set',
       'odrl:profile': [{ '@id': 'http://example.com/profile-type-a' }],
       'odrl:permission': [
         {
@@ -31,7 +33,11 @@ describe('Testing IDSA Policy Parser', () => {
       ],
     };
 
-    const outputPolicy = parsePolicy(inputPolicy);
+    const outputPolicy = IDSAPolicy.parse(inputPolicy);
+    const policy = instanciator.genPolicyFrom(outputPolicy);
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
 
     class TestDataFetcher extends PolicyDataFetcher {
       constructor() {
@@ -45,18 +51,21 @@ describe('Testing IDSA Policy Parser', () => {
     }
 
     const dataFetcher = new TestDataFetcher();
-    evaluator.setPolicy(outputPolicy, dataFetcher);
 
-    const isPerformable = await evaluator.isActionPerformable(
-      'read',
-      'http://example.com/resource-type-a0',
-    );
-    expect(isPerformable).to.equal(true);
+    if (policy) {
+      evaluator.setPolicy(policy, dataFetcher);
+      const isPerformable = await evaluator.isActionPerformable(
+        'read',
+        'http://example.com/resource-type-a0',
+      );
+      expect(isPerformable).to.equal(true);
+    }
   });
 
   it('Should list the correct leftOperands for a specific resource after parsing', async () => {
     const inputPolicy = {
       '@id': 'policy-id-b1',
+      '@type': 'Set',
       'odrl:profile': [{ '@id': 'http://example.com/profile-type-b' }],
       'odrl:permission': [
         {
@@ -78,7 +87,11 @@ describe('Testing IDSA Policy Parser', () => {
       ],
     };
 
-    const outputPolicy = parsePolicy(inputPolicy);
+    const outputPolicy = IDSAPolicy.parse(inputPolicy);
+    const policy = instanciator.genPolicyFrom(outputPolicy);
+    expect(policy).to.not.be.null;
+    expect(policy).to.not.be.undefined;
+    policy?.debug();
 
     class TestDataFetcher extends PolicyDataFetcher {
       constructor() {
@@ -97,11 +110,13 @@ describe('Testing IDSA Policy Parser', () => {
     }
 
     const dataFetcher = new TestDataFetcher();
-    evaluator.setPolicy(outputPolicy, dataFetcher);
+    if (policy) {
+      evaluator.setPolicy(policy, dataFetcher);
 
-    const leftOperands = await evaluator.listLeftOperandsFor(
-      'http://example.com/resource-type-b1',
-    );
-    expect(leftOperands).to.have.members(['language', 'dateTime']);
+      const leftOperands = await evaluator.listLeftOperandsFor(
+        'http://example.com/resource-type-b1',
+      );
+      expect(leftOperands).to.have.members(['language', 'dateTime']);
+    }
   });
 });
