@@ -87,8 +87,8 @@ describe('Testing IDSA Policy Parser', () => {
       ],
     };
 
-    const outputPolicy = IDSAPolicy.parse(inputPolicy);
-    const policy = instanciator.genPolicyFrom(outputPolicy);
+    // const outputPolicy = IDSAPolicy.parse(inputPolicy);
+    const policy = instanciator.genPolicyFrom(inputPolicy, IDSAPolicy);
     expect(policy).to.not.be.null;
     expect(policy).to.not.be.undefined;
     policy?.debug();

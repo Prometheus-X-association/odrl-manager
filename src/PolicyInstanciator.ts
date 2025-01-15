@@ -32,6 +32,10 @@ export type InstanciatorFunction = (
   fromArray?: boolean,
 ) => any;
 
+export interface PolicyNamespace {
+  parse: (data: any) => any;
+}
+
 export class PolicyInstanciator {
   public policy: Policy | null;
   public static instance: PolicyInstanciator;
@@ -334,15 +338,22 @@ export class PolicyInstanciator {
     }
   }
 
-  public genPolicyFrom(json: any): Policy | null {
+  public genPolicyFrom(json: any, namespace?: PolicyNamespace): Policy | null {
     try {
-      this.selectPolicyType(json);
-      this.traverse(json, this.policy);
+      if (!json) {
+        throw new Error('Input JSON is required');
+      }
+      const parsedJson = namespace ? namespace.parse(json) : json;
+      this.selectPolicyType(parsedJson);
+      this.traverse(parsedJson, this.policy);
       return this.policy;
-    } catch (error: any) {
-      console.error(error.message);
+    } catch (error) {
+      console.error(
+        'Error generating policy:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      return null;
     }
-    return null;
   }
 
   public static addNamespaceInstanciator(namespace: Namespace): void {
