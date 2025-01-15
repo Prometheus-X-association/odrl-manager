@@ -102,7 +102,8 @@ export namespace IDSAPolicy {
     IsNoneOf = 'odrl:isNoneOf',
     IsPartOf = 'odrl:isPartOf',
     LessThan = 'odrl:lt',
-    LessThanOrEquals = 'odrl:term-lteq',
+    LessThanOrEquals = 'odrl:lteq',
+    TermLessThanOrEquals = 'odrl:term-lteq',
     NotEquals = 'odrl:neq',
   }
 

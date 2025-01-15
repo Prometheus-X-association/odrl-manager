@@ -338,12 +338,15 @@ export class PolicyInstanciator {
     }
   }
 
-  public genPolicyFrom(json: any, namespace?: PolicyNamespace): Policy | null {
+  public genPolicyFrom(
+    json: any,
+    policyNamespace?: PolicyNamespace,
+  ): Policy | null {
     try {
       if (!json) {
         throw new Error('Input JSON is required');
       }
-      const parsedJson = namespace ? namespace.parse(json) : json;
+      const parsedJson = policyNamespace ? policyNamespace.parse(json) : json;
       this.selectPolicyType(parsedJson);
       this.traverse(parsedJson, this.policy);
       return this.policy;
@@ -363,7 +366,7 @@ export class PolicyInstanciator {
   private static handleNamespaceAttribute(
     attribute: string,
     element: any,
-    parent: any,
+    parent: ModelBasic,
     root: Policy | null,
     fromArray: boolean = false,
   ): ModelBasic | null | unknown {
