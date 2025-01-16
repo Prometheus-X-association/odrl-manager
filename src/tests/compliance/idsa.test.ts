@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import instanciator from 'PolicyInstanciator';
-import { IDSAPolicy } from 'policy-helper/interfaces/idsa.policy.interface';
+import { IDSAPolicy } from 'policy-helper/interoperability/idsa.policy.interface';
 import { PolicyEvaluator } from 'PolicyEvaluator';
 import { PolicyDataFetcher, Custom } from 'PolicyDataFetcher';
 import { EntityRegistry } from 'EntityRegistry';

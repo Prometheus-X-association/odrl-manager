@@ -7,7 +7,7 @@ import { EntityRegistry } from 'EntityRegistry';
 import { Custom } from 'PolicyFetcher';
 import { Extension, ModelBasic } from 'models/ModelBasic';
 import { Namespace } from 'Namespace';
-import { IDSAPolicy } from 'policy-helper/interfaces/idsa.policy.interface';
+import { IDSAPolicy } from 'policy-helper/interoperability/idsa.policy.interface';
 
 class DSpaceTimestamp extends ModelBasic {
   constructor(public timestamp: string) {
@@ -216,17 +216,19 @@ describe('Testing IDSA Policy with Namespaces', () => {
     if (policy) {
       evaluator.setPolicy(policy, dataFetcher);
 
-      // todo :
-      const isDistributionPerformable = await evaluator.isActionPerformable(
-        'cc:Distribution',
-        'http://example.com/resource-cc',
-      );
+      IDSAPolicy.wrapper.setEvaluator(evaluator);
+      const isDistributionPerformable =
+        await IDSAPolicy.wrapper.isActionPerformable(
+          'cc:Distribution',
+          'http://example.com/resource-cc',
+        );
       expect(isDistributionPerformable).to.equal(true);
 
-      const isDerivativeWorksPerformable = await evaluator.isActionPerformable(
-        'cc:DerivativeWorks',
-        'http://example.com/resource-cc',
-      );
+      const isDerivativeWorksPerformable =
+        await IDSAPolicy.wrapper.isActionPerformable(
+          'cc:DerivativeWorks',
+          'http://example.com/resource-cc',
+        );
       expect(isDerivativeWorksPerformable).to.equal(true);
 
       const actions = await evaluator.getPerformableActions(

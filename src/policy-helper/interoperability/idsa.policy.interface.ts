@@ -1,4 +1,5 @@
 import { parsePolicy } from '../parsers/idsa.parser.json';
+import { IDSAEvaluatorWrapper } from '../wrappers/idsa.evaluator.wrapper';
 
 export namespace IDSAPolicy {
   export const enum Action {
@@ -165,4 +166,5 @@ export namespace IDSAPolicy {
   }
 
   export const parse = parsePolicy;
+  export const wrapper = IDSAEvaluatorWrapper;
 }
