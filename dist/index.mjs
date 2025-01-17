@@ -395,9 +395,21 @@ var ModelBasic = class _ModelBasic {
       }
     });
   }
-  addExtension(ext) {
+  /**
+   * Adds an extension to the current target object. An extension is an additional property
+   * that can be attached to a policy to extend its functionality as decribed by it's context.
+   *
+   * @param {Extension} ext - The extension to add, containing a name and a value.
+   * @param {string} prefix - The prefix (or context) associated with the extension, used to
+   *                          identify the namespace from which the extension originates.
+   * @returns {void}
+   */
+  addExtension(ext, prefix) {
     const { name, value } = ext;
     this[name] = value;
+    if (value && typeof value === "object") {
+      value._context = prefix;
+    }
   }
   setParent(parent) {
     EntityRegistry.setParent(this, parent);
@@ -1398,6 +1410,13 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     }
     return _PolicyInstanciator.instance;
   }
+  /**
+   * Sets a permission rule on the policy
+   * @param {any} element - The permission element data
+   * @param {Policy} parent - The parent policy
+   * @param {Policy | null} root - The root policy
+   * @returns {RulePermission} The created permission rule
+   */
   static setPermission(element, parent, root) {
     const { assigner, assignee } = element;
     const rule = new RulePermission();
@@ -1409,6 +1428,13 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     parent.addPermission(rule);
     return rule;
   }
+  /**
+   * Sets a prohibition rule on the policy
+   * @param {any} element - The prohibition element data
+   * @param {Policy} parent - The parent policy
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleProhibition} The created prohibition rule
+   */
   static setProhibition(element, parent, root) {
     const { assigner, assignee } = element;
     const rule = new RuleProhibition();
@@ -1420,6 +1446,13 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     parent.addProhibition(rule);
     return rule;
   }
+  /**
+   * Sets an obligation rule on the policy
+   * @param {any} element - The obligation element data
+   * @param {Policy} parent - The parent policy
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleDuty} The created obligation rule
+   */
   static setObligation(element, parent, root) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(
@@ -1431,6 +1464,13 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     parent.addDuty(rule);
     return rule;
   }
+  /**
+   * Sets a duty rule on a permission
+   * @param {any} element - The duty element data
+   * @param {RulePermission} parent - The parent permission
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleDuty} The created duty rule
+   */
   static setDuty(element, parent, root) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(
@@ -1442,6 +1482,14 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     parent.addDuty(rule);
     return rule;
   }
+  /**
+   * Sets an action on a rule
+   * @param {string | any} element - The action element data
+   * @param {Rule} parent - The parent rule
+   * @param {Policy | null} root - The root policy
+   * @param {boolean} [fromArray] - Whether the action comes from an array
+   * @returns {Action} The created action
+   */
   static setAction(element, parent, root, fromArray) {
     try {
       const value = getLastTerm(
@@ -1463,11 +1511,24 @@ var _PolicyInstanciator = class _PolicyInstanciator {
       throw new Error("Action is undefined");
     }
   }
+  /**
+   * Sets a target on a rule
+   * @param {any} element - The target element data
+   * @param {Rule} parent - The parent rule
+   * @param {Policy | null} root - The root policy
+   */
   static setTarget(element, parent, root) {
     const asset = new Asset(element);
     asset.setParent(parent);
     parent.setTarget(asset);
   }
+  /**
+   * Sets a constraint on a parent element
+   * @param {any} element - The constraint element data
+   * @param {LogicalConstraint | Rule | Action} parent - The parent element
+   * @param {Policy | null} root - The root policy
+   * @returns {Constraint} The created constraint
+   */
   static setConstraint(element, parent, root) {
     var _a;
     const {
@@ -1511,9 +1572,23 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     parent.addConstraint(constraint || element);
     return constraint;
   }
+  /**
+   * Sets a refinement on an action
+   * @param {any} element - The refinement element data
+   * @param {Action} parent - The parent action
+   * @param {Policy | null} root - The root policy
+   * @returns {Constraint} The created refinement constraint
+   */
   static setRefinement(element, parent, root) {
     return _PolicyInstanciator.setConstraint(element, parent, root);
   }
+  /**
+   * Sets a remedy on a prohibition rule
+   * @param {any} element - The remedy element data
+   * @param {RuleProhibition} parent - The parent prohibition
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleDuty} The created remedy rule
+   */
   static setRemedy(element, parent, root) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(
@@ -1525,6 +1600,13 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     parent.addRemedy(rule);
     return rule;
   }
+  /**
+   * Sets a consequence on a duty rule
+   * @param {any} element - The consequence element data
+   * @param {RuleDuty} parent - The parent duty
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleDuty} The created consequence rule
+   */
   static setConsequence(element, parent, root) {
     const { assigner, assignee } = element;
     const rule = new RuleDuty(
@@ -1542,6 +1624,10 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     parent.addConsequence(rule);
     return rule;
   }
+  /**
+   * Selects and instantiates the appropriate policy type based on the input JSON
+   * @param {any} json - The input policy JSON
+   */
   selectPolicyType(json) {
     const context = json["@context"];
     switch (json["@type"]) {
@@ -1561,19 +1647,45 @@ var _PolicyInstanciator = class _PolicyInstanciator {
         throw new Error(`Unknown policy type: ${json["@type"]}`);
     }
   }
-  genPolicyFrom(json) {
+  /**
+   * Generates a policy from input JSON data
+   * @param {any} json - The input policy JSON
+   * @param {PolicyNamespace} [policyNamespace] - Optional policy namespace
+   * @returns {Policy | null} The generated policy or null if generation fails
+   */
+  genPolicyFrom(json, policyNamespace) {
     try {
-      this.selectPolicyType(json);
-      this.traverse(json, this.policy);
+      if (!json) {
+        throw new Error("Input JSON is required");
+      }
+      const parsedJson = policyNamespace ? policyNamespace.parse(json) : json;
+      this.selectPolicyType(parsedJson);
+      this.traverse(parsedJson, this.policy);
       return this.policy;
     } catch (error) {
-      console.error(error.message);
+      console.error(
+        "Error generating policy:",
+        error instanceof Error ? error.message : "Unknown error"
+      );
+      return null;
     }
-    return null;
   }
+  /**
+   * Adds a namespace instantiator
+   * @param {Namespace} namespace - The namespace to add
+   */
   static addNamespaceInstanciator(namespace) {
     this.namespaces[namespace.uri] = namespace;
   }
+  /**
+   * Handles namespace attributes during policy traversal
+   * @param {string} attribute - The attribute name
+   * @param {any} element - The element data
+   * @param {ModelBasic} parent - The parent model
+   * @param {Policy | null} root - The root policy
+   * @param {boolean} [fromArray] - Whether the element comes from an array
+   * @returns {ModelBasic | null | unknown} The created model or null
+   */
   static handleNamespaceAttribute(attribute, element, parent, root, fromArray = false) {
     var _a, _b;
     const context = (_b = (_a = this.instance) == null ? void 0 : _a.policy) == null ? void 0 : _b["@context"];
@@ -1593,7 +1705,7 @@ var _PolicyInstanciator = class _PolicyInstanciator {
             fromArray
           );
           if (ext) {
-            parent.addExtension(ext);
+            parent.addExtension(ext, prefix);
           }
           return ext;
         }
@@ -1601,6 +1713,11 @@ var _PolicyInstanciator = class _PolicyInstanciator {
     }
     return null;
   }
+  /**
+   * Traverses the policy tree and instantiates elements
+   * @param {any} node - The current node
+   * @param {any} parent - The parent node
+   */
   traverse(node, parent) {
     const instanciate = (property, element, fromArray = false) => {
       try {
@@ -1646,6 +1763,12 @@ var _PolicyInstanciator = class _PolicyInstanciator {
       }
     }
   }
+  /**
+   * Constructs a new instance of a type with namespace handling
+   * @param {new (...args: any[]) => T} Type - The type constructor
+   * @param {...any[]} args - Constructor arguments
+   * @returns {T} The constructed instance
+   */
   static construct(Type, ...args) {
     var _a, _b;
     const context = (_b = (_a = this.instance) == null ? void 0 : _a.policy) == null ? void 0 : _b["@context"];
@@ -1969,10 +2092,12 @@ var PolicyEvaluator = class _PolicyEvaluator {
         });
         const results = yield targets.reduce(
           (promise, target2) => __async(this, null, function* () {
+            var _a;
             const acc = yield promise;
             const parent = target2.getParent();
             const action = parent.action;
-            return (yield action.includes(actionType)) ? acc.concat(yield parent.evaluate()) : acc;
+            const namespaceDependency = (_a = action._namespace) == null ? void 0 : _a.length;
+            return action && (yield action.includes(actionType)) || namespaceDependency ? acc.concat(yield parent.evaluate()) : acc;
           }),
           Promise.resolve([])
         );

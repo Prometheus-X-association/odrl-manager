@@ -55,6 +55,15 @@ export abstract class ModelBasic {
     }
   }
 
+  /**
+   * Adds an extension to the current target object. An extension is an additional property
+   * that can be attached to a policy to extend its functionality as decribed by it's context.
+   *
+   * @param {Extension} ext - The extension to add, containing a name and a value.
+   * @param {string} prefix - The prefix (or context) associated with the extension, used to
+   *                          identify the namespace from which the extension originates.
+   * @returns {void}
+   */
   public addExtension(ext: Extension, prefix: string): void {
     const { name, value } = ext;
     (this as unknown as ExtensionList)[name] = value;
