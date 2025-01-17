@@ -116,6 +116,13 @@ export class PolicyInstanciator {
       remedy: PolicyInstanciator.setRemedy,
     };
 
+  /**
+   * Sets a permission rule on the policy
+   * @param {any} element - The permission element data
+   * @param {Policy} parent - The parent policy
+   * @param {Policy | null} root - The root policy
+   * @returns {RulePermission} The created permission rule
+   */
   private static setPermission(
     element: any,
     parent: Policy,
@@ -130,6 +137,13 @@ export class PolicyInstanciator {
     return rule;
   }
 
+  /**
+   * Sets a prohibition rule on the policy
+   * @param {any} element - The prohibition element data
+   * @param {Policy} parent - The parent policy
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleProhibition} The created prohibition rule
+   */
   private static setProhibition(
     element: any,
     parent: Policy,
@@ -144,6 +158,13 @@ export class PolicyInstanciator {
     return rule;
   }
 
+  /**
+   * Sets an obligation rule on the policy
+   * @param {any} element - The obligation element data
+   * @param {Policy} parent - The parent policy
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleDuty} The created obligation rule
+   */
   private static setObligation(
     element: any,
     parent: Policy,
@@ -160,6 +181,13 @@ export class PolicyInstanciator {
     return rule;
   }
 
+  /**
+   * Sets a duty rule on a permission
+   * @param {any} element - The duty element data
+   * @param {RulePermission} parent - The parent permission
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleDuty} The created duty rule
+   */
   private static setDuty(
     element: any,
     parent: RulePermission,
@@ -176,6 +204,14 @@ export class PolicyInstanciator {
     return rule;
   }
 
+  /**
+   * Sets an action on a rule
+   * @param {string | any} element - The action element data
+   * @param {Rule} parent - The parent rule
+   * @param {Policy | null} root - The root policy
+   * @param {boolean} [fromArray] - Whether the action comes from an array
+   * @returns {Action} The created action
+   */
   private static setAction(
     element: string | any,
     parent: Rule,
@@ -204,6 +240,12 @@ export class PolicyInstanciator {
     }
   }
 
+  /**
+   * Sets a target on a rule
+   * @param {any} element - The target element data
+   * @param {Rule} parent - The parent rule
+   * @param {Policy | null} root - The root policy
+   */
   private static setTarget(
     element: any,
     parent: Rule,
@@ -214,6 +256,13 @@ export class PolicyInstanciator {
     parent.setTarget(asset);
   }
 
+  /**
+   * Sets a constraint on a parent element
+   * @param {any} element - The constraint element data
+   * @param {LogicalConstraint | Rule | Action} parent - The parent element
+   * @param {Policy | null} root - The root policy
+   * @returns {Constraint} The created constraint
+   */
   private static setConstraint(
     element: any,
     parent: LogicalConstraint | Rule | Action,
@@ -272,6 +321,13 @@ export class PolicyInstanciator {
     return constraint;
   }
 
+  /**
+   * Sets a refinement on an action
+   * @param {any} element - The refinement element data
+   * @param {Action} parent - The parent action
+   * @param {Policy | null} root - The root policy
+   * @returns {Constraint} The created refinement constraint
+   */
   private static setRefinement(
     element: any,
     parent: Action,
@@ -280,6 +336,13 @@ export class PolicyInstanciator {
     return PolicyInstanciator.setConstraint(element, parent, root);
   }
 
+  /**
+   * Sets a remedy on a prohibition rule
+   * @param {any} element - The remedy element data
+   * @param {RuleProhibition} parent - The parent prohibition
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleDuty} The created remedy rule
+   */
   private static setRemedy(
     element: any,
     parent: RuleProhibition,
@@ -296,6 +359,13 @@ export class PolicyInstanciator {
     return rule;
   }
 
+  /**
+   * Sets a consequence on a duty rule
+   * @param {any} element - The consequence element data
+   * @param {RuleDuty} parent - The parent duty
+   * @param {Policy | null} root - The root policy
+   * @returns {RuleDuty} The created consequence rule
+   */
   private static setConsequence(
     element: any,
     parent: RuleDuty,
@@ -318,6 +388,10 @@ export class PolicyInstanciator {
     return rule;
   }
 
+  /**
+   * Selects and instantiates the appropriate policy type based on the input JSON
+   * @param {any} json - The input policy JSON
+   */
   private selectPolicyType(json: any): void {
     const context = json['@context'];
     switch (json['@type']) {
@@ -338,6 +412,12 @@ export class PolicyInstanciator {
     }
   }
 
+  /**
+   * Generates a policy from input JSON data
+   * @param {any} json - The input policy JSON
+   * @param {PolicyNamespace} [policyNamespace] - Optional policy namespace
+   * @returns {Policy | null} The generated policy or null if generation fails
+   */
   public genPolicyFrom(
     json: any,
     policyNamespace?: PolicyNamespace,
@@ -359,10 +439,23 @@ export class PolicyInstanciator {
     }
   }
 
+  /**
+   * Adds a namespace instantiator
+   * @param {Namespace} namespace - The namespace to add
+   */
   public static addNamespaceInstanciator(namespace: Namespace): void {
     this.namespaces[namespace.uri] = namespace;
   }
 
+  /**
+   * Handles namespace attributes during policy traversal
+   * @param {string} attribute - The attribute name
+   * @param {any} element - The element data
+   * @param {ModelBasic} parent - The parent model
+   * @param {Policy | null} root - The root policy
+   * @param {boolean} [fromArray] - Whether the element comes from an array
+   * @returns {ModelBasic | null | unknown} The created model or null
+   */
   private static handleNamespaceAttribute(
     attribute: string,
     element: any,
@@ -401,6 +494,11 @@ export class PolicyInstanciator {
     return null;
   }
 
+  /**
+   * Traverses the policy tree and instantiates elements
+   * @param {any} node - The current node
+   * @param {any} parent - The parent node
+   */
   public traverse(node: any, parent: any): void {
     const instanciate = (
       property: string,
@@ -456,6 +554,12 @@ export class PolicyInstanciator {
     }
   }
 
+  /**
+   * Constructs a new instance of a type with namespace handling
+   * @param {new (...args: any[]) => T} Type - The type constructor
+   * @param {...any[]} args - Constructor arguments
+   * @returns {T} The constructed instance
+   */
   public static construct<T>(
     Type: new (...args: any[]) => T,
     ...args: any[]

@@ -3,11 +3,28 @@ import { PolicyEvaluator } from 'PolicyEvaluator';
 import { expect } from 'chai';
 import { Policy } from 'models/odrl/Policy';
 import { PolicyDataFetcher } from 'PolicyDataFetcher';
+import { PolicyStateFetcher } from 'PolicyStateFetcher';
 import { EntityRegistry } from 'EntityRegistry';
 import { Custom } from 'PolicyFetcher';
 import { Extension, ModelBasic } from 'models/ModelBasic';
 import { Namespace } from 'Namespace';
 import { IDSAPolicy } from 'policy-helper/interoperability/idsa.policy.interface';
+
+class CCStateFetcher extends PolicyStateFetcher {
+  constructor() {
+    super();
+  }
+
+  @Custom()
+  protected async getDistribution(): Promise<boolean> {
+    return true;
+  }
+
+  @Custom()
+  protected async getDerivativeWorks(): Promise<boolean> {
+    return true;
+  }
+}
 
 class DSpaceTimestamp extends ModelBasic {
   constructor(public timestamp: string) {
@@ -176,14 +193,6 @@ describe('Testing IDSA Policy with Namespaces', () => {
         {
           'odrl:target': 'http://example.com/resource-cc',
           'odrl:action': 'cc:Distribution',
-          'odrl:duty': [
-            {
-              'odrl:action': 'cc:Attribution',
-            },
-            {
-              'odrl:action': 'cc:ShareAlike',
-            },
-          ],
         },
         {
           'odrl:target': 'http://example.com/resource-cc',
@@ -205,8 +214,10 @@ describe('Testing IDSA Policy with Namespaces', () => {
     }
 
     const dataFetcher = new CCDataFetcher();
+    const stateFetcher = new CCStateFetcher();
+
     if (policy) {
-      evaluator.setPolicy(policy, dataFetcher);
+      evaluator.setPolicy(policy, dataFetcher, stateFetcher);
 
       IDSAPolicy.wrapper.setEvaluator(evaluator);
       const isDistributionPerformable =
@@ -226,10 +237,7 @@ describe('Testing IDSA Policy with Namespaces', () => {
       const actions = await evaluator.getPerformableActions(
         'http://example.com/resource-cc',
       );
-      expect(actions).to.include.members([
-        'cc:Distribution',
-        'cc:DerivativeWorks',
-      ]);
+      expect(actions).to.include.members(['Distribution', 'DerivativeWorks']);
     }
   });
 });
