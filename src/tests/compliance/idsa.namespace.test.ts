@@ -175,27 +175,19 @@ describe('Testing IDSA Policy with Namespaces', () => {
       'odrl:permission': [
         {
           'odrl:target': 'http://example.com/resource-cc',
-          'odrl:action': {
-            '@id': 'cc:Distribution',
-          },
+          'odrl:action': 'cc:Distribution',
           'odrl:duty': [
             {
-              'odrl:action': {
-                '@id': 'cc:Attribution',
-              },
+              'odrl:action': 'cc:Attribution',
             },
             {
-              'odrl:action': {
-                '@id': 'cc:ShareAlike',
-              },
+              'odrl:action': 'cc:ShareAlike',
             },
           ],
         },
         {
           'odrl:target': 'http://example.com/resource-cc',
-          'odrl:action': {
-            '@id': 'cc:DerivativeWorks',
-          },
+          'odrl:action': 'cc:DerivativeWorks',
         },
       ],
     };

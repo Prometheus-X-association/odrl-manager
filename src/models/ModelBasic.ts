@@ -39,6 +39,8 @@ export abstract class ModelBasic {
   public _stateFetcherUID?: string;
   public _instanceOf?: string;
   public _namespace?: string | string[];
+  public _extension?: string;
+
   constructor() {
     this._objectUID = randomUUID();
     EntityRegistry.addReference(this);
@@ -53,9 +55,12 @@ export abstract class ModelBasic {
     }
   }
 
-  public addExtension(ext: Extension): void {
+  public addExtension(ext: Extension, prefix: string): void {
     const { name, value } = ext;
     (this as unknown as ExtensionList)[name] = value;
+    if (value && typeof value === 'object') {
+      (value as any)._context = prefix;
+    }
   }
 
   public setParent(parent: ModelBasic): void {

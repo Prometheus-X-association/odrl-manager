@@ -372,7 +372,6 @@ export class PolicyInstanciator {
   ): ModelBasic | null | unknown {
     const context = this.instance?.policy?.['@context'];
     const isContextArray = Array.isArray(context);
-
     if (
       isContextArray &&
       typeof attribute === 'string' &&
@@ -393,7 +392,7 @@ export class PolicyInstanciator {
             fromArray,
           );
           if (ext) {
-            parent.addExtension(ext);
+            parent.addExtension(ext, prefix);
           }
           return ext;
         }

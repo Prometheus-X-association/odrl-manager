@@ -346,7 +346,6 @@ export class PolicyEvaluator {
    * @returns {Promise<boolean>} Resolves with a boolean indicating the feasibility of the action.
    */
   public async isActionPerformable(
-    // Todo, include duties processes
     actionType: ActionType,
     target: string,
     defaultResult: boolean = false,
@@ -364,8 +363,9 @@ export class PolicyEvaluator {
           const acc = await promise;
           const parent: ParentRule = target.getParent() as ParentRule;
           const action: Action = parent.action as Action;
-          // evaluate permission & prohibition
-          return (await action.includes(actionType))
+          const namespaceDependency = action._namespace?.length;
+          return (action && (await action.includes(actionType))) ||
+            namespaceDependency
             ? acc.concat(await parent.evaluate())
             : acc;
         },
