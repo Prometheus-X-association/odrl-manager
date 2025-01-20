@@ -8,6 +8,12 @@ export class RuleDuty extends Rule {
   public compensatedParty?: string;
   public compensatingParty?: string;
   private status?: 'notInfringed' | 'infringed';
+
+  /**
+   * Creates an instance of RuleDuty.
+   * @param {Party | undefined} assigner - The party assigning the duty
+   * @param {Party | undefined} assignee - The party to whom the duty is assigned
+   */
   constructor(assigner?: Party, assignee?: Party) {
     super();
     if (assigner) {
@@ -19,6 +25,18 @@ export class RuleDuty extends Rule {
     this._instanceOf = 'RuleDuty';
   }
 
+  /**
+   * Gets the array of consequence duties associated with this duty
+   * @returns {RuleDuty[] | undefined} The array of consequence duties or undefined if none exist
+   */
+  public getConsequence(): RuleDuty[] | undefined {
+    return this.consequence;
+  }
+
+  /**
+   * Evaluates the duty by checking its action and constraints
+   * @returns {Promise<boolean>} True if the duty is fulfilled, false otherwise
+   */
   public async evaluate(): Promise<boolean> {
     const result = await Promise.all([
       this.evaluateConstraints(),
@@ -30,6 +48,10 @@ export class RuleDuty extends Rule {
     return this.evaluateConsequences();
   }
 
+  /**
+   * Evaluates the consequences of the duty
+   * @returns {Promise<boolean>} True if any consequence is fulfilled, false otherwise
+   */
   private async evaluateConsequences(): Promise<boolean> {
     if (!this.consequence || this.consequence.length === 0) {
       return false;
@@ -43,6 +65,10 @@ export class RuleDuty extends Rule {
     return false;
   }
 
+  /**
+   * Evaluates the actions of the duty
+   * @returns {Promise<boolean>} True if all actions are fulfilled, false otherwise
+   */
   private async evaluateActions(): Promise<boolean> {
     if (Array.isArray(this.action)) {
       const processes = await Promise.all(
@@ -55,6 +81,10 @@ export class RuleDuty extends Rule {
     return false;
   }
 
+  /**
+   * Evaluates the constraints of the duty
+   * @returns {Promise<boolean>} True if all constraints are fulfilled, false otherwise
+   */
   private async evaluateConstraints(): Promise<boolean> {
     try {
       if (this.constraints) {
@@ -69,14 +99,22 @@ export class RuleDuty extends Rule {
     return false;
   }
 
+  /**
+   * Verifies that the duty has valid properties
+   * @returns {Promise<boolean>} True if the duty is valid, throws an error otherwise
+   */
   public async verify(): Promise<boolean> {
     return true;
   }
 
-  public addConsequence(consequence: RuleDuty) {
+  /**
+   * Adds a consequence duty to this duty
+   * @param {RuleDuty} duty - The consequence duty to add
+   */
+  public addConsequence(duty: RuleDuty): void {
     if (this.consequence === undefined) {
       this.consequence = [];
     }
-    this.consequence.push(consequence);
+    this.consequence.push(duty);
   }
 }

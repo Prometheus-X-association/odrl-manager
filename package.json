@@ -3,7 +3,7 @@
     "node": ">=14.0.0"
   },
   "name": "json-odrl-manager",
-  "version": "v2.0.1",
+  "version": "v2.0.2",
   "description": "Partial implementation for ODRL policies in JSON format for Node.js.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

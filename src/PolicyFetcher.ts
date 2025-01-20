@@ -3,6 +3,10 @@ import { ModelBasic } from 'models/ModelBasic';
 import { AtomicConstraint } from 'models/odrl/AtomicConstraint';
 import { randomUUID } from 'node:crypto';
 
+/**
+ * Decorator for marking custom methods
+ * @returns {MethodDecorator} A decorator that registers custom methods
+ */
 export const Custom = (): MethodDecorator => {
   return (
     target: any,
@@ -41,10 +45,18 @@ export abstract class PolicyFetcher {
     });
   }
 
+  /**
+   * Sets options for the policy request
+   * @param {any} options - The options to set
+   */
   public setRequestOptions(options: any) {
     this.options = options;
   }
 
+  /**
+   * Sets the current node being processed
+   * @param {ModelBasic} node - The node to set as current
+   */
   public setCurrentNode(node: ModelBasic) {
     this.currentNode = node as AtomicConstraint;
   }

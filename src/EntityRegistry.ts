@@ -10,10 +10,29 @@ interface ParentRelations {
 }
 
 export class EntityRegistry {
+  /**
+   * Map of parent-child relationships between entities
+   * @private
+   */
   private static parentRelations: ParentRelations = {};
+
+  /**
+   * Map of all entity references by their UIDs
+   * @private
+   */
   private static entityReferences: EntityReferences = {};
+
+  /**
+   * Array of entities that have failed evaluation
+   * @private
+   */
   private static failures: ModelBasic[];
 
+  /**
+   * Gets the data fetcher associated with a policy
+   * @param {string} rootUID - The UID of the root policy
+   * @returns {PolicyDataFetcher | undefined} The associated data fetcher or undefined
+   */
   public static getDataFetcherFromPolicy(
     rootUID: string,
   ): PolicyDataFetcher | undefined {
@@ -23,6 +42,11 @@ export class EntityRegistry {
       : undefined;
   }
 
+  /**
+   * Gets the state fetcher associated with a policy
+   * @param {string} rootUID - The UID of the root policy
+   * @returns {PolicyStateFetcher | undefined} The associated state fetcher or undefined
+   */
   public static getStateFetcherFromPolicy(
     rootUID: string,
   ): PolicyStateFetcher | undefined {
@@ -32,6 +56,11 @@ export class EntityRegistry {
       : undefined;
   }
 
+  /**
+   * Gets an entity by its UID
+   * @param {string} uid - The UID of the entity to retrieve
+   * @returns {any | undefined} The entity or undefined if not found
+   */
   public static getEntity(uid: string): any | undefined {
     return EntityRegistry.entityReferences[uid];
   }

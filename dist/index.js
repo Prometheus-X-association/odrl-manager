@@ -78,14 +78,29 @@ module.exports = __toCommonJS(src_exports);
 
 // src/EntityRegistry.ts
 var _EntityRegistry = class _EntityRegistry {
+  /**
+   * Gets the data fetcher associated with a policy
+   * @param {string} rootUID - The UID of the root policy
+   * @returns {PolicyDataFetcher | undefined} The associated data fetcher or undefined
+   */
   static getDataFetcherFromPolicy(rootUID) {
     const root = _EntityRegistry.entityReferences[rootUID];
     return (root == null ? void 0 : root._fetcherUID) ? _EntityRegistry.entityReferences[root._fetcherUID] : void 0;
   }
+  /**
+   * Gets the state fetcher associated with a policy
+   * @param {string} rootUID - The UID of the root policy
+   * @returns {PolicyStateFetcher | undefined} The associated state fetcher or undefined
+   */
   static getStateFetcherFromPolicy(rootUID) {
     const root = _EntityRegistry.entityReferences[rootUID];
     return (root == null ? void 0 : root._stateFetcherUID) ? _EntityRegistry.entityReferences[root._stateFetcherUID] : void 0;
   }
+  /**
+   * Gets an entity by its UID
+   * @param {string} uid - The UID of the entity to retrieve
+   * @returns {any | undefined} The entity or undefined if not found
+   */
   static getEntity(uid) {
     return _EntityRegistry.entityReferences[uid];
   }
@@ -116,7 +131,15 @@ var _EntityRegistry = class _EntityRegistry {
     _EntityRegistry.failures = [];
   }
 };
+/**
+ * Map of parent-child relationships between entities
+ * @private
+ */
 _EntityRegistry.parentRelations = {};
+/**
+ * Map of all entity references by their UIDs
+ * @private
+ */
 _EntityRegistry.entityReferences = {};
 var EntityRegistry = _EntityRegistry;
 
@@ -137,9 +160,17 @@ var PolicyFetcher = class {
       this._context[lowercasePropertyName] = this[method].bind(this);
     });
   }
+  /**
+   * Sets options for the policy request
+   * @param {any} options - The options to set
+   */
   setRequestOptions(options) {
     this.options = options;
   }
+  /**
+   * Sets the current node being processed
+   * @param {ModelBasic} node - The node to set as current
+   */
   setCurrentNode(node) {
     this.currentNode = node;
   }
@@ -210,178 +241,323 @@ var PolicyDataFetcher = class extends PolicyFetcher {
       virtualLocation: this.getVirtualLocation.bind(this)
     }, this._context);
   }
+  /**
+   * Gets the types associated with a left operand
+   * @param {string} leftOperand - The left operand to get types for
+   * @returns {string[]} Array of types
+   */
   getTypes(leftOperand) {
     return Object.entries(this.types).flatMap(([key, values]) => values.includes(leftOperand) ? key : []).filter(Boolean);
   }
+  /**
+   * Gets the context containing left operand functions
+   * @returns {LeftOperandFunctions} The left operand functions context
+   */
   get context() {
     return this._context;
   }
+  /**
+   * Gets the absolute position
+   * @returns {Promise<number>} The absolute position
+   */
   getAbsolutePosition() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the absolute size
+   * @returns {Promise<number>} The absolute size
+   */
   getAbsoluteSize() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the absolute spatial position
+   * @returns {Promise<[number, number]>} The absolute spatial position
+   */
   getAbsoluteSpatialPosition() {
     return __async(this, null, function* () {
       return [0, 0];
     });
   }
+  /**
+   * Gets the absolute temporal position
+   * @returns {Promise<Date>} The absolute temporal position
+   */
   getAbsoluteTemporalPosition() {
     return __async(this, null, function* () {
       return /* @__PURE__ */ new Date();
     });
   }
+  /**
+   * Gets the count
+   * @returns {Promise<number>} The count
+   */
   getCount() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the date and time
+   * @returns {Promise<Date>} The date and time
+   */
   getDateTime() {
     return __async(this, null, function* () {
       return /* @__PURE__ */ new Date();
     });
   }
+  /**
+   * Gets the delay period
+   * @returns {Promise<number>} The delay period
+   */
   getDelayPeriod() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the delivery channel
+   * @returns {Promise<string>} The delivery channel
+   */
   getDeliveryChannel() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the device
+   * @returns {Promise<string>} The device
+   */
   getDevice() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the elapsed time
+   * @returns {Promise<number>} The elapsed time
+   */
   getElapsedTime() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the event
+   * @returns {Promise<string>} The event
+   */
   getEvent() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the file format
+   * @returns {Promise<string>} The file format
+   */
   getFileFormat() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the industry
+   * @returns {Promise<string>} The industry
+   */
   getIndustry() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the language
+   * @returns {Promise<string>} The language
+   */
   getLanguage() {
     return __async(this, null, function* () {
       return "en";
     });
   }
+  /**
+   * Gets the media
+   * @returns {Promise<string>} The media
+   */
   getMedia() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the metered time
+   * @returns {Promise<number>} The metered time
+   */
   getMeteredTime() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the pay amount
+   * @returns {Promise<number>} The pay amount
+   */
   getPayAmount() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the percentage
+   * @returns {Promise<number>} The percentage
+   */
   getPercentage() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the product
+   * @returns {Promise<string>} The product
+   */
   getProduct() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the purpose
+   * @returns {Promise<string>} The purpose
+   */
   getPurpose() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the recipient
+   * @returns {Promise<string>} The recipient
+   */
   getRecipient() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the relative position
+   * @returns {Promise<number>} The relative position
+   */
   getRelativePosition() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the relative size
+   * @returns {Promise<number>} The relative size
+   */
   getRelativeSize() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the relative spatial position
+   * @returns {Promise<[number, number]>} The relative spatial position
+   */
   getRelativeSpatialPosition() {
     return __async(this, null, function* () {
       return [0, 0];
     });
   }
+  /**
+   * Gets the relative temporal position
+   * @returns {Promise<Date>} The relative temporal position
+   */
   getRelativeTemporalPosition() {
     return __async(this, null, function* () {
       return /* @__PURE__ */ new Date();
     });
   }
+  /**
+   * Gets the resolution
+   * @returns {Promise<number>} The resolution
+   */
   getResolution() {
     return __async(this, null, function* () {
       return 0;
     });
   }
+  /**
+   * Gets the spatial
+   * @returns {Promise<string>} The spatial
+   */
   getSpatial() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the spatial coordinates
+   * @returns {Promise<[number, number]>} The spatial coordinates
+   */
   getSpatialCoordinates() {
     return __async(this, null, function* () {
       return [0, 0];
     });
   }
+  /**
+   * Gets the system
+   * @returns {Promise<string>} The system
+   */
   getSystem() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the system device
+   * @returns {Promise<string>} The system device
+   */
   getSystemDevice() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the time interval
+   * @returns {Promise<[Date, Date]>} The time interval
+   */
   getTimeInterval() {
     return __async(this, null, function* () {
       const now = /* @__PURE__ */ new Date();
       return [now, now];
     });
   }
+  /**
+   * Gets the unit of count
+   * @returns {Promise<string>} The unit of count
+   */
   getUnitOfCount() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the version
+   * @returns {Promise<string>} The version
+   */
   getVersion() {
     return __async(this, null, function* () {
       return "";
     });
   }
+  /**
+   * Gets the virtual location
+   * @returns {Promise<string>} The virtual location
+   */
   getVirtualLocation() {
     return __async(this, null, function* () {
       return "";
@@ -413,6 +589,11 @@ var ModelBasic = class _ModelBasic {
     this._objectUID = (0, import_node_crypto2.randomUUID)();
     EntityRegistry.addReference(this);
   }
+  /**
+   * Handles the failure state of a model evaluation
+   * @param {boolean} result - The result of the evaluation
+   * @protected
+   */
   handleFailure(result) {
     return __async(this, null, function* () {
       if (this._instanceOf === "AtomicConstraint") {
@@ -439,13 +620,26 @@ var ModelBasic = class _ModelBasic {
       value._context = prefix;
     }
   }
+  /**
+   * Sets the parent of this model
+   * @param {ModelBasic} parent - The parent model to set
+   */
   setParent(parent) {
     EntityRegistry.setParent(this, parent);
   }
+  /**
+   * Gets the parent of this model
+   * @returns {ModelBasic} The parent model
+   */
   getParent() {
     return EntityRegistry.getParent(this);
   }
   //
+  /**
+   * Validates the model and its children recursively
+   * @param {number} depth - The current depth in the validation tree
+   * @param {Promise<boolean>[]} promises - Array of validation promises
+   */
   validate(depth = 0, promises) {
     promises.push(
       (() => __async(this, null, function* () {
@@ -485,6 +679,10 @@ var ModelBasic = class _ModelBasic {
     );
   }
   //
+  /**
+   * Outputs a debug representation of the model
+   * @param {number} depth - The current depth in the debug tree
+   */
   debug(depth = 0) {
     const indentation = "  ".repeat(depth);
     console.log(
@@ -793,6 +991,11 @@ var RuleProhibition = class extends Rule {
 
 // src/models/odrl/RuleDuty.ts
 var RuleDuty = class extends Rule {
+  /**
+   * Creates an instance of RuleDuty.
+   * @param {Party | undefined} assigner - The party assigning the duty
+   * @param {Party | undefined} assignee - The party to whom the duty is assigned
+   */
   constructor(assigner, assignee) {
     super();
     if (assigner) {
@@ -803,6 +1006,17 @@ var RuleDuty = class extends Rule {
     }
     this._instanceOf = "RuleDuty";
   }
+  /**
+   * Gets the array of consequence duties associated with this duty
+   * @returns {RuleDuty[] | undefined} The array of consequence duties or undefined if none exist
+   */
+  getConsequence() {
+    return this.consequence;
+  }
+  /**
+   * Evaluates the duty by checking its action and constraints
+   * @returns {Promise<boolean>} True if the duty is fulfilled, false otherwise
+   */
   evaluate() {
     return __async(this, null, function* () {
       const result = yield Promise.all([
@@ -815,6 +1029,10 @@ var RuleDuty = class extends Rule {
       return this.evaluateConsequences();
     });
   }
+  /**
+   * Evaluates the consequences of the duty
+   * @returns {Promise<boolean>} True if any consequence is fulfilled, false otherwise
+   */
   evaluateConsequences() {
     return __async(this, null, function* () {
       if (!this.consequence || this.consequence.length === 0) {
@@ -829,6 +1047,10 @@ var RuleDuty = class extends Rule {
       return false;
     });
   }
+  /**
+   * Evaluates the actions of the duty
+   * @returns {Promise<boolean>} True if all actions are fulfilled, false otherwise
+   */
   evaluateActions() {
     return __async(this, null, function* () {
       if (Array.isArray(this.action)) {
@@ -842,6 +1064,10 @@ var RuleDuty = class extends Rule {
       return false;
     });
   }
+  /**
+   * Evaluates the constraints of the duty
+   * @returns {Promise<boolean>} True if all constraints are fulfilled, false otherwise
+   */
   evaluateConstraints() {
     return __async(this, null, function* () {
       try {
@@ -857,21 +1083,34 @@ var RuleDuty = class extends Rule {
       return false;
     });
   }
+  /**
+   * Verifies that the duty has valid properties
+   * @returns {Promise<boolean>} True if the duty is valid, throws an error otherwise
+   */
   verify() {
     return __async(this, null, function* () {
       return true;
     });
   }
-  addConsequence(consequence) {
+  /**
+   * Adds a consequence duty to this duty
+   * @param {RuleDuty} duty - The consequence duty to add
+   */
+  addConsequence(duty) {
     if (this.consequence === void 0) {
       this.consequence = [];
     }
-    this.consequence.push(consequence);
+    this.consequence.push(duty);
   }
 };
 
 // src/models/odrl/Action.ts
 var _Action = class _Action extends ModelBasic {
+  /**
+   * Creates an instance of Action.
+   * @param {string} value - The value representing the action
+   * @param {Action | null} includedIn - The parent action this action is included in
+   */
   constructor(value, includedIn) {
     super();
     this._instanceOf = "Action";
@@ -879,6 +1118,12 @@ var _Action = class _Action extends ModelBasic {
     this.includedIn = includedIn;
     _Action.includeIn(value, [this.value]);
   }
+  /**
+   * Includes a set of values in the inclusions map for a given action
+   * @param {string} current - The action to include other values in
+   * @param {string[]} values - Array of values to be included in the action
+   * @static
+   */
   static includeIn(current, values) {
     let inclusions = _Action.inclusions.get(current);
     if (!inclusions) {
@@ -889,18 +1134,33 @@ var _Action = class _Action extends ModelBasic {
       inclusions.add(value);
     }
   }
+  /**
+   * Adds a constraint to the action's refinement array
+   * @param {Constraint} constraint - The constraint to add
+   */
   addConstraint(constraint) {
     if (this.refinement === void 0) {
       this.refinement = [];
     }
     this.refinement.push(constraint);
   }
+  /**
+   * Checks if this action includes another action
+   * @param {string} value - The action value to check for inclusion
+   * @returns {Promise<boolean>} True if the action includes the value, false otherwise
+   */
   includes(value) {
     return __async(this, null, function* () {
       var _a;
       return ((_a = _Action.inclusions.get(this.value)) == null ? void 0 : _a.has(value)) || false;
     });
   }
+  /**
+   * Gets all actions included in the given action values
+   * @param {ActionType[]} values - Array of action types to get inclusions for
+   * @returns {Promise<ActionType[]>} Array of included action types
+   * @static
+   */
   static getIncluded(values) {
     return __async(this, null, function* () {
       const foundValues = [];
@@ -911,6 +1171,10 @@ var _Action = class _Action extends ModelBasic {
       return Array.from(new Set(foundValues));
     });
   }
+  /**
+   * Evaluates the action by checking refinements and state fetcher context
+   * @returns {Promise<boolean>} True if the action evaluation succeeds, false otherwise
+   */
   evaluate() {
     return __async(this, null, function* () {
       const refine = this.refine();
@@ -939,6 +1203,10 @@ var _Action = class _Action extends ModelBasic {
       return refine;
     });
   }
+  /**
+   * Refines the action by evaluating all its refinement constraints
+   * @returns {Promise<boolean>} True if all refinements evaluate successfully, false otherwise
+   */
   refine() {
     return __async(this, null, function* () {
       try {
@@ -954,12 +1222,20 @@ var _Action = class _Action extends ModelBasic {
       return true;
     });
   }
+  /**
+   * Verifies the action
+   * @returns {Promise<boolean>} Always returns true
+   */
   verify() {
     return __async(this, null, function* () {
       return true;
     });
   }
 };
+/**
+ * Map storing action inclusions relationships
+ * @private
+ */
 _Action.inclusions = /* @__PURE__ */ new Map();
 var Action = _Action;
 
@@ -1012,13 +1288,25 @@ var RightOperand = class extends ModelBasic {
 
 // src/models/odrl/LeftOperand.ts
 var LeftOperand = class extends ModelBasic {
+  /**
+   * Creates an instance of LeftOperand
+   * @param {string} value - The value to be assigned to the left operand
+   */
   constructor(value) {
     super();
     this.value = value;
   }
+  /**
+   * Gets the value of the left operand
+   * @returns {string} The value of the left operand
+   */
   getValue() {
     return this.value;
   }
+  /**
+   * Evaluates the left operand by fetching and processing its value
+   * @returns {Promise<[string | number, string[]] | null>} A tuple containing the evaluated value and its types, or null if evaluation fails
+   */
   evaluate() {
     return __async(this, null, function* () {
       try {
@@ -1049,6 +1337,10 @@ var LeftOperand = class extends ModelBasic {
       return null;
     });
   }
+  /**
+   * Verifies the left operand
+   * @returns {Promise<boolean>} Always returns true
+   */
   verify() {
     return __async(this, null, function* () {
       return true;
@@ -1086,6 +1378,12 @@ var Constraint = class extends ModelBasic {
 
 // src/models/odrl/AtomicConstraint.ts
 var _AtomicConstraint = class _AtomicConstraint extends Constraint {
+  /**
+   * Creates an instance of AtomicConstraint.
+   * @param {LeftOperand} leftOperand - The left operand of the constraint
+   * @param {Operator} operator - The operator to apply between operands
+   * @param {RightOperand} rightOperand - The right operand of the constraint
+   */
   constructor(leftOperand, operator, rightOperand) {
     super(leftOperand, operator, rightOperand);
     this._instanceOf = "AtomicConstraint";
@@ -1144,6 +1442,19 @@ var _AtomicConstraint = class _AtomicConstraint extends Constraint {
       return false;
     });
   }
+  /**
+   * Verifies that the atomic constraint has valid operands and operator
+   * @returns {Promise<boolean>} True if the constraint is valid, throws an error otherwise
+   */
+  verify() {
+    return __async(this, null, function* () {
+      const isValid = (yield __superGet(_AtomicConstraint.prototype, this, "verify").call(this)) && this.leftOperand instanceof LeftOperand && this.operator instanceof Operator && this.rightOperand instanceof RightOperand;
+      if (!isValid) {
+        throw new Error("AtomicConstraint propertie invalid");
+      }
+      return isValid;
+    });
+  }
   static isA(leftValue, rightValue) {
     const type = typeof leftValue;
     const value = typeof rightValue === "string" ? rightValue.toLowerCase() : "";
@@ -1166,15 +1477,6 @@ var _AtomicConstraint = class _AtomicConstraint extends Constraint {
         return false;
     }
   }
-  verify() {
-    return __async(this, null, function* () {
-      const isValid = (yield __superGet(_AtomicConstraint.prototype, this, "verify").call(this)) && this.leftOperand instanceof LeftOperand && this.operator instanceof Operator && this.rightOperand instanceof RightOperand;
-      if (!isValid) {
-        throw new Error("AtomicConstraint propertie invalid");
-      }
-      return isValid;
-    });
-  }
 };
 __decorateClass([
   HandleFailure()
@@ -1183,16 +1485,27 @@ var AtomicConstraint = _AtomicConstraint;
 
 // src/models/odrl/LogicalConstraint.ts
 var _LogicalConstraint = class _LogicalConstraint extends Constraint {
+  /**
+   * Creates an instance of LogicalConstraint
+   * @param {string} operand - The logical operand to be used ('and', 'andSequence', 'or', 'xone')
+   */
   constructor(operand) {
     super(null, null, null);
     this._instanceOf = "LogicalConstraint";
     this.operand = operand;
     this.constraint = [];
   }
+  /**
+   * Adds a constraint to the logical constraint's collection
+   * @param {Constraint} constraint - The constraint to add
+   */
   addConstraint(constraint) {
     this.constraint.push(constraint);
   }
-  // Todo
+  /**
+   * Evaluates the logical constraint based on its operand type
+   * @returns {Promise<boolean>} The result of evaluating all child constraints combined with the logical operand
+   */
   evaluate() {
     return __async(this, null, function* () {
       switch (this.operand) {
@@ -1209,6 +1522,10 @@ var _LogicalConstraint = class _LogicalConstraint extends Constraint {
       }
     });
   }
+  /**
+   * Verifies that the logical constraint is valid
+   * @returns {Promise<boolean>} True if the constraint is valid, throws an error otherwise
+   */
   verify() {
     return __async(this, null, function* () {
       const isValid = (yield __superGet(_LogicalConstraint.prototype, this, "verify").call(this)) && this.operand && _LogicalConstraint.operands.includes(this.operand);
@@ -1866,6 +2183,12 @@ var PolicyEvaluator = class _PolicyEvaluator {
         type: RuleDuty
       }
     };
+    /**
+     * Generic picking function that applies the appropriate picker based on options.
+     * @param explorable The explorable object to evaluate
+     * @param options Configuration object determining which picker to use
+     * @returns boolean indicating if the explorable should be picked
+     */
     this.pick = (explorable, options) => {
       for (const key in options) {
         if (options.hasOwnProperty(key)) {
@@ -1888,6 +2211,12 @@ var PolicyEvaluator = class _PolicyEvaluator {
     }
     return _PolicyEvaluator.instance;
   }
+  /**
+   * Filters and captures target explorables based on their unique identifiers.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object that may contain target criteria
+   * @returns boolean indicating if the explorable should be picked
+   */
   pickTarget(explorable, options) {
     if (explorable instanceof Asset) {
       const uid = explorable.uid;
@@ -1899,6 +2228,13 @@ var PolicyEvaluator = class _PolicyEvaluator {
     }
     return false;
   }
+  /**
+   * Filters entities based on a specific option key and corresponding payload.
+   * @param optionKey The key to check in the options object
+   * @param explorable The explorable object to evaluate
+   * @param options Configuration object containing filtering criteria
+   * @returns boolean indicating if the entity should be picked
+   */
   pickEntityFor(optionKey, explorable, options) {
     const payload = options[optionKey];
     if (payload && explorable instanceof RuleDuty || explorable instanceof RulePermission || explorable instanceof RuleProhibition || explorable instanceof PolicyAgreement) {
@@ -1907,20 +2243,50 @@ var PolicyEvaluator = class _PolicyEvaluator {
     }
     return false;
   }
+  /**
+   * Filters duties emitted by a specific assigner.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object that may contain assigner criteria
+   * @returns boolean indicating if the duty should be picked
+   */
   pickEmittedDuty(explorable, options) {
     return this.pickEntityFor("assigner", explorable, options);
   }
+  /**
+   * Filters duties assigned to a specific assignee.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object that may contain assignee criteria
+   * @returns boolean indicating if the duty should be picked
+   */
   pickAssignedDuty(explorable, options) {
     return this.pickEntityFor("assignee", explorable, options);
   }
+  /**
+   * Filters permission rules.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object for permission filtering
+   * @returns boolean indicating if the permission should be picked
+   */
   pickPermission(explorable, options) {
     console.log("pickPermission");
     return true;
   }
+  /**
+   * Filters prohibition rules.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object for prohibition filtering
+   * @returns boolean indicating if the prohibition should be picked
+   */
   pickProhibition(explorable, options) {
     console.log("pickProhibition");
     return true;
   }
+  /**
+   * Filters duties based on their type and configuration.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object for duty filtering
+   * @returns boolean indicating if the duty should be picked
+   */
   pickDuties(explorable, options) {
     const isRuleDuty = explorable instanceof RuleDuty;
     if (isRuleDuty) {
@@ -1929,41 +2295,10 @@ var PolicyEvaluator = class _PolicyEvaluator {
     }
     return false;
   }
-  static findAssigner(node) {
-    var _a;
-    let currentNode = node;
-    while (currentNode) {
-      if ((_a = currentNode.assigner) == null ? void 0 : _a.uid) {
-        return currentNode.assigner.uid;
-      }
-      currentNode = currentNode.getParent();
-    }
-    return void 0;
-  }
-  cleanPolicies() {
-    this.policies = [];
-  }
-  addPolicy(policy, dataFetcher, stateFetcher) {
-    if (dataFetcher) {
-      policy._fetcherUID = dataFetcher._objectUID;
-    }
-    if (stateFetcher) {
-      policy._stateFetcherUID = stateFetcher._objectUID;
-    }
-    this.policies.push(policy);
-  }
-  setPolicy(policy, dataFetcher, stateFetcher) {
-    this.cleanPolicies();
-    this.addPolicy(policy, dataFetcher, stateFetcher);
-  }
-  logPolicies() {
-    this.policies.forEach((policy) => {
-      policy.debug();
-    });
-  }
-  hasFailed(uid) {
-    return EntityRegistry.hasFailed(uid);
-  }
+  /**
+   * Sets fetcher options for all policies.
+   * @param options Configuration object to be set on the fetchers
+   */
   setFetcherOptions(options) {
     try {
       if (!this.policies.length) {
@@ -1987,6 +2322,11 @@ var PolicyEvaluator = class _PolicyEvaluator {
       console.warn(`\x1B[93m/!\\${error.message}\x1B[37m`);
     }
   }
+  /**
+   * Explores all policies and collects matching explorables based on picker criteria.
+   * @param options Configuration object for exploration
+   * @returns Promise resolving to array of matched explorables
+   */
   explore(options) {
     return __async(this, null, function* () {
       if (this.policies.length) {
@@ -2002,6 +2342,12 @@ var PolicyEvaluator = class _PolicyEvaluator {
       return [];
     });
   }
+  /**
+   * Creates a payload object for assignee-based duty filtering.
+   * @param assignee The assignee identifier
+   * @returns A DutyOptionPayload configured for assignee filtering
+   * @private
+   */
   static getAssigneePayload(assignee) {
     const payload = {
       propertyName: "assignee",
@@ -2010,6 +2356,12 @@ var PolicyEvaluator = class _PolicyEvaluator {
     };
     return payload;
   }
+  /**
+   * Creates a payload object for assigner-based duty filtering.
+   * @param assigner The assigner identifier
+   * @returns A DutyOptionPayload configured for assigner filtering
+   * @private
+   */
   static getAssignerPayload(assigner) {
     const payload = {
       propertyName: "assigner",
@@ -2018,6 +2370,79 @@ var PolicyEvaluator = class _PolicyEvaluator {
     };
     return payload;
   }
+  /**
+   * Traverses up the node hierarchy to find the first assigner UID.
+   * @param node The starting node to search from
+   * @returns The first found assigner UID or undefined if none found
+   * @public
+   */
+  static findAssigner(node) {
+    var _a;
+    let currentNode = node;
+    while (currentNode) {
+      if ((_a = currentNode.assigner) == null ? void 0 : _a.uid) {
+        return currentNode.assigner.uid;
+      }
+      currentNode = currentNode.getParent();
+    }
+    return void 0;
+  }
+  /**
+   * Clears all policies from the evaluator.
+   * @public
+   */
+  cleanPolicies() {
+    this.policies = [];
+  }
+  /**
+   * Adds a policy to the evaluator with optional data and state fetchers.
+   * @param policy The policy to add
+   * @param dataFetcher Optional data fetcher to associate with the policy
+   * @param stateFetcher Optional state fetcher to associate with the policy
+   * @public
+   */
+  addPolicy(policy, dataFetcher, stateFetcher) {
+    if (dataFetcher) {
+      policy._fetcherUID = dataFetcher._objectUID;
+    }
+    if (stateFetcher) {
+      policy._stateFetcherUID = stateFetcher._objectUID;
+    }
+    this.policies.push(policy);
+  }
+  /**
+   * Replaces all existing policies with a single new policy.
+   * @param policy The policy to set
+   * @param dataFetcher Optional data fetcher to associate with the policy
+   * @param stateFetcher Optional state fetcher to associate with the policy
+   * @public
+   */
+  setPolicy(policy, dataFetcher, stateFetcher) {
+    this.cleanPolicies();
+    this.addPolicy(policy, dataFetcher, stateFetcher);
+  }
+  /**
+   * Debugs all policies in the evaluator by printing their structure.
+   * @public
+   */
+  logPolicies() {
+    this.policies.forEach((policy) => {
+      policy.debug();
+    });
+  }
+  /**
+   * Checks if an entity with the given UID has failed evaluation.
+   * @param uid The unique identifier to check
+   * @returns Whether the entity has failed
+   * @public
+   */
+  hasFailed(uid) {
+    return EntityRegistry.hasFailed(uid);
+  }
+  /**
+   * Retrieves all targets defined in the policies.
+   * @returns {Promise<string[]>} A promise resolved with an array of target UIDs.
+   */
   listTargets() {
     return __async(this, null, function* () {
       try {
@@ -2170,6 +2595,10 @@ var PolicyEvaluator = class _PolicyEvaluator {
       }
     });
   }
+  /**
+   * Retrieves all duties defined in the policies.
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of duties
+   */
   getDuties() {
     return __async(this, null, function* () {
       try {
@@ -2182,6 +2611,12 @@ var PolicyEvaluator = class _PolicyEvaluator {
       }
     });
   }
+  /**
+   * Gets duties associated with a specific target.
+   * @param {string} target - The target UID
+   * @param {boolean} fulfilled - Whether to only return fulfilled duties (default: false)
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of matching duties
+   */
   getDutiesForTarget(target, fulfilled = false) {
     return __async(this, null, function* () {
       try {
@@ -2207,6 +2642,13 @@ var PolicyEvaluator = class _PolicyEvaluator {
       }
     });
   }
+  /**
+   * Gets duties for a specific action and target combination.
+   * @param {string} action - The action name
+   * @param {string} target - The target UID
+   * @param {boolean} fulfilled - Whether to only return fulfilled duties (default: false)
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of matching duties
+   */
   getDutiesFor(action, target, fulfilled = false) {
     return __async(this, null, function* () {
       try {
@@ -2232,6 +2674,11 @@ var PolicyEvaluator = class _PolicyEvaluator {
       }
     });
   }
+  /**
+   * Retrieves duties assigned to a specific assignee.
+   * @param {string} assignee - The assignee UID
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of assigned duties
+   */
   getAssignedDuties(assignee) {
     return __async(this, null, function* () {
       try {
@@ -2245,6 +2692,11 @@ var PolicyEvaluator = class _PolicyEvaluator {
       }
     });
   }
+  /**
+   * Retrieves duties emitted by a specific assigner.
+   * @param {string} assigner - The assigner UID
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of emitted duties
+   */
   getEmittedDuties(assigner) {
     return __async(this, null, function* () {
       try {
@@ -2352,10 +2804,18 @@ var PolicyStateFetcher = class _PolicyStateFetcher extends PolicyFetcher {
     });
     this._context = __spreadValues(__spreadValues({}, _context), this.context);
   }
+  /**
+   * Gets the context containing state functions
+   * @returns {StateFunctions} The state functions context
+   */
   get context() {
     return this._context;
   }
-  /*Todo: Write default*/
+  /**
+   * Gets the compensation state
+   * @returns {Promise<boolean>} The compensation state
+   * @protected
+   */
   getCompensate() {
     return __async(this, null, function* () {
       return false;

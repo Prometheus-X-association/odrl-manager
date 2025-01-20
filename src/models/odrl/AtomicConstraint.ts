@@ -16,6 +16,12 @@ type BasicTypes =
   | Array<any>;
 
 export class AtomicConstraint extends Constraint {
+  /**
+   * Creates an instance of AtomicConstraint.
+   * @param {LeftOperand} leftOperand - The left operand of the constraint
+   * @param {Operator} operator - The operator to apply between operands
+   * @param {RightOperand} rightOperand - The right operand of the constraint
+   */
   constructor(
     leftOperand: LeftOperand,
     operator: Operator,
@@ -25,6 +31,10 @@ export class AtomicConstraint extends Constraint {
     this._instanceOf = 'AtomicConstraint';
   }
 
+  /**
+   * Evaluates the atomic constraint by comparing left and right operands
+   * @returns {Promise<boolean>} True if the constraint evaluation succeeds, false otherwise
+   */
   @HandleFailure()
   public async evaluate(): Promise<boolean> {
     if (this.leftOperand && this.rightOperand) {
@@ -88,6 +98,22 @@ export class AtomicConstraint extends Constraint {
     return false;
   }
 
+  /**
+   * Verifies that the atomic constraint has valid operands and operator
+   * @returns {Promise<boolean>} True if the constraint is valid, throws an error otherwise
+   */
+  public async verify(): Promise<boolean> {
+    const isValid =
+      (await super.verify()) &&
+      this.leftOperand instanceof LeftOperand &&
+      this.operator instanceof Operator &&
+      this.rightOperand instanceof RightOperand;
+    if (!isValid) {
+      throw new Error('AtomicConstraint propertie invalid');
+    }
+    return isValid;
+  }
+
   private static isA(
     leftValue: BasicTypes,
     rightValue: string | number | [],
@@ -119,17 +145,5 @@ export class AtomicConstraint extends Constraint {
       default:
         return false;
     }
-  }
-
-  public async verify(): Promise<boolean> {
-    const isValid =
-      (await super.verify()) &&
-      this.leftOperand instanceof LeftOperand &&
-      this.operator instanceof Operator &&
-      this.rightOperand instanceof RightOperand;
-    if (!isValid) {
-      throw new Error('AtomicConstraint propertie invalid');
-    }
-    return isValid;
   }
 }

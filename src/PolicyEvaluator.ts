@@ -70,6 +70,12 @@ export class PolicyEvaluator {
     return PolicyEvaluator.instance;
   }
 
+  /**
+   * Filters and captures target explorables based on their unique identifiers.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object that may contain target criteria
+   * @returns boolean indicating if the explorable should be picked
+   */
   private pickTarget(explorable: Explorable, options?: any): boolean {
     if (explorable instanceof Asset) {
       const uid = (explorable as Asset).uid;
@@ -82,6 +88,13 @@ export class PolicyEvaluator {
     return false;
   }
 
+  /**
+   * Filters entities based on a specific option key and corresponding payload.
+   * @param optionKey The key to check in the options object
+   * @param explorable The explorable object to evaluate
+   * @param options Configuration object containing filtering criteria
+   * @returns boolean indicating if the entity should be picked
+   */
   private pickEntityFor(
     optionKey: string,
     explorable: Explorable,
@@ -100,24 +113,54 @@ export class PolicyEvaluator {
     return false;
   }
 
+  /**
+   * Filters duties emitted by a specific assigner.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object that may contain assigner criteria
+   * @returns boolean indicating if the duty should be picked
+   */
   private pickEmittedDuty(explorable: Explorable, options?: any): boolean {
     return this.pickEntityFor('assigner', explorable, options);
   }
 
+  /**
+   * Filters duties assigned to a specific assignee.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object that may contain assignee criteria
+   * @returns boolean indicating if the duty should be picked
+   */
   private pickAssignedDuty(explorable: Explorable, options?: any): boolean {
     return this.pickEntityFor('assignee', explorable, options);
   }
 
+  /**
+   * Filters permission rules.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object for permission filtering
+   * @returns boolean indicating if the permission should be picked
+   */
   private pickPermission(explorable: Explorable, options?: any): boolean {
     console.log('pickPermission');
     return true;
   }
 
+  /**
+   * Filters prohibition rules.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object for prohibition filtering
+   * @returns boolean indicating if the prohibition should be picked
+   */
   private pickProhibition(explorable: Explorable, options?: any): boolean {
     console.log('pickProhibition');
     return true;
   }
 
+  /**
+   * Filters duties based on their type and configuration.
+   * @param explorable The explorable object to evaluate
+   * @param options Optional configuration object for duty filtering
+   * @returns boolean indicating if the duty should be picked
+   */
   private pickDuties(explorable: Explorable, options?: any): boolean {
     const isRuleDuty = explorable instanceof RuleDuty;
     if (isRuleDuty) {
@@ -130,54 +173,10 @@ export class PolicyEvaluator {
     return false;
   }
 
-  public static findAssigner(node: any): string | undefined {
-    let currentNode = node;
-    while (currentNode) {
-      if (currentNode.assigner?.uid) {
-        return currentNode.assigner.uid;
-      }
-      currentNode = currentNode.getParent();
-    }
-    return undefined;
-  }
-
-  public cleanPolicies(): void {
-    this.policies = [];
-  }
-
-  public addPolicy(
-    policy: Policy,
-    dataFetcher?: PolicyDataFetcher,
-    stateFetcher?: PolicyStateFetcher,
-  ): void {
-    if (dataFetcher) {
-      policy._fetcherUID = dataFetcher._objectUID;
-    }
-    if (stateFetcher) {
-      policy._stateFetcherUID = stateFetcher._objectUID;
-    }
-    this.policies.push(policy);
-  }
-
-  public setPolicy(
-    policy: Policy,
-    dataFetcher?: PolicyDataFetcher,
-    stateFetcher?: PolicyStateFetcher,
-  ): void {
-    this.cleanPolicies();
-    this.addPolicy(policy, dataFetcher, stateFetcher);
-  }
-
-  public logPolicies(): void {
-    this.policies.forEach((policy: Policy) => {
-      policy.debug();
-    });
-  }
-
-  public hasFailed(uid: string) {
-    return EntityRegistry.hasFailed(uid);
-  }
-
+  /**
+   * Sets fetcher options for all policies.
+   * @param options Configuration object to be set on the fetchers
+   */
   private setFetcherOptions(options: any): void {
     try {
       if (!this.policies.length) {
@@ -202,6 +201,12 @@ export class PolicyEvaluator {
     }
   }
 
+  /**
+   * Generic picking function that applies the appropriate picker based on options.
+   * @param explorable The explorable object to evaluate
+   * @param options Configuration object determining which picker to use
+   * @returns boolean indicating if the explorable should be picked
+   */
   private pick = (explorable: Explorable, options?: any): boolean => {
     for (const key in options) {
       if (options.hasOwnProperty(key)) {
@@ -220,6 +225,11 @@ export class PolicyEvaluator {
     return false;
   };
 
+  /**
+   * Explores all policies and collects matching explorables based on picker criteria.
+   * @param options Configuration object for exploration
+   * @returns Promise resolving to array of matched explorables
+   */
   private async explore(options: any): Promise<Explorable[]> {
     if (this.policies.length) {
       const explorables: Explorable[] = (
@@ -235,6 +245,12 @@ export class PolicyEvaluator {
     return [];
   }
 
+  /**
+   * Creates a payload object for assignee-based duty filtering.
+   * @param assignee The assignee identifier
+   * @returns A DutyOptionPayload configured for assignee filtering
+   * @private
+   */
   private static getAssigneePayload(assignee: string): DutyOptionPayload {
     const payload: DutyOptionPayload = {
       propertyName: 'assignee',
@@ -244,6 +260,12 @@ export class PolicyEvaluator {
     return payload;
   }
 
+  /**
+   * Creates a payload object for assigner-based duty filtering.
+   * @param assigner The assigner identifier
+   * @returns A DutyOptionPayload configured for assigner filtering
+   * @private
+   */
   private static getAssignerPayload(assigner: string): DutyOptionPayload {
     const payload: DutyOptionPayload = {
       propertyName: 'assigner',
@@ -253,6 +275,92 @@ export class PolicyEvaluator {
     return payload;
   }
 
+  /**
+   * Traverses up the node hierarchy to find the first assigner UID.
+   * @param node The starting node to search from
+   * @returns The first found assigner UID or undefined if none found
+   * @public
+   */
+  public static findAssigner(node: any): string | undefined {
+    let currentNode = node;
+    while (currentNode) {
+      if (currentNode.assigner?.uid) {
+        return currentNode.assigner.uid;
+      }
+      currentNode = currentNode.getParent();
+    }
+    return undefined;
+  }
+
+  /**
+   * Clears all policies from the evaluator.
+   * @public
+   */
+  public cleanPolicies(): void {
+    this.policies = [];
+  }
+
+  /**
+   * Adds a policy to the evaluator with optional data and state fetchers.
+   * @param policy The policy to add
+   * @param dataFetcher Optional data fetcher to associate with the policy
+   * @param stateFetcher Optional state fetcher to associate with the policy
+   * @public
+   */
+  public addPolicy(
+    policy: Policy,
+    dataFetcher?: PolicyDataFetcher,
+    stateFetcher?: PolicyStateFetcher,
+  ): void {
+    if (dataFetcher) {
+      policy._fetcherUID = dataFetcher._objectUID;
+    }
+    if (stateFetcher) {
+      policy._stateFetcherUID = stateFetcher._objectUID;
+    }
+    this.policies.push(policy);
+  }
+
+  /**
+   * Replaces all existing policies with a single new policy.
+   * @param policy The policy to set
+   * @param dataFetcher Optional data fetcher to associate with the policy
+   * @param stateFetcher Optional state fetcher to associate with the policy
+   * @public
+   */
+  public setPolicy(
+    policy: Policy,
+    dataFetcher?: PolicyDataFetcher,
+    stateFetcher?: PolicyStateFetcher,
+  ): void {
+    this.cleanPolicies();
+    this.addPolicy(policy, dataFetcher, stateFetcher);
+  }
+
+  /**
+   * Debugs all policies in the evaluator by printing their structure.
+   * @public
+   */
+  public logPolicies(): void {
+    this.policies.forEach((policy: Policy) => {
+      policy.debug();
+    });
+  }
+
+  /**
+   * Checks if an entity with the given UID has failed evaluation.
+   * @param uid The unique identifier to check
+   * @returns Whether the entity has failed
+   * @public
+   */
+  public hasFailed(uid: string) {
+    return EntityRegistry.hasFailed(uid);
+  }
+
+  /**
+   * Retrieves all targets defined in the policies.
+   * @returns {Promise<string[]>} A promise resolved with an array of target UIDs.
+   */
   public async listTargets(): Promise<string[]> {
     try {
       const targets = (await this.explore({
@@ -416,6 +524,10 @@ export class PolicyEvaluator {
     }
   }
 
+  /**
+   * Retrieves all duties defined in the policies.
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of duties
+   */
   public async getDuties(): Promise<RuleDuty[]> {
     try {
       return (await this.explore({
@@ -427,6 +539,12 @@ export class PolicyEvaluator {
     }
   }
 
+  /**
+   * Gets duties associated with a specific target.
+   * @param {string} target - The target UID
+   * @param {boolean} fulfilled - Whether to only return fulfilled duties (default: false)
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of matching duties
+   */
   public async getDutiesForTarget(
     target: string,
     fulfilled: boolean = false,
@@ -455,6 +573,13 @@ export class PolicyEvaluator {
     }
   }
 
+  /**
+   * Gets duties for a specific action and target combination.
+   * @param {string} action - The action name
+   * @param {string} target - The target UID
+   * @param {boolean} fulfilled - Whether to only return fulfilled duties (default: false)
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of matching duties
+   */
   public async getDutiesFor(
     action: string,
     target: string,
@@ -484,6 +609,11 @@ export class PolicyEvaluator {
     }
   }
 
+  /**
+   * Retrieves duties assigned to a specific assignee.
+   * @param {string} assignee - The assignee UID
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of assigned duties
+   */
   public async getAssignedDuties(assignee: string): Promise<RuleDuty[]> {
     try {
       const payload = PolicyEvaluator.getAssigneePayload(assignee);
@@ -496,6 +626,11 @@ export class PolicyEvaluator {
     }
   }
 
+  /**
+   * Retrieves duties emitted by a specific assigner.
+   * @param {string} assigner - The assigner UID
+   * @returns {Promise<RuleDuty[]>} Promise resolved with array of emitted duties
+   */
   public async getEmittedDuties(assigner: string): Promise<any[]> {
     try {
       const payload = PolicyEvaluator.getAssigneePayload(assigner);

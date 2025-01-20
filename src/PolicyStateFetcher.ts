@@ -22,11 +22,19 @@ export abstract class PolicyStateFetcher extends PolicyFetcher {
     };
   }
 
+  /**
+   * Gets the context containing state functions
+   * @returns {StateFunctions} The state functions context
+   */
   public get context(): StateFunctions {
     return this._context as StateFunctions;
   }
 
-  /*Todo: Write default*/
+  /**
+   * Gets the compensation state
+   * @returns {Promise<boolean>} The compensation state
+   * @protected
+   */
   protected async getCompensate(): Promise<boolean> {
     return false;
   }

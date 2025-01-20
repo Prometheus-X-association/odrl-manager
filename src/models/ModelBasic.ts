@@ -2,6 +2,10 @@ import { EntityRegistry } from 'EntityRegistry';
 import { randomUUID } from 'node:crypto';
 import { RuleProhibition } from './odrl/RuleProhibition';
 
+/**
+ * Decorator that handles failure states for methods
+ * @returns {MethodDecorator} A decorator that wraps method execution with failure handling
+ */
 export const HandleFailure = (): MethodDecorator => {
   return (
     target: any,
@@ -32,6 +36,9 @@ export interface Extension {
   value: ExtensionValue;
 }
 
+/**
+ * Abstract class representing a basic ODRL model entity
+ */
 export abstract class ModelBasic {
   public _rootUID?: string;
   public _objectUID: string;
@@ -46,6 +53,11 @@ export abstract class ModelBasic {
     EntityRegistry.addReference(this);
   }
 
+  /**
+   * Handles the failure state of a model evaluation
+   * @param {boolean} result - The result of the evaluation
+   * @protected
+   */
   protected async handleFailure(result: boolean) {
     if (this._instanceOf === 'AtomicConstraint') {
       const parent = this.getParent();
@@ -72,16 +84,29 @@ export abstract class ModelBasic {
     }
   }
 
+  /**
+   * Sets the parent of this model
+   * @param {ModelBasic} parent - The parent model to set
+   */
   public setParent(parent: ModelBasic): void {
     EntityRegistry.setParent(this, parent);
   }
 
+  /**
+   * Gets the parent of this model
+   * @returns {ModelBasic} The parent model
+   */
   public getParent(): ModelBasic {
     return EntityRegistry.getParent(this);
   }
 
   protected abstract verify(): Promise<boolean>;
   //
+  /**
+   * Validates the model and its children recursively
+   * @param {number} depth - The current depth in the validation tree
+   * @param {Promise<boolean>[]} promises - Array of validation promises
+   */
   protected validate(depth: number = 0, promises: Promise<boolean>[]): void {
     promises.push(
       (async (): Promise<boolean> => {
@@ -136,6 +161,10 @@ export abstract class ModelBasic {
     );
   }
   //
+  /**
+   * Outputs a debug representation of the model
+   * @param {number} depth - The current depth in the debug tree
+   */
   public debug(depth: number = 0): void {
     const indentation = '  '.repeat(depth);
     console.log(

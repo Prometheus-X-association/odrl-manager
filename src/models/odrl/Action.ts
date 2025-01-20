@@ -83,6 +83,10 @@ export type ActionType = (typeof actions)[number];
 type InclusionMap = Map<string, Set<string>>;
 
 export class Action extends ModelBasic {
+  /**
+   * Map storing action inclusions relationships
+   * @private
+   */
   private static inclusions: InclusionMap = new Map();
 
   value: string;
@@ -90,6 +94,11 @@ export class Action extends ModelBasic {
   includedIn: Action | null;
   implies?: Action[];
 
+  /**
+   * Creates an instance of Action.
+   * @param {string} value - The value representing the action
+   * @param {Action | null} includedIn - The parent action this action is included in
+   */
   constructor(value: string, includedIn: Action | null) {
     super();
     this._instanceOf = 'Action';
@@ -99,6 +108,12 @@ export class Action extends ModelBasic {
     Action.includeIn(value, [this.value]);
   }
 
+  /**
+   * Includes a set of values in the inclusions map for a given action
+   * @param {string} current - The action to include other values in
+   * @param {string[]} values - Array of values to be included in the action
+   * @static
+   */
   public static includeIn(current: string, values: string[]) {
     let inclusions: Set<string> | undefined = Action.inclusions.get(current);
     if (!inclusions) {
@@ -110,6 +125,10 @@ export class Action extends ModelBasic {
     }
   }
 
+  /**
+   * Adds a constraint to the action's refinement array
+   * @param {Constraint} constraint - The constraint to add
+   */
   public addConstraint(constraint: Constraint) {
     if (this.refinement === undefined) {
       this.refinement = [];
@@ -117,10 +136,21 @@ export class Action extends ModelBasic {
     this.refinement.push(constraint);
   }
 
+  /**
+   * Checks if this action includes another action
+   * @param {string} value - The action value to check for inclusion
+   * @returns {Promise<boolean>} True if the action includes the value, false otherwise
+   */
   public async includes(value: string): Promise<boolean> {
     return Action.inclusions.get(this.value)?.has(value) || false;
   }
 
+  /**
+   * Gets all actions included in the given action values
+   * @param {ActionType[]} values - Array of action types to get inclusions for
+   * @returns {Promise<ActionType[]>} Array of included action types
+   * @static
+   */
   public static async getIncluded(values: ActionType[]): Promise<ActionType[]> {
     const foundValues: ActionType[] = [];
     values.forEach((value: ActionType) => {
@@ -131,6 +161,10 @@ export class Action extends ModelBasic {
     return Array.from(new Set(foundValues));
   }
 
+  /**
+   * Evaluates the action by checking refinements and state fetcher context
+   * @returns {Promise<boolean>} True if the action evaluation succeeds, false otherwise
+   */
   public async evaluate(): Promise<boolean> {
     const refine = this.refine();
     const rule = this.getParent();
@@ -160,6 +194,10 @@ export class Action extends ModelBasic {
     return refine;
   }
 
+  /**
+   * Refines the action by evaluating all its refinement constraints
+   * @returns {Promise<boolean>} True if all refinements evaluate successfully, false otherwise
+   */
   public async refine(): Promise<boolean> {
     try {
       if (this.refinement) {
@@ -174,6 +212,10 @@ export class Action extends ModelBasic {
     return true;
   }
 
+  /**
+   * Verifies the action
+   * @returns {Promise<boolean>} Always returns true
+   */
   public async verify(): Promise<boolean> {
     return true;
   }
